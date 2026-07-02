@@ -1,0 +1,17 @@
+flowchart TB
+    Internet["인터넷"] --> NLB["AWS NLB"]
+    NLB --> Istio["Istio Ingress Gateway"]
+    Istio --> VS["VirtualService"]
+    VS --> SVC["Kubernetes Services"]
+    SVC --> Pods["애플리케이션 Pod"]
+    Argo["Argo CD"] --> Helm["Helm values"]
+    Helm --> SVC
+    Rollouts["Argo Rollouts"] --> VS
+    HPA["HPA"] --> Pods
+    KEDA["KEDA"] --> Pods
+    Pods --> Prom["Prometheus"]
+    Pods --> Loki["Loki"]
+    Pods --> Tempo["Tempo"]
+    Prom --> Grafana["Grafana"]
+    Loki --> Grafana
+    Tempo --> Grafana

@@ -1,0 +1,12 @@
+flowchart LR
+    OrderTx["order transaction"] --> OrderOutbox[("order outbox")]
+    OrderOutbox --> Relay1["outbox relay"]
+    Relay1 --> Kafka["Kafka"]
+    PaymentTx["payment transaction"] --> PaymentOutbox[("payment outbox")]
+    PaymentOutbox --> Relay2["outbox relay"]
+    Relay2 --> Kafka
+    Kafka --> OrderConsumer["order payment consumer"]
+    Kafka --> NotificationConsumer["notification consumer"]
+    OrderConsumer --> Processed1[("processed_events")]
+    NotificationConsumer --> Processed2[("processed_events")]
+    NotificationConsumer --> DLQ[("DLQ")]

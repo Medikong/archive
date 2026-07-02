@@ -1,0 +1,1184 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DropMong 아키텍처 보드</title>
+  <meta name="description" content="DropMong 제한 수량 커머스의 서비스, 인프라, 이벤트, 캐시, 전환 맵을 담은 아키텍처 보드.">
+  <style>
+    :root {
+      --surface-primary: #08090a;
+      --surface-panel: #101114;
+      --surface-raised: #17191f;
+      --surface-inset: #0c0d10;
+      --text-primary: #f7f8f8;
+      --text-secondary: #c9d0dc;
+      --text-muted: #8a91a0;
+      --border-subtle: rgba(255,255,255,0.06);
+      --border-strong: rgba(255,255,255,0.13);
+      --accent-primary: #6f7cff;
+      --accent-soft: rgba(111,124,255,0.16);
+      --status-success: #29c46a;
+      --status-warning: #f0b35a;
+      --status-error: #ff6b6b;
+      --kafka: #c087ff;
+      --infra: #5bd6d0;
+      --data: #ffd166;
+      --radius-card: 8px;
+      --radius-panel: 12px;
+      --space-1: 4px;
+      --space-2: 8px;
+      --space-3: 12px;
+      --space-4: 16px;
+      --space-5: 20px;
+      --space-6: 24px;
+      --space-8: 32px;
+      --space-10: 40px;
+      --space-12: 48px;
+      --space-16: 64px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100dvh;
+      color: var(--text-primary);
+      background:
+        radial-gradient(circle at 12% 0%, rgba(111,124,255,0.18), transparent 28rem),
+        radial-gradient(circle at 86% 12%, rgba(91,214,208,0.13), transparent 26rem),
+        linear-gradient(180deg, #08090a 0%, #0d0f14 44%, #08090a 100%);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.6;
+      font-feature-settings: "cv01", "ss03";
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    code,
+    .mono {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    }
+
+    .keep {
+      white-space: nowrap;
+    }
+
+    .shell {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 0 var(--space-6) var(--space-16);
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      backdrop-filter: blur(18px);
+      background: rgba(8,9,10,0.78);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .topbar-inner {
+      max-width: 1240px;
+      margin: 0 auto;
+      min-height: 68px;
+      padding: 0 var(--space-6);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-4);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      min-width: 0;
+    }
+
+    .brand-mark {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      background:
+        linear-gradient(135deg, rgba(111,124,255,0.95), rgba(91,214,208,0.9));
+      box-shadow: 0 16px 42px rgba(111,124,255,0.25);
+      flex: 0 0 auto;
+    }
+
+    .brand-title {
+      font-size: 14px;
+      font-weight: 650;
+      letter-spacing: 0;
+      white-space: nowrap;
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    .nav a {
+      color: var(--text-muted);
+      font-size: 13px;
+      font-weight: 560;
+      padding: 8px 10px;
+      border-radius: 999px;
+      white-space: nowrap;
+      transition: color 120ms ease-out, background 120ms ease-out;
+    }
+
+    .nav a:hover,
+    .nav a:focus-visible {
+      color: var(--text-primary);
+      background: rgba(255,255,255,0.05);
+      outline: none;
+    }
+
+    .hero {
+      padding: var(--space-16) 0 var(--space-12);
+      display: grid;
+      grid-template-columns: minmax(0, 0.92fr) minmax(420px, 1.08fr);
+      gap: var(--space-8);
+      align-items: center;
+    }
+
+    .kicker {
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 650;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: var(--space-4);
+    }
+
+    h1 {
+      margin: 0;
+      color: var(--text-primary);
+      font-size: clamp(40px, 6.4vw, 68px);
+      line-height: 1.02;
+      font-weight: 650;
+      letter-spacing: 0;
+    }
+
+    h1 span {
+      display: block;
+      text-wrap: balance;
+    }
+
+    .lead {
+      margin: var(--space-6) 0 0;
+      max-width: 64ch;
+      color: var(--text-secondary);
+      font-size: 18px;
+      line-height: 1.7;
+    }
+
+    .hero-actions {
+      margin-top: var(--space-8);
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-3);
+    }
+
+    .button {
+      border: 1px solid var(--border-strong);
+      background: rgba(255,255,255,0.04);
+      color: var(--text-primary);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-weight: 620;
+      transition: transform 120ms ease-out, border-color 120ms ease-out, background 120ms ease-out;
+    }
+
+    .button.primary {
+      background: var(--accent-primary);
+      color: #ffffff;
+      border-color: var(--accent-primary);
+    }
+
+    .button:hover,
+    .button:focus-visible {
+      transform: translateY(-1px);
+      border-color: rgba(255,255,255,0.24);
+      outline: none;
+    }
+
+    .hero-visual {
+      position: relative;
+      min-width: 0;
+      padding: var(--space-6);
+      border: 1px solid var(--border-strong);
+      border-radius: 22px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02)),
+        rgba(16,17,20,0.78);
+      box-shadow: 0 28px 80px rgba(0,0,0,0.34);
+      overflow: hidden;
+    }
+
+    .hero-visual::before {
+      content: "";
+      position: absolute;
+      inset: -120px -160px auto auto;
+      width: 320px;
+      height: 320px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(111,124,255,0.34), transparent 65%);
+      pointer-events: none;
+    }
+
+    .map-grid {
+      position: relative;
+      display: grid;
+      gap: var(--space-3);
+      min-width: 0;
+    }
+
+    .map-row {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: var(--space-3);
+      min-width: 0;
+    }
+
+    .mini-node {
+      min-width: 0;
+      min-height: 92px;
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-panel);
+      background: var(--surface-raised);
+      padding: var(--space-4);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .mini-node strong {
+      font-size: 14px;
+      line-height: 1.25;
+    }
+
+    .mini-node span {
+      color: var(--text-muted);
+      font-size: 12px;
+    }
+
+    .mini-node.critical {
+      background: linear-gradient(180deg, rgba(111,124,255,0.2), rgba(111,124,255,0.08));
+      border-color: rgba(111,124,255,0.7);
+    }
+
+    .route-line {
+      min-width: 0;
+      max-width: 100%;
+      min-height: 42px;
+      border: 1px solid var(--border-subtle);
+      border-radius: 999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-secondary);
+      background: rgba(255,255,255,0.025);
+      font-size: 13px;
+      font-weight: 620;
+      padding: 9px 14px;
+      text-align: center;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+
+    .section {
+      margin-top: var(--space-10);
+      border: 1px solid var(--border-subtle);
+      border-radius: 18px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.045), rgba(255,255,255,0.018)),
+        rgba(16,17,20,0.84);
+      padding: var(--space-8);
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      gap: var(--space-6);
+      align-items: flex-start;
+      margin-bottom: var(--space-6);
+    }
+
+    .section h2 {
+      margin: 0;
+      font-size: clamp(26px, 3vw, 38px);
+      line-height: 1.1;
+      font-weight: 650;
+      letter-spacing: 0;
+    }
+
+    .section p {
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-2);
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border-strong);
+      color: var(--text-secondary);
+      background: rgba(255,255,255,0.035);
+      font-size: 12px;
+      font-weight: 650;
+      white-space: nowrap;
+    }
+
+    .badge.p0 { color: #ffffff; background: rgba(255,107,107,0.18); border-color: rgba(255,107,107,0.5); }
+    .badge.p1 { color: #ffffff; background: rgba(240,179,90,0.16); border-color: rgba(240,179,90,0.42); }
+    .badge.ok { color: #ffffff; background: rgba(41,196,106,0.16); border-color: rgba(41,196,106,0.42); }
+
+    .doc-roadmap {
+      display: grid;
+      grid-template-columns: minmax(260px, 0.72fr) minmax(0, 1.28fr);
+      gap: var(--space-4);
+      align-items: stretch;
+    }
+
+    .doc-phase {
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-panel);
+      background: var(--surface-inset);
+      padding: var(--space-5, 20px);
+    }
+
+    .doc-phase strong {
+      display: block;
+      margin-bottom: var(--space-3);
+      font-size: 18px;
+    }
+
+    .doc-phase ol {
+      margin: 0;
+      padding-left: 22px;
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+
+    .doc-phase li + li {
+      margin-top: var(--space-3);
+    }
+
+    .doc-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: var(--space-3);
+    }
+
+    .doc-card {
+      min-width: 0;
+      min-height: 128px;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-panel);
+      background: var(--surface-raised);
+      padding: var(--space-4);
+      display: grid;
+      grid-template-rows: auto auto 1fr;
+      gap: var(--space-2);
+      transition: border-color 120ms ease-out, background 120ms ease-out, transform 120ms ease-out;
+    }
+
+    .doc-card:hover,
+    .doc-card:focus-visible {
+      transform: translateY(-1px);
+      border-color: rgba(111,124,255,0.46);
+      background: linear-gradient(180deg, rgba(111,124,255,0.12), rgba(255,255,255,0.035));
+      outline: none;
+    }
+
+    .doc-card span {
+      color: var(--accent-primary);
+      font-size: 12px;
+      font-weight: 680;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    }
+
+    .doc-card strong {
+      font-size: 15px;
+      line-height: 1.25;
+    }
+
+    .doc-card em {
+      color: var(--text-muted);
+      font-size: 12px;
+      font-style: normal;
+      line-height: 1.45;
+    }
+
+    .journey-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: var(--space-4);
+    }
+
+    .journey-step {
+      position: relative;
+      min-width: 0;
+      min-height: 150px;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-panel);
+      background: var(--surface-raised);
+      padding: var(--space-4);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+    }
+
+    .journey-step::after {
+      display: none;
+    }
+
+    .journey-step:last-child::after {
+      display: none;
+    }
+
+    .journey-step span {
+      color: var(--accent-primary);
+      font-size: 12px;
+      font-weight: 680;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    }
+
+    .journey-step strong {
+      color: var(--text-primary);
+      font-size: 15px;
+      line-height: 1.25;
+    }
+
+    .journey-step em {
+      color: var(--text-muted);
+      font-size: 12px;
+      font-style: normal;
+      line-height: 1.45;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: var(--space-4);
+    }
+
+    .card {
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-panel);
+      background: var(--surface-raised);
+      padding: var(--space-5, 20px);
+      min-width: 0;
+    }
+
+    .card h3 {
+      margin: 0 0 var(--space-2);
+      font-size: 18px;
+      line-height: 1.25;
+      font-weight: 650;
+    }
+
+    .card p,
+    .card li {
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+
+    .card ul {
+      margin: var(--space-3) 0 0;
+      padding-left: 18px;
+    }
+
+    .diagram-scroll {
+      overflow-x: auto;
+      padding-bottom: var(--space-2);
+    }
+
+    .flow {
+      min-width: 980px;
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: var(--space-3);
+      align-items: stretch;
+    }
+
+    .flow-node {
+      position: relative;
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-panel);
+      background: var(--surface-raised);
+      padding: var(--space-4);
+      min-height: 112px;
+    }
+
+    .flow-node::after {
+      content: "";
+      position: absolute;
+      right: -13px;
+      top: 50%;
+      width: 13px;
+      height: 1px;
+      background: rgba(255,255,255,0.28);
+    }
+
+    .flow-node:last-child::after {
+      display: none;
+    }
+
+    .flow-node strong {
+      display: block;
+      font-size: 14px;
+      margin-bottom: var(--space-2);
+    }
+
+    .flow-node span {
+      display: block;
+      color: var(--text-muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .flow-node.critical {
+      background: var(--accent-soft);
+      border-color: rgba(111,124,255,0.58);
+    }
+
+    .swimlane {
+      min-width: 980px;
+      display: grid;
+      grid-template-columns: 170px repeat(6, 1fr);
+      gap: 1px;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-panel);
+      overflow: hidden;
+      background: var(--border-subtle);
+    }
+
+    .lane-cell {
+      min-height: 76px;
+      background: var(--surface-panel);
+      padding: var(--space-3);
+      color: var(--text-secondary);
+      font-size: 13px;
+    }
+
+    .lane-head {
+      background: var(--surface-inset);
+      color: var(--text-primary);
+      font-weight: 650;
+    }
+
+    .lane-event {
+      border-radius: 7px;
+      padding: 7px 8px;
+      background: rgba(111,124,255,0.15);
+      color: var(--text-primary);
+      border: 1px solid rgba(111,124,255,0.32);
+    }
+
+    .lane-event.kafka {
+      background: rgba(192,135,255,0.13);
+      border-color: rgba(192,135,255,0.34);
+    }
+
+    .matrix {
+      width: 100%;
+      border-collapse: collapse;
+      overflow: hidden;
+      border-radius: var(--radius-panel);
+      font-size: 14px;
+    }
+
+    .matrix th,
+    .matrix td {
+      text-align: left;
+      vertical-align: top;
+      padding: 14px 12px;
+      border-bottom: 1px solid var(--border-subtle);
+      color: var(--text-secondary);
+    }
+
+    .matrix th {
+      color: var(--text-primary);
+      background: rgba(255,255,255,0.04);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .matrix tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: var(--space-4);
+    }
+
+    .metric {
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-panel);
+      background: var(--surface-inset);
+      padding: var(--space-4);
+    }
+
+    .metric .value {
+      display: block;
+      color: var(--text-primary);
+      font-size: 24px;
+      font-weight: 680;
+      line-height: 1.1;
+      margin-bottom: var(--space-2);
+    }
+
+    .metric .name {
+      color: var(--text-muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .repo-map {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: var(--space-4);
+    }
+
+    .repo {
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-panel);
+      padding: var(--space-4);
+      background: var(--surface-raised);
+    }
+
+    .repo strong {
+      display: block;
+      margin-bottom: var(--space-3);
+    }
+
+    .repo .from,
+    .repo .to {
+      border-radius: 7px;
+      padding: var(--space-3);
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .repo .from {
+      background: rgba(255,107,107,0.10);
+      border: 1px solid rgba(255,107,107,0.24);
+      margin-bottom: var(--space-2);
+    }
+
+    .repo .to {
+      background: rgba(41,196,106,0.10);
+      border: 1px solid rgba(41,196,106,0.24);
+    }
+
+    .source-list {
+      columns: 2;
+      column-gap: var(--space-8);
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+
+    .source-list a {
+      color: var(--text-secondary);
+      text-decoration: underline;
+      text-decoration-color: rgba(111,124,255,0.58);
+      text-underline-offset: 3px;
+      overflow-wrap: anywhere;
+    }
+
+    footer {
+      color: var(--text-muted);
+      font-size: 13px;
+      padding: var(--space-10) 0 0;
+    }
+
+    @media (max-width: 980px) {
+      .hero {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      .doc-roadmap {
+        grid-template-columns: 1fr;
+      }
+
+      .cards,
+      .doc-grid,
+      .journey-grid,
+      .metric-grid,
+      .repo-map {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .topbar-inner {
+        align-items: flex-start;
+        flex-direction: column;
+        padding-top: var(--space-3);
+        padding-bottom: var(--space-3);
+      }
+    }
+
+    @media (max-width: 640px) {
+      .shell,
+      .topbar-inner {
+        padding-left: var(--space-4);
+        padding-right: var(--space-4);
+      }
+
+      .hero {
+        display: block;
+        padding-top: var(--space-10);
+      }
+
+      .hero-visual {
+        width: 100%;
+        max-width: 343px;
+        margin-top: var(--space-8);
+      }
+
+      .section {
+        padding: var(--space-5, 20px);
+      }
+
+      .section-header {
+        flex-direction: column;
+      }
+
+      .cards,
+      .doc-grid,
+      .journey-grid,
+      .metric-grid,
+      .repo-map,
+      .map-row {
+        grid-template-columns: 1fr;
+      }
+
+      .route-line {
+        display: block;
+        border-radius: 18px;
+      }
+
+      .source-list {
+        columns: 1;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        scroll-behavior: auto !important;
+        transition: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="#top" aria-label="DropMong 아키텍처 보드 홈">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span class="brand-title">DropMong 아키텍처 보드</span>
+      </a>
+      <nav class="nav" aria-label="페이지 섹션">
+        <a href="#service">서비스</a>
+        <a href="#journey">사용자 흐름</a>
+        <a href="#docs">문서</a>
+        <a href="#boundary">서비스 경계</a>
+        <a href="#flow">드롭 흐름</a>
+        <a href="#events">이벤트</a>
+        <a href="#infra">인프라</a>
+        <a href="#migration">전환</a>
+        <a href="#verification">검증</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="top" class="shell">
+    <section class="hero" aria-labelledby="hero-title">
+      <div>
+        <div class="kicker">아키텍처 설계 패킷</div>
+        <h1 id="hero-title"><span>DropMong</span><span>제한 수량</span><span>커머스 설계</span></h1>
+        <p class="lead">
+          DropMong은 정해진 시간에 한정 수량 상품을 판매하고, <span class="keep">주문 폭주에도</span> <span class="keep">재고 초과 확정</span>을 막는 드롭 커머스 서비스다.
+        </p>
+        <div class="hero-actions">
+          <a class="button primary" href="./README.md">문서 인덱스</a>
+          <a class="button" href="./01-visual-architecture.md">핵심 구조 요약</a>
+          <a class="button" href="./assets/service-map.svg">서비스 맵 SVG</a>
+        </div>
+      </div>
+
+      <div class="hero-visual" aria-label="목표 아키텍처 개요">
+        <div class="map-grid">
+          <div class="route-line">NLB -> Istio -> Admission</div>
+          <div class="map-row">
+            <div class="mini-node"><strong>auth</strong><span>JWT, role claim 관리</span></div>
+            <div class="mini-node"><strong>catalog</strong><span>drop, read projection</span></div>
+            <div class="mini-node critical"><strong>order</strong><span>재고, TTL, outbox</span></div>
+            <div class="mini-node"><strong>payment</strong><span>mock 승인, outbox</span></div>
+            <div class="mini-node"><strong>notification</strong><span>consumer, processed event</span></div>
+          </div>
+          <div class="route-line">Kafka: order / payment / notification 이벤트</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="service" class="section">
+      <div class="section-header">
+        <div>
+          <div class="kicker">00. 서비스 개요</div>
+          <h2>DropMong은 드롭 피크를 견디는 <span class="keep">한정 수량</span> 커머스다</h2>
+        </div>
+        <p>상품을 보여주는 것보다 중요한 기준은 주문 정합성, <span class="keep">안전한 재시도</span>, 장애 격리다.</p>
+      </div>
+      <div class="cards">
+        <article class="card">
+          <h3>고객 경험</h3>
+          <p>고객은 오픈 예정 드롭을 보고, 오픈하면 주문하고 결제한다. 같은 요청을 다시 보내도 <span class="keep">중복 주문은 없다.</span></p>
+        </article>
+        <article class="card">
+          <h3>운영자 경험</h3>
+          <p>운영자는 상품, 드롭 일정, 판매 수량을 설정하고, 피크 트래픽과 장애 상태를 dashboard와 runbook으로 확인한다.</p>
+        </article>
+        <article class="card">
+          <h3>시스템 기준</h3>
+          <p>order-service가 재고 예약과 주문 상태를 단독으로 갖는다. 결제와 알림은 이벤트로 연결하고, <span class="keep">실패 시에도</span> 복구 가능한 흐름으로 처리한다.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="journey" class="section">
+      <div class="section-header">
+        <div>
+          <div class="kicker">01. 사용자 흐름</div>
+          <h2>고객 구매 흐름은 6단계다</h2>
+        </div>
+        <p>운영자와 플랫폼 운영자 흐름은 <a href="./12-user-flows.md" class="mono">12-user-flows.md</a>에 정리했다.</p>
+      </div>
+      <div class="journey-grid" aria-label="고객 구매 여정">
+        <div class="journey-step">
+          <span>01</span>
+          <strong>드롭 발견</strong>
+          <em>목록과 상세에서 오픈 시간, 상품, 가격을 확인한다.</em>
+        </div>
+        <div class="journey-step">
+          <span>02</span>
+          <strong>로그인</strong>
+          <em>주문 전에 JWT를 받고 고객 권한을 확인한다.</em>
+        </div>
+        <div class="journey-step">
+          <span>03</span>
+          <strong>오픈 대기</strong>
+          <em>오픈 시각까지 상세 화면에서 상태를 확인한다.</em>
+        </div>
+        <div class="journey-step">
+          <span>04</span>
+          <strong>주문 시도</strong>
+          <em>입장 제어를 통과하면 주문 서비스가 재고를 예약한다.</em>
+        </div>
+        <div class="journey-step">
+          <span>05</span>
+          <strong>결제</strong>
+          <em>결제 서비스가 승인, 실패, 지연 결과를 이벤트로 남긴다.</em>
+        </div>
+        <div class="journey-step">
+          <span>06</span>
+          <strong>상태 확인</strong>
+          <em>확정, 취소, 만료 상태와 알림을 확인한다.</em>
+        </div>
+      </div>
+    </section>
+
+    <section id="docs" class="section">
+      <div class="section-header">
+        <div>
+          <div class="kicker">02. 설계 문서 세트</div>
+          <h2>구현 전에 합의할 문서 순서</h2>
+        </div>
+        <p>문서는 제품 범위에서 시작해 계약, 운영, 릴리즈 게이트로 끝난다.</p>
+      </div>
+      <div class="doc-roadmap">
+        <div class="doc-phase">
+          <strong>읽는 순서</strong>
+          <ol>
+            <li>제품과 도메인 경계를 먼저 잠근다.</li>
+            <li>서비스, 데이터, API, 이벤트 계약을 맞춘다.</li>
+            <li>핵심 흐름과 인프라 운영 기준을 연결한다.</li>
+            <li>사용자 행동과 화면 흐름을 맞춘다.</li>
+            <li>보안과 릴리즈 게이트로 구현 착수 조건을 닫는다.</li>
+          </ol>
+        </div>
+        <div class="doc-grid">
+          <a class="doc-card" href="./00-product-scope.md"><span>00</span><strong>제품 범위</strong><em>무엇을 만들고 제외할지</em></a>
+          <a class="doc-card" href="./01-domain-model.md"><span>01</span><strong>도메인 모델</strong><em>상태, 용어, 불변 조건</em></a>
+          <a class="doc-card" href="./02-system-architecture.md"><span>02</span><strong>시스템 아키텍처</strong><em>전체 구조와 저장소 영향</em></a>
+          <a class="doc-card" href="./03-service-boundaries.md"><span>03</span><strong>서비스 경계</strong><em>5개 서비스 책임 경계</em></a>
+          <a class="doc-card" href="./04-data-design.md"><span>04</span><strong>데이터 설계</strong><em>transaction, idempotency, outbox</em></a>
+          <a class="doc-card" href="./05-api-contracts.md"><span>05</span><strong>API 계약</strong><em>HTTP, error, auth header</em></a>
+          <a class="doc-card" href="./06-event-contracts.md"><span>06</span><strong>이벤트 계약</strong><em>Kafka envelope, DLQ, replay</em></a>
+          <a class="doc-card" href="./07-critical-flows.md"><span>07</span><strong>핵심 흐름</strong><em>주문, 결제, 만료, 장애</em></a>
+          <a class="doc-card" href="./08-infra-deployment.md"><span>08</span><strong>인프라 배포</strong><em>Istio, GitOps, KEDA, Rollouts</em></a>
+          <a class="doc-card" href="./09-observability-slo.md"><span>09</span><strong>관측성과 SLO</strong><em>metric, trace, alert</em></a>
+          <a class="doc-card" href="./10-security.md"><span>10</span><strong>보안</strong><em>JWT, mTLS, policy, audit</em></a>
+          <a class="doc-card" href="./11-test-release-plan.md"><span>11</span><strong>테스트와 릴리즈</strong><em>검증과 rollback 기준</em></a>
+          <a class="doc-card" href="./12-user-flows.md"><span>12</span><strong>사용자 흐름</strong><em>고객, 운영자, 플랫폼 흐름</em></a>
+        </div>
+      </div>
+    </section>
+
+    <section id="boundary" class="section">
+      <div class="section-header">
+        <div>
+          <div class="kicker">03. 서비스 경계</div>
+          <h2>5개 서비스로 충분하다</h2>
+        </div>
+        <div class="badge-row">
+          <span class="badge ok">5개 서비스</span>
+          <span class="badge p0">oversell 0</span>
+          <span class="badge">order가 inventory 소유</span>
+        </div>
+      </div>
+      <div class="cards">
+        <article class="card">
+          <h3>왜 `order-service`가 재고를 갖나</h3>
+          <p>주문 생성과 재고 예약이 분리되면 동시성 실패와 보상 흐름이 복잡해진다. oversell 0은 같은 트랜잭션 경계에서 지켜야 한다.</p>
+        </article>
+        <article class="card">
+          <h3>왜 `ticket-service`를 빼나</h3>
+          <p>드롭 커머스에서 티켓 발행은 핵심 도메인이 아니다. 주문 확정 결과나 주문 이력으로 흡수하는 편이 경계가 단순하다.</p>
+        </article>
+        <article class="card">
+          <h3>왜 `catalog-service`는 캐시 가능한가</h3>
+          <p>상품과 드롭 정보는 low-mutation read path다. 공개 조회는 projection과 cache로 빠르게 만들고, 재고 진실은 order DB에 둔다.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="flow" class="section">
+      <div class="section-header">
+        <div>
+          <div class="kicker">04. 드롭 오픈 흐름</div>
+          <h2>피크 트래픽은 주문 전에 거른다</h2>
+        </div>
+        <p>대기열, rate limit, admission token은 `order-service` 앞에서 작동해야 한다.</p>
+      </div>
+      <div class="diagram-scroll" role="region" aria-label="드롭 오픈 요청 경로" tabindex="0">
+        <div class="flow">
+          <div class="flow-node"><strong>고객</strong><span>drop open time에 조회와 주문 요청 집중</span></div>
+          <div class="flow-node"><strong>AWS NLB</strong><span>cluster ingress 진입점</span></div>
+          <div class="flow-node"><strong>Istio Gateway</strong><span>routing, mTLS, canary 경로</span></div>
+          <div class="flow-node critical"><strong>Admission</strong><span>rate limit, token, waiting room 제어</span></div>
+          <div class="flow-node"><strong>Catalog</strong><span>캐시 가능한 drop detail</span></div>
+          <div class="flow-node critical"><strong>Order</strong><span>idempotency, inventory reservation 처리</span></div>
+          <div class="flow-node"><strong>Payment</strong><span>승인, 실패, 지연</span></div>
+          <div class="flow-node"><strong>Notify</strong><span>비동기 알림</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="events" class="section">
+      <div class="section-header">
+        <div>
+          <div class="kicker">05. 이벤트와 saga</div>
+          <h2>DB 변경과 이벤트 발행을 분리하지 않는다</h2>
+        </div>
+        <div class="badge-row">
+          <span class="badge p0">transactional outbox</span>
+          <span class="badge">멱등 consumer</span>
+        </div>
+      </div>
+      <div class="diagram-scroll" role="region" aria-label="주문 결제 이벤트 swimlane" tabindex="0">
+        <div class="swimlane">
+          <div class="lane-cell lane-head">구간</div>
+          <div class="lane-cell lane-head">1</div>
+          <div class="lane-cell lane-head">2</div>
+          <div class="lane-cell lane-head">3</div>
+          <div class="lane-cell lane-head">4</div>
+          <div class="lane-cell lane-head">5</div>
+          <div class="lane-cell lane-head">6</div>
+
+          <div class="lane-cell lane-head">고객</div>
+          <div class="lane-cell"><div class="lane-event">POST /orders</div></div>
+          <div class="lane-cell"></div>
+          <div class="lane-cell"><div class="lane-event">POST /payments</div></div>
+          <div class="lane-cell"></div>
+          <div class="lane-cell"></div>
+          <div class="lane-cell"><div class="lane-event">GET /orders/{id}</div></div>
+
+          <div class="lane-cell lane-head">order-service</div>
+          <div class="lane-cell"><div class="lane-event">재고 예약</div></div>
+          <div class="lane-cell"><div class="lane-event">outbox 기록</div></div>
+          <div class="lane-cell"></div>
+          <div class="lane-cell"><div class="lane-event kafka">결제 결과 소비</div></div>
+          <div class="lane-cell"><div class="lane-event">확정 또는 해제</div></div>
+          <div class="lane-cell"></div>
+
+          <div class="lane-cell lane-head">payment-service</div>
+          <div class="lane-cell"></div>
+          <div class="lane-cell"></div>
+          <div class="lane-cell"><div class="lane-event">payment 기록</div></div>
+          <div class="lane-cell"><div class="lane-event">outbox 기록</div></div>
+          <div class="lane-cell"></div>
+          <div class="lane-cell"></div>
+
+          <div class="lane-cell lane-head">Kafka</div>
+          <div class="lane-cell"></div>
+          <div class="lane-cell"><div class="lane-event kafka">order.created</div></div>
+          <div class="lane-cell"></div>
+          <div class="lane-cell"><div class="lane-event kafka">payment.approved</div></div>
+          <div class="lane-cell"><div class="lane-event kafka">notification.requested</div></div>
+          <div class="lane-cell"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="infra" class="section">
+      <div class="section-header">
+        <div>
+          <div class="kicker">06. 인프라 제어</div>
+          <h2>Kong 제거 후 Istio 중심으로 정리한다</h2>
+        </div>
+        <p>Gateway, traffic split, canary, telemetry가 한 경로에서 설명되어야 한다.</p>
+      </div>
+      <table class="matrix">
+        <thead>
+          <tr>
+            <th>계층</th>
+            <th>채택</th>
+            <th>중요한 이유</th>
+            <th>주요 신호</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="mono">진입</td>
+            <td>Istio Ingress Gateway</td>
+            <td>Kong route와 mesh route를 이중으로 설명하지 않는다.</td>
+            <td class="mono">accepted_rps / rejected_rps</td>
+          </tr>
+          <tr>
+            <td class="mono">확장</td>
+            <td>HPA + KEDA</td>
+            <td>HTTP 서비스는 HPA, Kafka consumer는 lag 기반 KEDA가 맞다.</td>
+            <td class="mono">consumer_lag / hpa_replicas</td>
+          </tr>
+          <tr>
+            <td class="mono">릴리즈</td>
+            <td>Argo Rollouts</td>
+            <td>order/payment 경로는 canary 분석과 자동 rollback이 필요하다.</td>
+            <td class="mono">canary_error_rate / rollback_time</td>
+          </tr>
+          <tr>
+            <td class="mono">관측성</td>
+            <td>Prometheus, Grafana, Loki, Tempo</td>
+            <td>metric, log, trace를 correlation id로 연결한다.</td>
+            <td class="mono">trace_id / request_id</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="migration" class="section">
+      <div class="section-header">
+        <div>
+          <div class="kicker">07. 저장소 전환 맵</div>
+          <h2>무엇을 어디서 바꿀지 먼저 보이게 한다</h2>
+        </div>
+      </div>
+      <div class="repo-map">
+        <div class="repo">
+          <strong class="mono">workspaces</strong>
+          <div class="from">Ticketmong PRD, 6-service 문서</div>
+          <div class="to">DropMong PRD, ADR, 아키텍처 보드</div>
+        </div>
+        <div class="repo">
+          <strong class="mono">services</strong>
+          <div class="from">concert, reservation, ticket</div>
+          <div class="to">catalog, order, payment, auth, notification</div>
+        </div>
+        <div class="repo">
+          <strong class="mono">e-gitops</strong>
+          <div class="from">Kong annotations, ticketing values</div>
+          <div class="to">Istio Gateway, Rollouts, KEDA values</div>
+        </div>
+        <div class="repo">
+          <strong class="mono">infra</strong>
+          <div class="from">medikong, Kong NodePort, old ECR list</div>
+          <div class="to">DropMong, Istio NLB target, new ECR list</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="verification" class="section">
+      <div class="section-header">
+        <div>
+          <div class="kicker">08. 검증</div>
+          <h2>설계는 테스트 이름으로 끝나야 한다</h2>
+        </div>
+        <div class="badge-row">
+          <span class="badge ok">k6</span>
+          <span class="badge ok">Prometheus</span>
+          <span class="badge ok">Argo Rollouts</span>
+        </div>
+      </div>
+      <div class="metric-grid">
+        <div class="metric"><span class="value">0</span><span class="name">oversell_count 목표</span></div>
+        <div class="metric"><span class="value">P95/P99</span><span class="name">accepted checkout latency만 측정</span></div>
+        <div class="metric"><span class="value">lag drain</span><span class="name">KEDA consumer 확장 목표</span></div>
+        <div class="metric"><span class="value">auto</span><span class="name">SLO breach 시 canary rollback</span></div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-header">
+        <div>
+          <div class="kicker">출처</div>
+          <h2>조사 근거</h2>
+        </div>
+      </div>
+      <div class="source-list">
+        <p><a href="https://aws.amazon.com/builders-library/using-load-shedding-to-avoid-overload/">AWS load shedding</a></p>
+        <p><a href="https://aws.amazon.com/builders-library/making-retries-safe-with-idempotent-APIs/">AWS idempotent APIs</a></p>
+        <p><a href="https://docs.stripe.com/api/idempotent_requests">Stripe idempotency</a></p>
+        <p><a href="https://careersatdoordash.com/blog/high-performance-proxy-cache-for-doordash-services/">DoorDash proxy cache</a></p>
+        <p><a href="https://shopify.engineering/capturing-every-change-shopify-sharded-monolith">Shopify CDC</a></p>
+        <p><a href="https://www.etsy.com/codeascraft/search-prefetching-performance">Etsy prefetch</a></p>
+        <p><a href="https://keda.sh/docs/2.17/scalers/apache-kafka/">KEDA Kafka scaler</a></p>
+        <p><a href="https://argoproj.github.io/argo-rollouts/">Argo Rollouts</a></p>
+      </div>
+    </section>
+
+    <footer>
+      <span class="mono">workspaces/docs/medikong</span>에 저장된, 기존 Ticketmong 프로젝트 문서를 대체하기 전의 아키텍처 계획 패킷이다.
+    </footer>
+  </main>
+</body>
+</html>

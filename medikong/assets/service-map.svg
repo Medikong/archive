@@ -1,0 +1,124 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" role="img" aria-labelledby="title desc">
+  <title id="title">DropMong target service map</title>
+  <desc id="desc">Five services with Istio ingress, admission control, Kafka, databases, and observability.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#08090a"/>
+      <stop offset="55%" stop-color="#101114"/>
+      <stop offset="100%" stop-color="#141826"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#6f7cff"/>
+      <stop offset="100%" stop-color="#5bd6d0"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="18" stdDeviation="22" flood-color="#000000" flood-opacity="0.35"/>
+    </filter>
+    <style>
+      .bg { fill: url(#bg); }
+      .panel { fill: rgba(255,255,255,0.035); stroke: rgba(255,255,255,0.14); stroke-width: 1; }
+      .node { fill: #17191f; stroke: rgba(255,255,255,0.16); stroke-width: 1.2; }
+      .node-strong { fill: rgba(111,124,255,0.15); stroke: #6f7cff; stroke-width: 1.5; }
+      .data { fill: rgba(255,209,102,0.12); stroke: #ffd166; stroke-width: 1.2; }
+      .event { fill: rgba(192,135,255,0.13); stroke: #c087ff; stroke-width: 1.2; }
+      .infra { fill: rgba(91,214,208,0.12); stroke: #5bd6d0; stroke-width: 1.2; }
+      .title { font: 650 34px system-ui, -apple-system, "Segoe UI", sans-serif; fill: #f7f8f8; }
+      .label { font: 650 18px system-ui, -apple-system, "Segoe UI", sans-serif; fill: #f7f8f8; }
+      .small { font: 450 14px system-ui, -apple-system, "Segoe UI", sans-serif; fill: #c9d0dc; }
+      .mono { font: 600 13px Consolas, Menlo, monospace; fill: #8a91a0; }
+      .line { stroke: rgba(255,255,255,0.28); stroke-width: 2; fill: none; marker-end: url(#arrow); }
+      .line-accent { stroke: #6f7cff; stroke-width: 2.4; fill: none; marker-end: url(#arrowAccent); }
+      .line-event { stroke: #c087ff; stroke-width: 2.2; fill: none; marker-end: url(#arrowEvent); stroke-dasharray: 6 7; }
+    </style>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 Z" fill="rgba(255,255,255,0.38)"/>
+    </marker>
+    <marker id="arrowAccent" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 Z" fill="#6f7cff"/>
+    </marker>
+    <marker id="arrowEvent" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 Z" fill="#c087ff"/>
+    </marker>
+  </defs>
+  <rect class="bg" width="1280" height="720" rx="28"/>
+  <text class="title" x="56" y="70">DropMong Target Architecture</text>
+  <text class="small" x="58" y="100">Five services, one inventory owner, Istio ingress, outbox-first events, catalog cache only.</text>
+
+  <rect class="panel" x="48" y="132" width="1184" height="518" rx="20" filter="url(#shadow)"/>
+
+  <rect class="infra" x="88" y="176" width="180" height="76" rx="12"/>
+  <text class="label" x="115" y="207">AWS NLB</text>
+  <text class="small" x="115" y="230">external entry</text>
+
+  <rect class="infra" x="318" y="176" width="210" height="76" rx="12"/>
+  <text class="label" x="350" y="207">Istio Gateway</text>
+  <text class="small" x="350" y="230">routing and canary</text>
+
+  <rect class="node-strong" x="578" y="176" width="230" height="76" rx="12"/>
+  <text class="label" x="608" y="207">Admission</text>
+  <text class="small" x="608" y="230">rate limit / token / queue</text>
+
+  <path class="line-accent" d="M268 214 H318"/>
+  <path class="line-accent" d="M528 214 H578"/>
+
+  <rect class="node" x="92" y="324" width="184" height="96" rx="12"/>
+  <text class="label" x="122" y="356">auth-service</text>
+  <text class="small" x="122" y="381">JWT / role claim</text>
+  <text class="mono" x="122" y="404">auth-db</text>
+
+  <rect class="node" x="318" y="324" width="184" height="96" rx="12"/>
+  <text class="label" x="346" y="356">catalog-service</text>
+  <text class="small" x="346" y="381">drops / products</text>
+  <text class="mono" x="346" y="404">read projection</text>
+
+  <rect class="node-strong" x="544" y="304" width="210" height="136" rx="12"/>
+  <text class="label" x="574" y="337">order-service</text>
+  <text class="small" x="574" y="363">orders + inventory</text>
+  <text class="small" x="574" y="386">reservation TTL</text>
+  <text class="mono" x="574" y="414">oversell_count = 0</text>
+
+  <rect class="node" x="796" y="324" width="184" height="96" rx="12"/>
+  <text class="label" x="824" y="356">payment-service</text>
+  <text class="small" x="824" y="381">approve / fail / delay</text>
+  <text class="mono" x="824" y="404">payment outbox</text>
+
+  <rect class="node" x="1022" y="324" width="184" height="96" rx="12"/>
+  <text class="label" x="1048" y="356">notification</text>
+  <text class="small" x="1048" y="381">user + ops alerts</text>
+  <text class="mono" x="1048" y="404">processed_events</text>
+
+  <path class="line" d="M693 252 V304"/>
+  <path class="line" d="M693 252 C510 272 410 288 410 324"/>
+  <path class="line" d="M693 252 C875 272 888 288 888 324"/>
+  <path class="line" d="M693 252 C1080 278 1114 294 1114 324"/>
+  <path class="line" d="M693 252 C250 278 184 294 184 324"/>
+
+  <rect class="event" x="496" y="510" width="288" height="72" rx="14"/>
+  <text class="label" x="604" y="539">Kafka</text>
+  <text class="small" x="550" y="562">order / payment / notification events</text>
+
+  <path class="line-event" d="M649 440 V510"/>
+  <path class="line-event" d="M888 420 C888 476 790 510 784 540"/>
+  <path class="line-event" d="M640 582 C640 626 1030 616 1114 420"/>
+  <path class="line-event" d="M640 582 C640 624 566 624 650 440"/>
+
+  <rect class="data" x="318" y="460" width="184" height="70" rx="12"/>
+  <text class="label" x="352" y="490">Catalog DB</text>
+  <text class="small" x="352" y="512">cacheable reads</text>
+
+  <rect class="data" x="544" y="460" width="210" height="70" rx="12"/>
+  <text class="label" x="590" y="490">Order DB</text>
+  <text class="small" x="590" y="512">truth + outbox</text>
+
+  <rect class="data" x="796" y="460" width="184" height="70" rx="12"/>
+  <text class="label" x="836" y="490">Payment DB</text>
+  <text class="small" x="836" y="512">result + outbox</text>
+
+  <path class="line" d="M410 420 V460"/>
+  <path class="line-accent" d="M649 440 V460"/>
+  <path class="line" d="M888 420 V460"/>
+
+  <rect class="panel" x="88" y="594" width="1120" height="34" rx="17"/>
+  <text class="mono" x="112" y="616">Invariant: only order-service changes inventory reservations. Catalog cache never becomes stock truth.</text>
+</svg>
+

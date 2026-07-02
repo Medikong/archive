@@ -1,0 +1,18 @@
+flowchart LR
+    Customer["고객"] --> Istio["Istio Ingress Gateway"]
+    Operator["운영자"] --> Istio
+    Istio --> Admission["Admission control"]
+    Admission --> Auth["auth-service"]
+    Admission --> Catalog["catalog-service"]
+    Admission --> Order["order-service"]
+    Admission --> Payment["payment-service"]
+    Admission --> Notification["notification-service"]
+    Catalog --> CatalogDB[("catalog-db")]
+    Order --> OrderDB[("order-db")]
+    Payment --> PaymentDB[("payment-db")]
+    Notification --> NotificationDB[("notification-db")]
+    Order --> Kafka["Kafka"]
+    Payment --> Kafka
+    Catalog --> Kafka
+    Kafka --> Order
+    Kafka --> Notification

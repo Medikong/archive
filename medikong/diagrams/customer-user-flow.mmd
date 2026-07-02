@@ -1,0 +1,18 @@
+flowchart LR
+    A["드롭 발견"] --> B["상세 확인"]
+    B --> C["로그인"]
+    C --> D["오픈 대기"]
+    D --> E{"Admission 결과"}
+    E -->|admitted| F["주문 시도"]
+    E -->|queued| D
+    E -->|rejected| R["재시도 안내"]
+    F --> G{"재고 예약"}
+    G -->|reserved| H["결제"]
+    G -->|sold out| S["품절 안내"]
+    H --> I{"결제 결과"}
+    I -->|approved| J["주문 확정"]
+    I -->|failed| K["주문 취소"]
+    I -->|delayed| L["확인 중"]
+    J --> M["상태 확인과 알림"]
+    K --> M
+    L --> M
