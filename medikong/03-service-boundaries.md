@@ -130,20 +130,30 @@ flowchart LR
 
 | 서비스 | 책임 | 외부 의존 | 소유 데이터 | 주요 위험 |
 | --- | --- | --- | --- | --- |
-| `auth-service` | identity, JWT, role | PostgreSQL | users, credentials, roles | token claim drift |
+| `auth-service` | identity, JWT, role | PostgreSQL | auth identities, credentials, sessions, roles | token claim drift |
+| `member-service` | 회원, 프로필, 동의 상태 | PostgreSQL, Kafka | members, profiles, consent profiles, outbox | identity/member drift |
 | `catalog-service` | product, drop, 공개 read model | PostgreSQL, cache | products, drops, schedules | stale public data |
+| `coupon-service` | coupon policy, 발급, 사용 예약/확정 | PostgreSQL, Kafka, cache | coupon campaigns, issues, counters, usages, outbox | duplicate issue |
 | `order-service` | order, reservation, 재고 진실 | PostgreSQL, Kafka | orders, reservations, inventory buckets, outbox | oversell |
 | `payment-service` | mock payment 상태 | PostgreSQL, Kafka | payments, outbox | ambiguous outcome |
 | `notification-service` | 비동기 notification | Kafka, DB | notifications, processed events | consumer lag |
+| `message-recovery-service` | DLQ, retry, replay 운영 | Kafka, PostgreSQL | dead letters, replay jobs, retry policies, queue states | unsafe replay |
 
 ## 2. auth-service
 
 ### 소유
 
-- user account
+- auth identity
 - password credential or mock credential
 - role claim: `customer`, `operator`, `admin`
 - JWT issue and refresh policy
+
+### Aggregate / Entity
+
+- Aggregate: `AuthIdentity`
+- Entity: `AuthCredential`
+- Entity: `AuthSession`
+- Entity: `RoleClaim`
 
 ### API
 
@@ -153,13 +163,60 @@ flowchart LR
 - `GET /healthz`
 - `GET /readyz`
 
+### 이벤트
+
+생산:
+
+- `auth.identity.created`
+- `auth.identity.disabled`
+
 ### 소유하지 않음
 
+- member profile
+- consent state
 - order authorization beyond user identity
 - drop 운영자 workflow
 - payment permission decision
 
-## 3. catalog-service
+## 3. member-service
+
+### 소유
+
+- member
+- member profile
+- consent profile
+- member lifecycle outbox
+
+### Aggregate / Entity
+
+- Aggregate: `Member`
+- Entity: `MemberProfile`
+- Entity: `ConsentProfile`
+
+### API
+
+- `GET /members/me`
+- `PATCH /members/me/profile`
+- `PATCH /members/me/consents`
+- `GET /admin/members/{memberId}`
+
+### 이벤트
+
+생산:
+
+- `member.created`
+- `member.profile.updated`
+- `member.consent.updated`
+
+소비:
+
+- `auth.identity.created`
+
+### 경계 규칙
+
+`member-service`는 회원의 업무 프로필과 동의 상태를 소유한다. `auth-service`는 인증 주체와 토큰 발급만 소유하고, 회원 프로필을 직접 변경하지 않는다.
+
+## 4. catalog-service
 
 ### 소유
 
@@ -168,6 +225,16 @@ flowchart LR
 - drop schedule
 - 공개 read DTO
 - catalog update outbox
+
+### Aggregate / Entity
+
+- Aggregate: `Product`
+- Aggregate: `SalesEvent`
+- Entity: `ProductOption`
+- Entity: `ProductStatus`
+- Entity: `CouponDrop`
+- Entity: `TimeDeal`
+- Entity: `EventQuota`
 
 ### API
 
@@ -195,7 +262,54 @@ flowchart LR
 
 `catalog-service`는 stock summary를 보여줄 수 있지만, order가 stock을 reserve할 수 있는지 결정하면 안 된다.
 
-## 4. order-service
+## 5. coupon-service
+
+### 소유
+
+- coupon campaign
+- coupon issue
+- coupon issue counter
+- coupon usage reservation
+- coupon usage confirmation
+- coupon outbox
+
+### Aggregate / Entity
+
+- Aggregate: `CouponCampaign`
+- Aggregate: `CouponIssue`
+- Entity: `CouponCounter`
+- Entity: `CouponUsage`
+
+### API
+
+- `POST /coupons/issues`
+- `GET /coupons/issues`
+- `POST /internal/coupons/usages/reserve`
+- `POST /internal/coupons/usages/{usageId}/confirm`
+- `POST /internal/coupons/usages/{usageId}/release`
+- `POST /admin/coupons/campaigns`
+- `PATCH /admin/coupons/campaigns/{campaignId}`
+
+### 이벤트
+
+생산:
+
+- `coupon.issued`
+- `coupon.issue.failed`
+- `coupon.usage.reserved`
+- `coupon.usage.confirmed`
+- `coupon.usage.released`
+
+소비:
+
+- `coupon.usage.confirm.requested`
+- `coupon.usage.release.requested`
+
+### 경계 규칙
+
+`coupon-service`가 쿠폰 발급 가능 여부와 사용 상태를 결정한다. `order-service`는 쿠폰 할인값을 주문 스냅샷에 기록할 수 있지만, 쿠폰 발급/사용 원장을 직접 변경하지 않는다.
+
+## 6. order-service
 
 ### 소유
 
@@ -205,6 +319,16 @@ flowchart LR
 - reservation expiration
 - order idempotency
 - order outbox
+
+### Aggregate / Entity
+
+- Aggregate: `CheckoutSession`
+- Aggregate: `Order`
+- Aggregate: `StockItem`
+- Aggregate: `StockReservation`
+- Entity: `PriceSnapshot`
+- Entity: `OrderLine`
+- Entity: `SoldOutProjection`
 
 ### API
 
@@ -222,10 +346,14 @@ flowchart LR
 - `order.confirmed`
 - `order.cancelled`
 - `order.reservation.expired`
+- `coupon.usage.confirm.requested`
+- `coupon.usage.release.requested`
 - `notification.requested`
 
 소비:
 
+- `coupon.usage.reserved`
+- `coupon.usage.released`
 - `payment.approved`
 - `payment.failed`
 - 선택적 `catalog.drop.updated`
@@ -234,7 +362,7 @@ flowchart LR
 
 All stock-changing writes happen inside `order-service`. Payment and catalog never update inventory tables.
 
-## 5. payment-service
+## 7. payment-service
 
 ### 소유
 
@@ -242,6 +370,11 @@ All stock-changing writes happen inside `order-service`. Payment and catalog nev
 - mock payment mode: approve, fail, delay
 - payment idempotency
 - payment outbox
+
+### Aggregate / Entity
+
+- Aggregate: `PaymentRequest`
+- Entity: `PaymentResult`
 
 ### API
 
@@ -265,20 +398,25 @@ All stock-changing writes happen inside `order-service`. Payment and catalog nev
 
 Payment result is a fact about payment, not direct authority to mutate inventory. `order-service` consumes the event and decides legal state transition.
 
-## 6. notification-service
+## 8. notification-service
 
 ### 소유
 
 - notification record
 - delivery state
 - processed event marker
-- DLQ replay metadata
+
+### Aggregate / Entity
+
+- Aggregate: `NotificationRequest`
+- Entity: `DeliveryAttempt`
+- Entity: `FailureHistory`
+- Entity: `ProcessedEvent`
 
 ### API
 
 - `GET /notifications`
 - `PATCH /notifications/{notificationId}/read`
-- `GET /admin/notifications/dead-letter`
 
 ### 이벤트
 
@@ -298,7 +436,53 @@ Payment result is a fact about payment, not direct authority to mutate inventory
 
 Notification 작업은 async로 처리한다. synchronous checkout critical path 안에 들어가면 안 된다.
 
-## 7. 서비스 간 정책
+## 9. message-recovery-service
+
+### 소유
+
+- message envelope projection
+- queue state
+- retry policy
+- dead letter
+- replay job
+- replay audit log
+
+### Aggregate / Entity
+
+- Aggregate: `ReplayJob`
+- Aggregate: `DeadLetter`
+- Entity: `MessageEnvelope`
+- Entity: `QueueState`
+- Entity: `RetryPolicy`
+- Entity: `ReplayAttempt`
+
+### API
+
+- `GET /admin/messages/dead-letter`
+- `GET /admin/messages/dead-letter/{deadLetterId}`
+- `POST /admin/messages/dead-letter/{deadLetterId}/replay`
+- `POST /admin/messages/replay-jobs`
+- `GET /admin/messages/replay-jobs/{replayJobId}`
+
+### 이벤트
+
+생산:
+
+- `message.replay.requested`
+- `message.replay.completed`
+- `message.replay.failed`
+
+소비:
+
+- `*.dead_lettered`
+- `notification.failed`
+- `payment.delayed`
+
+### 경계 규칙
+
+`message-recovery-service`는 실패 메시지의 격리, 조회, 재처리 요청을 소유한다. 원래 업무 상태의 합법적인 전이는 각 도메인 서비스가 다시 판단해야 하며, message recovery가 order, payment, coupon, notification 테이블을 직접 수정하면 안 된다.
+
+## 10. 서비스 간 정책
 
 | 주제 | 규칙 |
 | --- | --- |
@@ -309,7 +493,7 @@ Notification 작업은 async로 처리한다. synchronous checkout critical path
 | Events | Common event envelope from `06-event-contracts.md`. |
 | Schema 변경 | DB schema는 service repo가 소유하고, 배포 순서는 GitOps runbook이 소유한다. |
 
-## 8. 나중에 분리할 조건
+## 11. 나중에 분리할 조건
 
 지금은 이 service를 분리하지 않는다. 대신 언제 다시 검토할지 조건을 기록한다.
 
