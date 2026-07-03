@@ -4,6 +4,128 @@
 
 이 문서는 서비스가 어디까지 책임지고 어디부터 다른 서비스에 넘기는지 정의한다.
 
+## 전체 바운디드 컨텍스트
+
+```mermaid
+flowchart LR
+  Customer(("이용자"))
+
+  subgraph Auth["Auth Context"]
+    AuthIdentity["AuthIdentity (AR)<br/>인증 주체"]
+    AuthCredential["AuthCredential<br/>비밀번호/OAuth/소셜"]
+    AuthSession["AuthSession<br/>로그인 세션"]
+  end
+
+  subgraph MemberCtx["Member Context"]
+    Member["Member (AR)<br/>회원"]
+    MemberProfile["MemberProfile<br/>회원 프로필"]
+    ConsentProfile["ConsentProfile<br/>마케팅/알림 동의"]
+  end
+
+  subgraph Event["Event Context"]
+    SalesEvent["SalesEvent (AR)<br/>세일 이벤트"]
+    CouponDrop["CouponDrop<br/>선착순 쿠폰 오픈"]
+    TimeDeal["TimeDeal<br/>타임딜"]
+    EventQuota["EventQuota<br/>이벤트 수량 제한"]
+  end
+
+  subgraph Catalog["Catalog Context"]
+    Product["Product (AR)<br/>상품"]
+    ProductOption["ProductOption<br/>옵션/SKU"]
+    ProductStatus["ProductStatus<br/>판매/전시 상태"]
+  end
+
+  subgraph Coupon["Coupon Context"]
+    CouponCampaign["CouponCampaign (AR)<br/>쿠폰 정책"]
+    CouponIssue["CouponIssue (AR)<br/>회원별 쿠폰"]
+    CouponCounter["CouponCounter<br/>발급/요청 카운터"]
+    CouponUsage["CouponUsage<br/>사용 예약/확정"]
+  end
+
+  subgraph Inventory["Inventory Context"]
+    StockItem["StockItem (AR)<br/>판매 가능 재고"]
+    StockReservation["StockReservation (AR)<br/>재고 예약"]
+    SoldOutProjection["SoldOutProjection<br/>품절 상태"]
+  end
+
+  subgraph Ordering["Ordering Context"]
+    CheckoutSession["CheckoutSession (AR)<br/>주문서"]
+    PriceSnapshot["PriceSnapshot<br/>가격/혜택 검증값"]
+    Order["Order (AR)<br/>주문"]
+    OrderLine["OrderLine<br/>상품/가격 스냅샷"]
+  end
+
+  subgraph Payment["Payment Context"]
+    PaymentRequest["PaymentRequest (AR)<br/>결제 요청"]
+    PaymentResult["PaymentResult<br/>승인/실패/만료"]
+  end
+
+  subgraph Messaging["Messaging & Recovery Context"]
+    MessageEnvelope["MessageEnvelope<br/>비동기 메시지"]
+    QueueState["QueueState<br/>지연/중단 상태"]
+    RetryPolicy["RetryPolicy<br/>재시도 정책"]
+    DeadLetter["DeadLetter<br/>최종 실패 메시지"]
+  end
+
+  subgraph Notification["Notification Context"]
+    NotificationRequest["NotificationRequest (AR)<br/>알림 요청"]
+    DeliveryAttempt["DeliveryAttempt<br/>발송 시도"]
+    FailureHistory["FailureHistory<br/>실패 이력"]
+  end
+
+  Customer -->|"로그인"| AuthSession
+  Customer -->|"쿠폰 발급 요청"| CouponDrop
+  Customer -->|"상품 탐색/주문"| Product
+  Customer -->|"결제"| PaymentRequest
+
+  AuthCredential --> AuthIdentity
+  AuthSession --> AuthIdentity
+  AuthIdentity -->|"인증 후 회원 식별"| Member
+  Member --> MemberProfile
+  Member --> ConsentProfile
+
+  SalesEvent --> CouponDrop
+  SalesEvent --> TimeDeal
+  CouponDrop --> EventQuota
+  TimeDeal --> ProductOption
+
+  Product --> ProductOption
+  Product --> ProductStatus
+
+  CouponCampaign --> CouponDrop
+  CouponIssue --> Member
+  CouponIssue --> CouponCampaign
+  CouponCounter --> CouponCampaign
+
+  StockItem --> ProductOption
+  StockReservation --> StockItem
+  SoldOutProjection --> StockItem
+
+  CheckoutSession --> Member
+  CheckoutSession --> TimeDeal
+  CheckoutSession --> CouponUsage
+  CheckoutSession --> StockReservation
+  CheckoutSession --> PriceSnapshot
+  Order --> OrderLine
+  OrderLine --> ProductOption
+  OrderLine --> CouponIssue
+
+  PaymentRequest --> CheckoutSession
+  PaymentResult --> Order
+
+  CouponIssue -.-> MessageEnvelope
+  NotificationRequest -.-> MessageEnvelope
+  MessageEnvelope --> QueueState
+  MessageEnvelope --> RetryPolicy
+  RetryPolicy --> DeadLetter
+
+  Order --> NotificationRequest
+  CouponIssue --> NotificationRequest
+  ConsentProfile --> NotificationRequest
+  NotificationRequest --> DeliveryAttempt
+  DeliveryAttempt --> FailureHistory
+```
+
 ## 1. 경계 요약
 
 | 서비스 | 책임 | 외부 의존 | 소유 데이터 | 주요 위험 |
