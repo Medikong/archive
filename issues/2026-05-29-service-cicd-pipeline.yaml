@@ -1,0 +1,218 @@
+---
+"$schema": "./template/linear-workplan.schema.json"
+version: 1
+defaults:
+  team: Medikong
+  project: CI/CD 리팩토링
+  state: Backlog
+  priority: 1
+  assignee: null
+  labels:
+  - medikong
+  - cicd
+  - github-actions
+milestones:
+- id: sprint-0-planning
+  title: Sprint 0 계획 기간
+  goal: 새 6개 서비스 CI/CD 리팩토링 범위와 이슈 발행 단위 확정
+  start_date: "2026-05-25"
+  target_date: "2026-05-31"
+tasks:
+- local_id: cicd.refactor
+  title: "CI/CD 리팩토링: 변경 서비스 기준 테스트·이미지 빌드 흐름 재정비"
+  type: planning
+  repository: workspace
+  milestone: sprint-0-planning
+  labels:
+  - parent
+  depends_on: []
+  description: |
+    ## 목표
+    새 6개 서비스 기준 변경 서비스 단위 테스트와 Docker 이미지 빌드 흐름 재정비
+
+    ## 배경
+    - 서로 다른 서비스 기준의 단위 테스트 대상과 이미지 빌드 대상
+    - 전체 서비스 실행 중심 workflow와 불명확한 변경 서비스 경계
+    - repo별 소유 경계를 지킨 `service`와 `gitops` 작업 분리 필요성
+    - ECR 레지스트리 부재로 Container Registry push 진행 불가
+    - AWS dev 인프라 부재로 실제 Kubernetes CD 진행 불가
+
+    ## 범위
+    - 포함: 서비스별 CI 분리, 테스트 개선, Docker 이미지 빌드 자동화, Private ECR 레지스트리 준비, GitOps 정적 검증 개선
+    - 제외: Container Registry push 자동화, GitOps 배포 선언 변경, 실제 Kubernetes 배포 실행, Argo sync, AWS dev 인프라 구성, 운영 환경 secret 발급
+
+    ## 완료 기준
+    - 하위 이슈 발행 단위 합의
+    - 담당 repo별 하위 이슈 배치
+    - image push 작업의 후속 분리 기준 확인
+    - 실제 CD 작업의 후속 분리 기준 확인
+    - Project와 Sprint milestone 연결 기준 확인
+  done_when:
+  - CI/CD 리팩토링 부모 이슈 제목과 범위 합의
+  - service와 gitops 하위 이슈 발행 단위 확정
+  - GitHub Issue와 Project 등록 전 사용자 확인
+  evidence:
+  - 로컬 workplan
+  - 하위 이슈 후보 목록
+  estimate: null
+  links:
+  - title: Medikong/workspace#4
+    url: https://github.com/Medikong/workspace/issues/4
+- local_id: cicd.service-ci-pipeline
+  title: 서비스별 CI·테스트 실행 범위 분리
+  type: implementation
+  repository: service
+  milestone: sprint-0-planning
+  parent: cicd.refactor
+  labels:
+  - ci
+  - github-actions
+  - test
+  depends_on: []
+  description: |
+    ## 목표
+    새 서비스 기준 변경 감지, 테스트 실행 범위, 후속 이미지 빌드 대상이 분리된 `service` repo CI 파이프라인
+
+    ## 배경
+    - 전체 실행에 가까운 현재 CI 구조
+    - 새 6개 서비스 기준과 기존 의료 도메인 서비스 기준의 혼재
+    - `requirements.txt` 기반 서비스와 `pyproject.toml`·`uv` 기반 서비스의 혼재
+    - 변경된 서비스만 후속 단계로 이어지는 CI 경계 필요성
+
+    ## 범위
+    - 포함: 서비스별 CI 실행 단위, 변경 서비스 기준 실행 범위, 공통 경로 영향 범위, 서비스별 단위·통합 테스트 실행 방식
+    - 제외: Docker image push, GitOps 배포 선언 수정
+
+    ## 작업 메모
+    - path filter와 matrix 구현
+    - 공통 패키지 변경 시 전체 실행 또는 서비스 매핑 기준 검토
+    - `uv` 기반 서비스 테스트 반영
+    - 기본 CI 필수 경로와 선택 실행 경로 구분
+  done_when:
+  - 새 서비스 기준 CI 실행 단위 반영
+  - 변경 서비스 기준 후속 단계 전달 목록 제공
+  - 서비스별 테스트 실행 방식 반영
+  - CI 테스트 대상 누락 제거
+  evidence:
+  - service CI workflow 변경 PR
+  - 변경 서비스 감지 결과 예시
+  estimate: null
+  links:
+  - title: Medikong/service#4
+    url: https://github.com/Medikong/service/issues/4
+- local_id: cicd.service-image-build
+  title: 변경 서비스 기준 Docker 이미지 빌드 자동화
+  type: implementation
+  repository: service
+  milestone: sprint-0-planning
+  parent: cicd.refactor
+  labels:
+  - docker
+  - registry
+  depends_on: []
+  description: |
+    ## 목표
+    변경된 서비스만 Docker image를 빌드하는 `service` repo workflow
+
+    ## 배경
+    - 서비스별 Dockerfile context와 image repository 기준 차이
+    - 배포 단계로 전달할 image tag와 digest 필요성
+    - ECR 레지스트리 부재로 registry 인증과 push 권한 연결 불가
+
+    ## 범위
+    - 포함: 서비스별 build context, image tag, image digest 산출, build 실패 처리
+    - 제외: Container Registry push, registry 인증 설정, Kubernetes 배포 선언 수정, Argo sync 방식 결정
+
+    ## 작업 메모
+    - commit SHA tag와 보조 tag 처리
+    - image digest 출력
+    - push 자동화 후속 이슈 분리
+  done_when:
+  - 변경 서비스 기준 image build workflow 반영
+  - 서비스별 image tag와 digest 산출
+  - image build 실패 시 후속 단계 차단
+  evidence:
+  - image build workflow 변경 PR
+  - 서비스별 image tag와 digest 예시
+  estimate: null
+  links:
+  - title: Medikong/service#6
+    url: https://github.com/Medikong/service/issues/6
+- local_id: cicd.infra-private-ecr
+  title: 서비스 이미지용 Private ECR 레지스트리 준비
+  type: ops
+  repository: infra
+  milestone: sprint-0-planning
+  parent: cicd.refactor
+  labels:
+  - aws
+  - ecr
+  - registry
+  depends_on: []
+  description: |
+    ## 목표
+    새 서비스 Docker image push 대상이 되는 Private ECR 레지스트리
+
+    ## 배경
+    - Container Registry push 자동화 전 ECR repository와 접근 권한 필요성
+    - 서비스별 image repository 이름과 계정·region 기준 필요성
+    - service repo workflow의 registry 인증 연결 전 선행 조건
+
+    ## 범위
+    - 포함: 서비스 이미지용 Private ECR repository, push 권한, repository naming 기준
+    - 제외: service repo image push workflow, GitOps 배포 선언 변경, Kubernetes 배포 실행
+
+    ## 작업 메모
+    - 서비스별 repository 생성 단위 검토
+    - GitHub Actions 인증 방식 검토
+    - image push 자동화 후속 이슈 연결
+  done_when:
+  - 서비스 이미지용 Private ECR repository 준비
+  - GitHub Actions push 권한 연결 기준 확인
+  - image push 자동화 후속 이슈 발행 조건 확인
+  evidence:
+  - ECR repository 목록
+  - registry URI 목록
+  estimate: null
+  links:
+  - title: Medikong/infra#3
+    url: https://github.com/Medikong/infra/issues/3
+- local_id: cicd.gitops-validation
+  title: GitOps 검증 파이프라인 개선
+  type: test
+  repository: gitops
+  milestone: sprint-0-planning
+  parent: cicd.refactor
+  labels:
+  - validation
+  - github-actions
+  depends_on: []
+  description: |
+    ## 목표
+    현재 GitOps 선언의 Helm rendering과 Argo Application·values 파일 불일치를 함께 검증하는 GitOps validation workflow
+
+    ## 배경
+    - Argo manifest 기본 필드 존재 여부 중심의 현재 검증
+    - valueFiles 불일치 누락 가능성
+    - values 파일과 Argo Application 목록 차이의 누락 가능성
+    - AWS dev 인프라 부재로 실제 Argo sync와 rollout 검증 불가
+
+    ## 범위
+    - 포함: Argo Application valueFiles 존재 검사, values와 Argo Application 서비스 목록 비교, GitOps validation workflow 반영
+    - 제외: 서비스 CI 테스트, image build workflow, image push workflow, GitOps 배포 선언 변경, 실제 Kubernetes 배포
+
+    ## 작업 메모
+    - Argo valueFiles 검사
+    - service 목록 비교
+    - 누락 파일과 서비스명이 보이는 실패 메시지
+  done_when:
+  - Argo valueFiles 불일치 CI 실패 처리
+  - values와 Argo Application 서비스 목록 차이 표시
+  - GitOps validation workflow 검증 반영
+  evidence:
+  - GitOps validation workflow 변경 PR
+  - mismatch 검출 결과 예시
+  estimate: null
+  links:
+  - title: Medikong/gitops#3
+    url: https://github.com/Medikong/gitops/issues/3
