@@ -18,8 +18,8 @@
 
 | 계층 | 테스트 | 결과 | 확인 내용 |
 | --- | --- | --- | --- |
-| unit | `order-service` pytest | 통과, 20개 테스트 | `payment.failed` 이벤트 처리, 주문 상태 `PAYMENT_FAILED`, 결제 실패 후 예약 재고 release, 업무 metric |
-| unit | `payment-service` pytest | 통과, 21개 테스트 | mock 실패 결제 생성, idempotency, 실패 metric |
+| unit | `order-service` pytest | 통과, 21개 테스트 | `payment.failed` 이벤트 처리, 주문 상태 `PAYMENT_FAILED`, 결제 실패 후 예약 재고 release, 업무 metric, request id 응답 echo |
+| unit | `payment-service` pytest | 통과, 22개 테스트 | mock 실패 결제 생성, idempotency, 실패 metric, request id 응답 echo |
 | e2e | `05-payment-failure-flow` Newman | 통과, 4 requests / 14 assertions | 주문 생성, 결제 실패, 주문 실패 상태 조회, 실패 후 재고 회복 경로 |
 
 ## 3. Docker E2E 실행 기록

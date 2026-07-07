@@ -200,12 +200,13 @@ DropMong 전환 전 기존 티켓팅 이름을 사용하는 경우에도 신규 
 
 ```bash
 task tests:purchase-e2e-with-metrics
+task tests:purchase-e2e-with-traces
 task tests:purchase-e2e SCENARIO=04-customer-drop-purchase-happy-path
 task tests:purchase-e2e SCENARIO=05-payment-failure-flow
 task tests:purchase-e2e SCENARIO=06-sold-out-concurrency-flow
 ```
 
-반복 실행과 metric 확인 기준은 `02-docker-purchase-e2e-runbook.md`를 따른다.
+반복 실행, metric 확인, 정상 구매 trace smoke 기준은 `02-docker-purchase-e2e-runbook.md`를 따른다.
 
 ## 13. 관측성 기준
 

@@ -19,10 +19,12 @@
 
 | 계층 | 테스트 | 결과 | 확인 내용 |
 | --- | --- | --- | --- |
-| unit | `catalog-service` pytest | 통과, 6개 테스트 | 드롭 목록, 드롭 상세, unknown drop 404, 품절/동시성용 테스트 드롭 조회 |
-| unit | `order-service` pytest | 통과, 20개 테스트 | 주문 생성, idempotency replay/conflict, 품절, 결제 승인/실패 이벤트 처리, 결제 실패 후 재고 release, 업무 metric |
-| unit | `payment-service` pytest | 통과, 21개 테스트 | 결제 승인/실패 처리, idempotency, 업무 metric |
+| unit | `catalog-service` pytest | 통과, 7개 테스트 | 드롭 목록, 드롭 상세, unknown drop 404, 품절/동시성용 테스트 드롭 조회, request id 응답 echo |
+| unit | `order-service` pytest | 통과, 21개 테스트 | 주문 생성, idempotency replay/conflict, 품절, 결제 승인/실패 이벤트 처리, 결제 실패 후 재고 release, 업무 metric, request id 응답 echo |
+| unit | `payment-service` pytest | 통과, 22개 테스트 | 결제 승인/실패 처리, idempotency, 업무 metric, request id 응답 echo |
+| unit | `notification-service` pytest | 통과, 14개 테스트 | 알림 조회, Kafka 이벤트 처리, request id 응답 echo |
 | e2e | `04-customer-drop-purchase-happy-path` Newman | 통과, 6 requests / 12 assertions | 드롭 조회, 주문 생성, 결제 승인, 주문 확정, 알림 조회 |
+| observability | `08-purchase-flow-trace-smoke` Newman | 통과, 4 requests / 4 assertions | 정상 구매 후 catalog/order/payment/notification 주요 API span을 Tempo에서 검색 |
 
 ## 3. Docker E2E 실행 기록
 
@@ -34,7 +36,7 @@
 | 실행 project | `dropmong-purchase-check` |
 | 포함 서비스 | postgres, kafka, kafka-init, catalog-service, order-service, payment-service, notification-service |
 | Newman 결과 | 6 requests / 12 assertions / failures 0 |
-| 평균 응답 시간 | 57ms |
+| 평균 응답 시간 | 69ms |
 | 확인된 최종 상태 | 결제 승인 후 주문 `CONFIRMED`, 알림 조회 성공 |
 | 정리 상태 | 실행 후 compose stack 제거 완료 |
 
@@ -46,6 +48,16 @@
 | `orders_sold_out_total` | 1 | `06`에서 초과 주문 1건이 품절로 거절됨 |
 | `payments_approved_total` | 1 | `04` 정상 구매 결제 승인 1건 |
 | `payments_failed_total` | 2 | `05` 결제 실패 1건, `06` 재고 release 검증용 실패 1건 |
+
+Trace smoke는 별도 clean Docker Compose 환경에서 `04` 실행 직후 `08-purchase-flow-trace-smoke`를 실행해 확인했다.
+
+| 항목 | 결과 |
+| --- | --- |
+| 실행 project | `dropmong-purchase-trace-check` |
+| 포함 관측성 서비스 | otel-collector, tempo |
+| Newman 결과 | 4 requests / 4 assertions / failures 0 |
+| 검색 기준 | `service.name` + `request_id` |
+| 확인된 서비스 | catalog-service, order-service, payment-service, notification-service |
 
 ## 4. 시나리오 기준 검증 흐름
 
@@ -73,6 +85,7 @@ task test-service SERVICE=notification-service
 
 ```bash
 task tests:purchase-e2e SCENARIO=04-customer-drop-purchase-happy-path
+task tests:purchase-e2e-with-traces
 ```
 
 ## 6. 아직 분리해서 추가하면 좋은 테스트
@@ -84,7 +97,7 @@ task tests:purchase-e2e SCENARIO=04-customer-drop-purchase-happy-path
 | integration | `notification.requested`가 실제 Kafka consumer로 알림 저장까지 이어지는지 | 비동기 알림 경로가 E2E timeout 원인이 될 수 있다. |
 | gateway e2e | JWT 없는 주문 요청 차단 | 로컬 구매 E2E는 Gateway를 우회한다. |
 | gateway e2e | 위조 `X-User-*` 헤더 제거 또는 덮어쓰기 | Istio Ingress JWT 구조와 연결되는 보안 테스트다. |
-| observability | 정상 구매 journey trace 검색 | 주문 생성부터 결제 승인, 알림까지 `request_id` 또는 `correlation_id`로 추적 가능해야 한다. |
+| observability | Kafka event trace context 전파 확인 | 현재 HTTP API span 검색은 확인했지만 Kafka producer/consumer 경계까지 하나의 흐름으로 고정해야 한다. |
 | observability | 주요 metric 증가 확인 | `orders_created_total`, `payments_approved_total`은 확인했다. `notifications_requested_total`은 추가 구현이 필요하다. |
 | observability | ERROR log 없음 확인 | synthetic run 동안 관련 서비스에 예상 밖 ERROR 로그가 없어야 한다. |
 
@@ -97,3 +110,4 @@ task tests:purchase-e2e SCENARIO=04-customer-drop-purchase-happy-path
 - 결제 승인 후 주문 상태가 `CONFIRMED`가 된다.
 - 알림 생성 지연이 있어도 구매 완료 자체를 막지 않는다.
 - `05-payment-failure-flow`, `06-sold-out-concurrency-flow`를 이어서 실행해도 테스트 데이터 충돌이 없다.
+- 정상 구매 주요 API span이 Tempo에서 `service.name` + `request_id`로 검색된다.

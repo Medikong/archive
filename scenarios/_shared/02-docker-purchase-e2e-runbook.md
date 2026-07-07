@@ -14,6 +14,7 @@
 | 메시징 | Kafka 기반 `order.created`, `payment.approved`, `payment.failed`, `order.confirmed`, `notification.requested` 흐름이 깨지지 않음 |
 | 테스트 데이터 | 정상 구매, 결제 실패, 품절/동시성 시나리오가 서로의 fixture를 오염시키지 않음 |
 | 업무 metric | 성공/실패/품절 지표가 기대 방향으로 증가 |
+| trace | 정상 구매 주요 API span이 Tempo에서 `service.name` + `request_id`로 검색됨 |
 | 정리 상태 | 실행 후 compose stack과 volume이 제거되어 다음 실행에 영향을 주지 않음 |
 
 ## 2. 기본 실행 명령
@@ -27,6 +28,14 @@ task tests:purchase-e2e-with-metrics
 ```
 
 이 명령은 clean Docker Compose stack에서 `04`, `05`, `06`을 순서대로 실행한 뒤 `07-purchase-flow-metrics` collection으로 `/metrics` 값을 자동 판정한다.
+
+정상 구매 trace까지 확인할 때는 다음 명령을 사용한다.
+
+```bash
+task tests:purchase-e2e-with-traces
+```
+
+이 명령은 Tempo와 OpenTelemetry Collector를 포함한 clean Docker Compose stack에서 `04-customer-drop-purchase-happy-path`를 실행한 뒤 `08-purchase-flow-trace-smoke` collection으로 정상 구매 주요 API span을 자동 판정한다.
 
 개별 시나리오만 확인할 때는 다음 명령을 사용한다.
 
@@ -63,6 +72,8 @@ tests/e2e/docker-compose.yml
 | order-service | 주문 생성, 재고 예약, 주문 상태 전이 |
 | payment-service | mock 결제 승인/실패 |
 | notification-service | 구매 결과 알림 저장/조회 |
+| otel-collector | trace 실행 시 OpenTelemetry span 수집 |
+| tempo | trace 실행 시 span 저장과 검색 |
 
 ## 4. 시나리오별 통과 기준
 
@@ -72,6 +83,7 @@ tests/e2e/docker-compose.yml
 | `05-payment-failure-flow` | 4 requests / 14 assertions / failures 0 | 결제 실패 후 주문 `PAYMENT_FAILED`, 예약 수량 release |
 | `06-sold-out-concurrency-flow` | 8 requests / 15 assertions / failures 0 | 초과 주문 409 `product sold out`, 실패 결제 후 재주문 가능 |
 | `07-purchase-flow-metrics` | 2 requests / 8 assertions / failures 0 | `04/05/06` 이후 order/payment 업무 metric 기대값 확인 |
+| `08-purchase-flow-trace-smoke` | 4 requests / 4 assertions / failures 0 | `04` 이후 catalog/order/payment/notification API span 검색 |
 
 ## 5. Metric 확인 기준
 
@@ -95,7 +107,22 @@ payment-service: http://127.0.0.1:18086/metrics
 
 이 값은 clean compose 환경에서 `04`, `05`, `06`을 순서대로 실행했을 때의 누적값이다. 단일 시나리오만 실행하면 기대값이 달라진다.
 
-## 6. 수동 검증이 필요할 때
+## 6. Trace 확인 기준
+
+Trace 확인은 Tempo와 OpenTelemetry Collector가 포함된 Docker stack이 떠 있는 동안만 가능하다. 자동 판정은 `task tests:purchase-e2e-with-traces`가 수행한다.
+
+2026-07-07 기준 clean Docker Compose 환경에서 `04-customer-drop-purchase-happy-path` 실행 후 다음 trace 검색을 확인했다.
+
+| 서비스 | 검색 기준 |
+| --- | --- |
+| `catalog-service` | `service.name=catalog-service request_id=e2e-happy-catalog-list` |
+| `order-service` | `service.name=order-service request_id=e2e-happy-order-create` |
+| `payment-service` | `service.name=payment-service request_id=e2e-happy-payment-approve` |
+| `notification-service` | `service.name=notification-service request_id=e2e-happy-notification-list` |
+
+현재 trace smoke는 정상 구매의 HTTP API span 존재를 확인한다. Kafka consumer span, Loki log correlation, Kafka lag 확인은 아직 별도 자동화 대상이다.
+
+## 7. 수동 검증이 필요할 때
 
 Task 실행이 막히거나 metric을 직접 확인해야 하면 다음 흐름으로 본다.
 
@@ -110,7 +137,16 @@ docker compose -p dropmong-purchase-check -f tests/e2e/docker-compose.yml down -
 
 수동 실행에서는 마지막 `down -v --remove-orphans`까지 완료해야 다음 실행이 같은 조건에서 시작된다.
 
-## 7. 실패했을 때 보는 순서
+Trace를 수동으로 확인해야 하면 Tempo와 Collector를 함께 띄운 뒤 `04`와 `08`을 이어서 실행한다.
+
+```bash
+docker compose -p dropmong-purchase-trace-check -f tests/e2e/docker-compose.yml up -d --build --wait --wait-timeout 180 postgres kafka kafka-init tempo otel-collector catalog-service order-service payment-service notification-service
+task tests:purchase-e2e-newman SCENARIO=04-customer-drop-purchase-happy-path E2E_COMPOSE_PROJECT=dropmong-purchase-trace-check E2E_NETWORK=dropmong-purchase-trace-check_default
+task tests:purchase-e2e-newman SCENARIO=08-purchase-flow-trace-smoke E2E_COMPOSE_PROJECT=dropmong-purchase-trace-check E2E_NETWORK=dropmong-purchase-trace-check_default
+docker compose -p dropmong-purchase-trace-check -f tests/e2e/docker-compose.yml down -v --remove-orphans
+```
+
+## 8. 실패했을 때 보는 순서
 
 | 증상 | 먼저 볼 것 |
 | --- | --- |
@@ -120,9 +156,12 @@ docker compose -p dropmong-purchase-check -f tests/e2e/docker-compose.yml down -
 | 결제 승인/실패 반영 실패 | Kafka topic, `payment-service` event 발행, `order-service` consumer |
 | 알림 조회 실패 | `notification-service` consumer, `notification.requested` event |
 | metric 값 불일치 | clean stack 여부, 시나리오 실행 순서, 이전 volume 잔존 여부 |
+| trace 검색 실패 | `OTEL_TRACES_EXPORTER`, Collector endpoint, Tempo `/api/search`, 요청의 `X-Request-Id` |
 
-## 8. 다음 자동화 대상
+## 9. 다음 자동화 대상
 
 현재 `04/05/06` 실행 후 `/metrics`를 자동으로 읽어 기대값을 검증하는 `07-purchase-flow-metrics` collection과 `task tests:purchase-e2e-with-metrics`가 추가되어 있다.
 
-다음 단계는 `tests/e2e/observability`의 Tempo trace smoke를 구매 서비스에 연결해 `request_id` 또는 `correlation_id` 기준으로 정상 구매 journey trace를 확인하는 것이다.
+정상 구매 주요 API span은 `08-purchase-flow-trace-smoke` collection과 `task tests:purchase-e2e-with-traces`로 확인한다.
+
+다음 단계는 Kafka producer/consumer trace context 전파, log correlation, Kafka lag, notification 업무 metric까지 자동 판정하는 것이다.

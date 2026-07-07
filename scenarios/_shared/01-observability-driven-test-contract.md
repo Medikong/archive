@@ -25,8 +25,8 @@ tests/e2e/observability/
 | 자동 판정 | `trace-smoke.py`가 Tempo API를 polling해서 trace 존재 여부 확인 |
 | 대상 서비스 | 현재 기본값은 `coupon-service` |
 | 제외 endpoint | `/healthz`, `/readyz`, `/metrics`는 trace에 남지 않아야 함 |
-| 구매 시나리오 서비스 | `catalog-service`, `order-service`, `payment-service`, `notification-service`는 아직 구매 journey trace E2E와 직접 연결되어 있지 않음 |
-| 구매 서비스 metric | `order-service`, `payment-service`는 구매 업무 metric을 일부 제공한다. `notification-service`, Kafka lag, trace 연계는 추가 작업이 필요하다. |
+| 구매 시나리오 서비스 | `catalog-service`, `order-service`, `payment-service`, `notification-service`에 FastAPI trace instrumentation을 연결했고, 정상 구매 주요 API span은 `08-purchase-flow-trace-smoke`로 검색한다. |
+| 구매 서비스 metric | `order-service`, `payment-service`는 구매 업무 metric을 제공하고 `07-purchase-flow-metrics`가 자동 판정한다. `notification-service` 업무 metric, Kafka lag, Kafka trace context 전파는 추가 작업이 필요하다. |
 
 따라서 구매 시나리오의 실전형 테스트는 기존 E2E에 관측성 검증을 붙이는 방향으로 확장한다.
 
@@ -97,6 +97,15 @@ API E2E 성공
 + ERROR log 없음
 + 주요 metric 증가
 ```
+
+2026-07-07 기준 자동화된 범위:
+
+| 항목 | 상태 |
+| --- | --- |
+| API E2E | `04-customer-drop-purchase-happy-path` 통과 |
+| metric | `07-purchase-flow-metrics`로 order/payment 주요 counter 확인 |
+| trace | `08-purchase-flow-trace-smoke`로 catalog/order/payment/notification 주요 API span 확인 |
+| 남은 범위 | Kafka event trace context, Loki log correlation, notification 업무 metric, Kafka lag |
 
 ## 6. 결제 실패 관측성 테스트
 
@@ -179,28 +188,28 @@ API E2E 성공
 
 ## 10. 구현 순서
 
-1. 구매 서비스의 `/metrics`를 `service_ready`에서 업무 metric까지 확장한다.
-2. `catalog-service`, `order-service`, `payment-service`, `notification-service`에 FastAPI trace instrumentation을 붙인다.
-3. E2E 요청에 고유 `X-Request-Id`와 `synthetic_run_id`를 넣는다.
+1. 구매 서비스의 `/metrics`를 `service_ready`에서 업무 metric까지 확장한다. 현재 `order-service`, `payment-service` 주요 counter와 `07` 자동 판정은 완료했다.
+2. `catalog-service`, `order-service`, `payment-service`, `notification-service`에 FastAPI trace instrumentation을 붙인다. 현재 정상 구매 API span smoke는 완료했다.
+3. E2E 요청에 고유 `X-Request-Id`를 넣는다. 현재 `04` 정상 구매와 `08` trace smoke에서 request id 기반 검색을 사용한다.
 4. Kafka producer/consumer header에 `traceparent`, `tracestate`, `correlation_id`를 전파한다.
-5. `tests/e2e/observability`의 trace smoke를 구매 서비스에도 적용할 수 있게 파라미터화한다.
-6. `04/05/06` Newman 실행 뒤 Tempo, Prometheus, Loki 또는 log output을 조회하는 검증 스크립트를 추가한다.
-7. 품절/동시성은 순차 E2E와 별도로 병렬 주문 스크립트 또는 k6 테스트를 추가한다.
-8. canary/rollout에서는 `oversell_count > 0`, error rate 급등, p95 초과, Kafka lag 미회복을 중단 조건으로 사용한다.
+5. `04/05/06` Newman 실행 뒤 Tempo, Prometheus, Loki 또는 log output을 조회하는 검증 스크립트를 추가한다. 현재 Prometheus metric 성격의 `/metrics` 판정과 정상 구매 Tempo 검색은 완료했다.
+6. 품절/동시성은 순차 E2E와 별도로 병렬 주문 스크립트 또는 k6 테스트를 추가한다.
+7. canary/rollout에서는 `oversell_count > 0`, error rate 급등, p95 초과, Kafka lag 미회복을 중단 조건으로 사용한다.
 
 ## 11. 현재 바로 가능한 테스트
 
-지금 바로 실행 가능한 관측성 테스트는 기존 Go 서비스 trace smoke다.
+지금 바로 실행 가능한 관측성 테스트는 기존 Go 서비스 trace smoke와 구매 정상 흐름 trace smoke다.
 
 ```bash
 task tests:test-observability-e2e
+task tests:purchase-e2e-with-traces
 ```
 
-구매 시나리오의 기능 E2E와 order/payment 업무 metric 자동 확인은 `02-docker-purchase-e2e-runbook.md` 기준으로 바로 실행할 수 있다. trace 기반 관측성 테스트까지 연결하려면 다음 작업이 먼저 필요하다.
+구매 시나리오의 기능 E2E, order/payment 업무 metric 자동 확인, 정상 구매 주요 API trace 검색은 `02-docker-purchase-e2e-runbook.md` 기준으로 바로 실행할 수 있다.
 
-- 구매 Python 서비스에 trace exporter 설정
-- 구매 E2E compose에 Collector/Tempo 연결
-- Newman 실행 후 Tempo search 검증 스크립트 추가
 - notification 업무 metric, Kafka lag metric, oversell metric 추가
+- Kafka producer/consumer trace context 전파
+- Loki 또는 log output 기반 correlation 검증
+- 결제 실패, 품절/동시성 시나리오의 trace smoke 확장
 
-즉, 현재 구매 시나리오는 기능 E2E와 order/payment 업무 metric 자동 검증까지 갖췄고, trace/log/Kafka lag까지 포함한 실전형 관측성 자동화는 다음 개발 task로 분리하는 것이 맞다.
+즉, 현재 구매 시나리오는 기능 E2E, order/payment 업무 metric 자동 검증, 정상 구매 HTTP trace smoke까지 갖췄고, Kafka/log/lag까지 포함한 실전형 관측성 자동화는 다음 개발 task로 분리하는 것이 맞다.

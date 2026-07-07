@@ -18,8 +18,8 @@
 
 | 계층 | 테스트 | 결과 | 확인 내용 |
 | --- | --- | --- | --- |
-| unit | `catalog-service` pytest | 통과, 6개 테스트 | 품절/동시성 전용 드롭 상세 조회가 가능하다. |
-| unit | `order-service` pytest | 통과, 20개 테스트 | 품절 응답, 결제 실패 후 재고 release, 결제 승인/실패 이벤트 처리, 업무 metric |
+| unit | `catalog-service` pytest | 통과, 7개 테스트 | 품절/동시성 전용 드롭 상세 조회가 가능하고 request id를 응답에 echo한다. |
+| unit | `order-service` pytest | 통과, 21개 테스트 | 품절 응답, 결제 실패 후 재고 release, 결제 승인/실패 이벤트 처리, 업무 metric, request id 응답 echo |
 | e2e | `06-sold-out-concurrency-flow` Newman | 통과, 8 requests / 15 assertions | 여러 주문으로 재고를 소진한 뒤 초과 주문이 실패하고, 실패 결제 후 재주문 가능 |
 
 ## 3. Docker E2E 실행 기록
