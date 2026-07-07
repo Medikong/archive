@@ -83,6 +83,10 @@ sequenceDiagram
 
 ## 5. 설계 문서 작성 계획
 
+0. `00-detailed-design.md`
+   - `12-user-flows.md`와 `blueprint` 요구사항을 정상 구매 구현 기준으로 연결한다.
+   - API, 이벤트, 데이터, 테스트, 인프라 확인점을 한 번에 볼 수 있게 정리한다.
+
 1. `01-user-journey.md`
    - 사용자가 화면에서 어떤 순서로 행동하는지 정리한다.
    - 화면 메시지와 사용자 기대 결과를 포함한다.
@@ -104,6 +108,15 @@ sequenceDiagram
    - `payment_approved_confirms_order`
    - `notification_after_order_confirmed`
 
+6. `06-performance-and-language-decision.md`
+   - FastAPI를 기본 언어로 두고 성능 병목 구간에서 Go 전환을 검토하는 기준을 정리한다.
+   - REST, Kafka, gRPC 적용 기준을 함께 정리한다.
+
+7. `test-execution-record.md`
+   - 현재 구현 상태와 실제로 실행한 단위 테스트, E2E 테스트, 추가해야 할 통합 테스트를 기록한다.
+
+공통 인프라와 테스트 계약은 `../_shared/00-shared-infra-test-contract.md`를 따른다. 이 시나리오에서 공통으로 승격해야 하는 API, topic, DB, 상태값 변경이 생기면 shared 문서를 먼저 수정한다.
+
 ## 6. 구현 전 결정할 것
 
 | 결정 항목 | 기본 방향 |
@@ -113,6 +126,7 @@ sequenceDiagram
 | 결제 방식 | `payment-service`의 mock approve 모드를 사용한다. |
 | 재고 진실 | `order-service`가 소유한다. |
 | 알림 처리 | 주문 확정 뒤 비동기로 처리한다. |
+| 서비스 언어 | 기본은 FastAPI, 주문/쿠폰처럼 성능 민감한 경계는 Go 후보로 둔다. |
 
 ## 7. 완료 기준
 
