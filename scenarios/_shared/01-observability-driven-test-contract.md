@@ -26,7 +26,7 @@ tests/e2e/observability/
 | 대상 서비스 | 현재 기본값은 `coupon-service` |
 | 제외 endpoint | `/healthz`, `/readyz`, `/metrics`는 trace에 남지 않아야 함 |
 | 구매 시나리오 서비스 | `catalog-service`, `order-service`, `payment-service`, `notification-service`는 아직 구매 journey trace E2E와 직접 연결되어 있지 않음 |
-| 구매 서비스 metric | 현재는 `/metrics`의 `service_ready` 중심 |
+| 구매 서비스 metric | `order-service`, `payment-service`는 구매 업무 metric을 일부 제공한다. `notification-service`, Kafka lag, trace 연계는 추가 작업이 필요하다. |
 
 따라서 구매 시나리오의 실전형 테스트는 기존 E2E에 관측성 검증을 붙이는 방향으로 확장한다.
 
@@ -196,11 +196,11 @@ API E2E 성공
 task tests:test-observability-e2e
 ```
 
-구매 시나리오에 바로 연결하려면 다음 작업이 먼저 필요하다.
+구매 시나리오의 기능 E2E와 order/payment 업무 metric 자동 확인은 `02-docker-purchase-e2e-runbook.md` 기준으로 바로 실행할 수 있다. trace 기반 관측성 테스트까지 연결하려면 다음 작업이 먼저 필요하다.
 
 - 구매 Python 서비스에 trace exporter 설정
 - 구매 E2E compose에 Collector/Tempo 연결
 - Newman 실행 후 Tempo search 검증 스크립트 추가
-- 주문/결제/품절 업무 metric 추가
+- notification 업무 metric, Kafka lag metric, oversell metric 추가
 
-즉, 현재 구매 시나리오의 관측성 테스트는 설계 기준을 세운 상태이고, 자동화는 다음 개발 task로 분리하는 것이 맞다.
+즉, 현재 구매 시나리오는 기능 E2E와 order/payment 업무 metric 자동 검증까지 갖췄고, trace/log/Kafka lag까지 포함한 실전형 관측성 자동화는 다음 개발 task로 분리하는 것이 맞다.

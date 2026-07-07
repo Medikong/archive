@@ -20,10 +20,34 @@
 | 계층 | 테스트 | 결과 | 확인 내용 |
 | --- | --- | --- | --- |
 | unit | `catalog-service` pytest | 통과, 6개 테스트 | 드롭 목록, 드롭 상세, unknown drop 404, 품절/동시성용 테스트 드롭 조회 |
-| unit | `order-service` pytest | 통과, 17개 테스트 | 주문 생성, idempotency replay/conflict, 품절, 결제 승인/실패 이벤트 처리, 결제 실패 후 재고 release |
+| unit | `order-service` pytest | 통과, 20개 테스트 | 주문 생성, idempotency replay/conflict, 품절, 결제 승인/실패 이벤트 처리, 결제 실패 후 재고 release, 업무 metric |
+| unit | `payment-service` pytest | 통과, 21개 테스트 | 결제 승인/실패 처리, idempotency, 업무 metric |
 | e2e | `04-customer-drop-purchase-happy-path` Newman | 통과, 6 requests / 12 assertions | 드롭 조회, 주문 생성, 결제 승인, 주문 확정, 알림 조회 |
 
-## 3. 시나리오 기준 검증 흐름
+## 3. Docker E2E 실행 기록
+
+2026-07-07에 clean Docker Compose 환경에서 구매 시나리오 E2E를 다시 실행했다.
+
+| 항목 | 결과 |
+| --- | --- |
+| 실행 stack | `tests/e2e/docker-compose.yml` |
+| 실행 project | `dropmong-purchase-check` |
+| 포함 서비스 | postgres, kafka, kafka-init, catalog-service, order-service, payment-service, notification-service |
+| Newman 결과 | 6 requests / 12 assertions / failures 0 |
+| 평균 응답 시간 | 57ms |
+| 확인된 최종 상태 | 결제 승인 후 주문 `CONFIRMED`, 알림 조회 성공 |
+| 정리 상태 | 실행 후 compose stack 제거 완료 |
+
+이어 실행한 `05`, `06` 시나리오까지 포함한 누적 metric은 다음과 같았다.
+
+| Metric | 값 | 해석 |
+| --- | ---: | --- |
+| `orders_created_total` | 8 | `04` 1건, `05` 1건, `06` 성공 주문 6건 |
+| `orders_sold_out_total` | 1 | `06`에서 초과 주문 1건이 품절로 거절됨 |
+| `payments_approved_total` | 1 | `04` 정상 구매 결제 승인 1건 |
+| `payments_failed_total` | 2 | `05` 결제 실패 1건, `06` 재고 release 검증용 실패 1건 |
+
+## 4. 시나리오 기준 검증 흐름
 
 ```text
 GET /drops
@@ -34,7 +58,7 @@ GET /drops
 -> GET /notifications
 ```
 
-## 4. 실행 명령 기준
+## 5. 실행 명령 기준
 
 서비스 단위 테스트:
 
@@ -51,7 +75,7 @@ task test-service SERVICE=notification-service
 task tests:purchase-e2e SCENARIO=04-customer-drop-purchase-happy-path
 ```
 
-## 5. 아직 분리해서 추가하면 좋은 테스트
+## 6. 아직 분리해서 추가하면 좋은 테스트
 
 | 계층 | 추가 항목 | 이유 |
 | --- | --- | --- |
@@ -61,10 +85,10 @@ task tests:purchase-e2e SCENARIO=04-customer-drop-purchase-happy-path
 | gateway e2e | JWT 없는 주문 요청 차단 | 로컬 구매 E2E는 Gateway를 우회한다. |
 | gateway e2e | 위조 `X-User-*` 헤더 제거 또는 덮어쓰기 | Istio Ingress JWT 구조와 연결되는 보안 테스트다. |
 | observability | 정상 구매 journey trace 검색 | 주문 생성부터 결제 승인, 알림까지 `request_id` 또는 `correlation_id`로 추적 가능해야 한다. |
-| observability | 주요 metric 증가 확인 | `orders_created_total`, `payments_approved_total`, `notifications_requested_total`이 증가해야 한다. |
+| observability | 주요 metric 증가 확인 | `orders_created_total`, `payments_approved_total`은 확인했다. `notifications_requested_total`은 추가 구현이 필요하다. |
 | observability | ERROR log 없음 확인 | synthetic run 동안 관련 서비스에 예상 밖 ERROR 로그가 없어야 한다. |
 
-## 6. 완료 판단
+## 7. 완료 판단
 
 정상 구매 시나리오는 다음 조건을 만족하면 완료로 본다.
 

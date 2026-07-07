@@ -18,10 +18,27 @@
 
 | 계층 | 테스트 | 결과 | 확인 내용 |
 | --- | --- | --- | --- |
-| unit | `order-service` pytest | 통과, 17개 테스트 | `payment.failed` 이벤트 처리, 주문 상태 `PAYMENT_FAILED`, 결제 실패 후 예약 재고 release |
+| unit | `order-service` pytest | 통과, 20개 테스트 | `payment.failed` 이벤트 처리, 주문 상태 `PAYMENT_FAILED`, 결제 실패 후 예약 재고 release, 업무 metric |
+| unit | `payment-service` pytest | 통과, 21개 테스트 | mock 실패 결제 생성, idempotency, 실패 metric |
 | e2e | `05-payment-failure-flow` Newman | 통과, 4 requests / 14 assertions | 주문 생성, 결제 실패, 주문 실패 상태 조회, 실패 후 재고 회복 경로 |
 
-## 3. 시나리오 기준 검증 흐름
+## 3. Docker E2E 실행 기록
+
+2026-07-07에 clean Docker Compose 환경에서 결제 실패 E2E를 다시 실행했다.
+
+| 항목 | 결과 |
+| --- | --- |
+| 실행 stack | `tests/e2e/docker-compose.yml` |
+| 실행 project | `dropmong-purchase-check` |
+| 포함 서비스 | postgres, kafka, kafka-init, catalog-service, order-service, payment-service, notification-service |
+| Newman 결과 | 4 requests / 14 assertions / failures 0 |
+| 평균 응답 시간 | 121ms |
+| 확인된 최종 상태 | mock 결제 실패 후 주문 `PAYMENT_FAILED`, 실패 주문은 예약 수량에서 제외 |
+| 정리 상태 | 실행 후 compose stack 제거 완료 |
+
+같은 실행에서 `payments_failed_total`은 누적 2로 확인했다. 이 값은 `05`의 결제 실패 1건과 `06`의 재고 release 검증용 실패 1건을 합친 결과다.
+
+## 4. 시나리오 기준 검증 흐름
 
 ```text
 POST /orders
@@ -32,7 +49,7 @@ POST /orders
 
 마지막 `POST /orders`는 결제 실패로 예약이 풀린 뒤 다음 주문이 가능한지 확인하는 성격이다.
 
-## 4. 실행 명령 기준
+## 5. 실행 명령 기준
 
 서비스 단위 테스트:
 
@@ -47,7 +64,7 @@ task test-service SERVICE=payment-service
 task tests:purchase-e2e SCENARIO=05-payment-failure-flow
 ```
 
-## 5. 아직 분리해서 추가하면 좋은 테스트
+## 6. 아직 분리해서 추가하면 좋은 테스트
 
 | 계층 | 추가 항목 | 이유 |
 | --- | --- | --- |
@@ -57,10 +74,10 @@ task tests:purchase-e2e SCENARIO=05-payment-failure-flow
 | e2e | 결제 실패 알림 조회 | 사용자 관점에서는 실패 사유와 다음 행동 안내까지 확인해야 한다. |
 | e2e | 결제 지연/예약 만료 | `00-detailed-design.md`에는 포함되어 있으나 현재 자동화는 실패 즉시 처리 중심이다. |
 | observability | `payment.failed` trace/log 검색 | 결제 실패 원인과 주문 실패 반영이 같은 correlation으로 추적되어야 한다. |
-| observability | 실패 metric 증가 확인 | `payments_failed_total`, `orders_payment_failed_total`, `inventory_released_total`이 증가해야 한다. |
+| observability | 실패 metric 증가 확인 | `payments_failed_total`은 확인했다. `orders_payment_failed_total`, `inventory_released_total`은 추가 구현이 필요하다. |
 | observability | PII/raw token 로그 부재 확인 | 실패 로그에 카드 정보, JWT, 개인정보가 남지 않아야 한다. |
 
-## 6. 완료 판단
+## 7. 완료 판단
 
 결제 실패 시나리오는 다음 조건을 만족하면 완료로 본다.
 

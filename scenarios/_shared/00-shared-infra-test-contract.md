@@ -196,6 +196,17 @@ task test-e2e SCENARIO=<scenario-name>
 
 DropMong 전환 전 기존 티켓팅 이름을 사용하는 경우에도 신규 테스트 이름은 DropMong 시나리오 이름으로 작성한다.
 
+구매 시나리오 전용 Docker E2E는 다음 명령을 기준으로 한다.
+
+```bash
+task tests:purchase-e2e-with-metrics
+task tests:purchase-e2e SCENARIO=04-customer-drop-purchase-happy-path
+task tests:purchase-e2e SCENARIO=05-payment-failure-flow
+task tests:purchase-e2e SCENARIO=06-sold-out-concurrency-flow
+```
+
+반복 실행과 metric 확인 기준은 `02-docker-purchase-e2e-runbook.md`를 따른다.
+
 ## 13. 관측성 기준
 
 모든 서비스는 다음 endpoint를 제공한다.

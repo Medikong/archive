@@ -19,10 +19,26 @@
 | 계층 | 테스트 | 결과 | 확인 내용 |
 | --- | --- | --- | --- |
 | unit | `catalog-service` pytest | 통과, 6개 테스트 | 품절/동시성 전용 드롭 상세 조회가 가능하다. |
-| unit | `order-service` pytest | 통과, 17개 테스트 | 품절 응답, 결제 실패 후 재고 release, 결제 승인/실패 이벤트 처리 |
+| unit | `order-service` pytest | 통과, 20개 테스트 | 품절 응답, 결제 실패 후 재고 release, 결제 승인/실패 이벤트 처리, 업무 metric |
 | e2e | `06-sold-out-concurrency-flow` Newman | 통과, 8 requests / 15 assertions | 여러 주문으로 재고를 소진한 뒤 초과 주문이 실패하고, 실패 결제 후 재주문 가능 |
 
-## 3. 시나리오 기준 검증 흐름
+## 3. Docker E2E 실행 기록
+
+2026-07-07에 clean Docker Compose 환경에서 품절/동시성 E2E를 다시 실행했다.
+
+| 항목 | 결과 |
+| --- | --- |
+| 실행 stack | `tests/e2e/docker-compose.yml` |
+| 실행 project | `dropmong-purchase-check` |
+| 포함 서비스 | postgres, kafka, kafka-init, catalog-service, order-service, payment-service, notification-service |
+| Newman 결과 | 8 requests / 15 assertions / failures 0 |
+| 평균 응답 시간 | 189ms |
+| 확인된 최종 상태 | 재고 소진 후 초과 주문은 409 `product sold out`, 결제 실패 후 재주문 가능 |
+| 정리 상태 | 실행 후 compose stack 제거 완료 |
+
+같은 실행에서 `orders_sold_out_total`은 1로 확인했다. 이는 품절/동시성 시나리오의 초과 주문 1건이 정상적으로 거절되었음을 의미한다.
+
+## 4. 시나리오 기준 검증 흐름
 
 ```text
 POST /orders x 여러 고객
@@ -35,7 +51,7 @@ POST /orders x 여러 고객
 
 현재 자동화는 실제 병렬 요청보다는 순차 요청으로 재고 소진과 release를 검증한다. 실제 동시성 검증은 통합 테스트 또는 부하 테스트에서 별도로 추가해야 한다.
 
-## 4. 실행 명령 기준
+## 5. 실행 명령 기준
 
 서비스 단위 테스트:
 
@@ -50,7 +66,7 @@ task test-service SERVICE=order-service
 task tests:purchase-e2e SCENARIO=06-sold-out-concurrency-flow
 ```
 
-## 5. 아직 분리해서 추가하면 좋은 테스트
+## 6. 아직 분리해서 추가하면 좋은 테스트
 
 | 계층 | 추가 항목 | 이유 |
 | --- | --- | --- |
@@ -59,10 +75,10 @@ task tests:purchase-e2e SCENARIO=06-sold-out-concurrency-flow
 | e2e | 병렬 Newman 또는 별도 스크립트 기반 동시 주문 | 현재 E2E는 순차 소진 방식이므로 실제 경쟁 상황을 더해야 한다. |
 | load | drop-open spike 테스트 | admission reject, latency p95/p99, oversell count를 관측해야 한다. |
 | observability | `oversell_count = 0` 대시보드/알림 | 운영 기준에서 가장 중요한 안전 지표다. |
-| observability | sold out/admission metric 확인 | `orders_sold_out_total`, `admission_rejected_total`을 성공 주문과 분리해서 확인해야 한다. |
+| observability | sold out/admission metric 확인 | `orders_sold_out_total`은 확인했다. `admission_rejected_total`은 admission control 구현 시 추가한다. |
 | observability | Kafka lag 회복 확인 | 테스트 종료 후 주문/결제/알림 consumer lag가 기준 이하로 회복되어야 한다. |
 
-## 6. 완료 판단
+## 7. 완료 판단
 
 품절/동시성 시나리오는 다음 조건을 만족하면 완료로 본다.
 

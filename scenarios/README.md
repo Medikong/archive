@@ -15,6 +15,7 @@
 | 주문/결제 | `../blueprint/10-sitemap/PAGE_A_11_payment.md` | 주문 확정 전 최종 검증과 결제 실패 화면 상태 |
 | 공통 계약 | `_shared/00-shared-infra-test-contract.md` | API, Kafka topic, DB 소유권, JWT, 테스트 이름 |
 | 관측성 테스트 | `_shared/01-observability-driven-test-contract.md` | trace, metric, log, Kafka lag를 이용한 실전형 테스트 기준 |
+| Docker E2E 검증 | `_shared/02-docker-purchase-e2e-runbook.md` | 정상 구매, 결제 실패, 품절/동시성 반복 실행과 metric 확인 기준 |
 
 ## 이번 개발 대상
 
