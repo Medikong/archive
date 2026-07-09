@@ -9,6 +9,7 @@
 | 주제 | 용도 | 시작 문서 |
 | --- | --- | --- |
 | `auth-service-design/` | 국내/해외 기업의 인증 서비스 설계 사례 조사 | [auth-service-design/README.md](auth-service-design/README.md) |
+| `interest-ranking-design/` | 찜(위시리스트)/실시간 인기 랭킹/조회수 집계 설계 사례 조사 | [interest-ranking-design/README.md](interest-ranking-design/README.md) |
 
 ## 작성 기준
 
