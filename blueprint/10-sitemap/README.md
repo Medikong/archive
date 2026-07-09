@@ -75,6 +75,8 @@ mindmap
       주문 내역
       배송 조회
       쿠폰 / 포인트
+        보유 쿠폰
+        쿠폰 코드 등록
       결제 수단 관리
       주소록
     고객지원 / 설정
@@ -88,6 +90,11 @@ mindmap
       로그인 메인
       이메일 로그인
       이메일 회원가입
+      비밀번호 찾기
+      인증 방식 선택
+      휴대폰 번호 인증
+      이메일 인증
+      새 비밀번호 설정
       휴대폰 번호 로그인
       소셜 로그인
 ```
@@ -105,9 +112,10 @@ mindmap
 - [PAGE.A.15 주문 내역 페이지](PAGE_A_15_order_history.md)
 - [PAGE.A.16 배송 조회 페이지](PAGE_A_16_track_order.md)
 - [PAGE.A.17 배송/주문 관리 페이지](PAGE_A_17_shipping_order_manage.md)
-- [PAGE.A.30 로그인 메인 페이지](PAGE_A_30_multi_signin.md)
-- [PAGE.A.31 이메일 회원가입 페이지](PAGE_A_31_email_signup.md)
-- [PAGE.A.32 이메일 로그인 페이지](PAGE_A_32_email_signin.md)
+- [PAGE.A.19 보유 쿠폰 페이지 그룹](PAGE_A_19_coupon_wallet/README.md)
+- [PAGE.A.19 보유 쿠폰 페이지](PAGE_A_19_coupon_wallet/PAGE_A_19_owned_coupon.md)
+- [PAGE.A.300 인증 및 회원 페이지](PAGE_A_300_auth_member/PAGE_A_300_auth_member.md) - `PAGE.A.300~303`
+- [PAGE.A.310 비밀번호 재설정 페이지](PAGE_A_310_password_find/PAGE_A_310_password_find.md)
 
 ### 예시 문서
 
@@ -117,4 +125,4 @@ mindmap
 
 ## 연관 태그
 
-🏷️ 요구사항 참조: [REQ.A.01](../00-requirements/.example/REQ_A_01_order_checkout.md) | 유스케이스 참조: [UC.A.01](../30-uc/.examples/UC_A_01_place_order.md) | 영속성 참조: [PST.A.01](../55-persistence/.examples/PST_A_01_order_persistence.md) | 서비스 참조: [SVC.A.01](../60-service/.examples/SVC_A_01_order_service.md) | 시나리오 참조: [SCN.A.01](../80-scenario/.examples/SCN_A_01_place_order.md)
+🏷️ 요구사항 참조: [REQ.A.01](../00-requirements/REQ_A_01_limited_drop_commerce.md), [REQ.A.02](../00-requirements/REQ_A_02_coupon_benefit.md), [REQ.A.05](../00-requirements/REQ_A_05_auth_member.md) | 페이지 참조: [PAGE.A.01](PAGE_A_01_homepage.md), [PAGE.A.02](PAGE_A_02_product_detail.md), [PAGE.A.06](PAGE_A_06_shopping_cart.md), [PAGE.A.10](PAGE_A_10_my.md), [PAGE.A.11](PAGE_A_11_payment.md), [PAGE.A.14](PAGE_A_14_order_complete.md), [PAGE.A.15](PAGE_A_15_order_history.md), [PAGE.A.16](PAGE_A_16_track_order.md), [PAGE.A.17](PAGE_A_17_shipping_order_manage.md), [PAGE.A.19](PAGE_A_19_coupon_wallet/PAGE_A_19_owned_coupon.md), [PAGE.A.300](PAGE_A_300_auth_member/PAGE_A_300_auth_member.md), [PAGE.A.310](PAGE_A_310_password_find/PAGE_A_310_password_find.md) | 유스케이스 참조: UC.A.01, UC.A.02, UC.A.04, [UC.A.19](../30-uc/UC_A_19_coupon_wallet.md), [UC.A.300](../30-uc/UC_A_300_auth_member.md)

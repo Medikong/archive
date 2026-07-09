@@ -12,6 +12,8 @@ Medikong 문서와 증거 자료를 장기 보관하는 아카이빙 레포다.
 | `medikong/adr/` | 구조적 의사결정 기록 | [medikong/adr/README.md](medikong/adr/README.md) |
 | `architecture/` | 기존 Medikong 아키텍처, repo 경계, 관측성, 배포, 합성 E2E 설계 | [architecture/README.md](architecture/README.md) |
 | `evidence/` | CI, 부하테스트, 보안, 관측성, 트래픽 검증 결과 | [evidence/README.md](evidence/README.md) |
+| `research/` | 외부 기업 사례, 공개 기술 문서, 제품 설계 참고 자료 | [research/README.md](research/README.md) |
+| `validations/` | 실무 프로젝트에서 앞으로 검증할 운영 안정성 과제와 성공 기준 | [validations/README.md](validations/README.md) |
 | `runbooks/` | 배포, 관측성, 운영 확인 절차 | [runbooks/README.md](runbooks/README.md) |
 | `trouble/` | 장애, 실패, 운영 리스크 분석 기록 | [trouble/README.md](trouble/README.md) |
 | `issues/` | GitHub Issue/Project 발행 전 작업 후보와 템플릿 | [issues/README.md](issues/README.md) |
@@ -45,6 +47,19 @@ archive/
     assets/
     diagrams/
     runbooks/
+  research/
+    README.md
+    auth-service-design/
+      README.md
+      companies/
+      analysis/
+      templates/
+  validations/
+    README.md
+    backpressure-effectiveness/
+      README.md
+    oom-incident-snapshot-capture/
+      README.md
   runbooks/
     README.md
     deployment/
@@ -87,6 +102,12 @@ archive/
 | [evidence/security/README.md](evidence/security/README.md) | RBAC, ServiceAccount, NetworkPolicy 검증 결과 |
 | [evidence/traffic/README.md](evidence/traffic/README.md) | canary, rollback, traffic policy 검증 |
 | [trouble/README.md](trouble/README.md) | 트러블슈팅 기록 전체 인덱스 |
+
+### 외부 사례 조사
+
+| 문서 | 용도 |
+| --- | --- |
+| [research/auth-service-design/README.md](research/auth-service-design/README.md) | 국내/해외 기업 인증 서비스 설계 사례 조사 |
 
 ### 운영 절차
 

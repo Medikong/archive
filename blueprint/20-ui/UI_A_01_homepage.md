@@ -18,7 +18,7 @@ updated: 2026-07-07
 - 에셋 유형: 화면 이미지, 컴포넌트 시트
 - 파일 경로:
   - [홈 화면](assets/UI_A_01_homepage/UI_A_01_01_homepage.png)
-  - [홈 화면 컴포넌트 시트](assets/UI_A_01_homepage/UI_A_01_02_homepage_component.png)
+  - [홈 화면 컴포넌트 시트](assets/UI_A_01_homepage/UI_A_01_02_hompage_component.png)
 - 원본 URL: local
 - 캡처 일시: 2026-07-07
 - 캡처 조건: DropMong 메인 홈, 추천 드롭/오픈 예정/큐레이션/카테고리/브랜드관/실시간 랭킹 노출
@@ -35,7 +35,7 @@ updated: 2026-07-07
 
 ### 컴포넌트 시트
 
-![홈 화면 컴포넌트 시트](assets/UI_A_01_homepage/UI_A_01_02_homepage_component.png)
+![홈 화면 컴포넌트 시트](assets/UI_A_01_homepage/UI_A_01_02_hompage_component.png)
 
 ## 화면 구성
 

@@ -6,7 +6,7 @@ status: active
 tags: [project-design, ddd, ui, backend, template]
 source: local
 created: 2026-07-06
-updated: 2026-07-06
+updated: 2026-07-07
 ---
 
 # 프로젝트 설계 템플릿
@@ -19,7 +19,7 @@ updated: 2026-07-06
 2. `10-sitemap/README.md`에 전체 사이트맵을 flowchart로 먼저 그린다.
 3. `10-sitemap/.template/PAGE_A_XX.md`를 복사해 페이지 문서를 만든다.
 4. `20-ui/.template/ui-asset.md`로 이미지, 문서, 와이어프레임 같은 UI 근거를 정리한다.
-5. `30-uc/README.md`에 유스케이스 전체를 mindmap으로 먼저 확장한다.
+5. `30-uc/README.md`에서 유스케이스 작성 컨텍스트를 확인하고 `30-uc/INDEX.md`에 유스케이스 문서 목록을 관리한다.
 6. `30-uc/.template/use-case.md`로 사용자 관점 작업 단위를 만든다.
 7. `40-event-storming-bounded-context/.template/bounded-context.md`로 이벤트스토밍 결과와 도메인 경계를 정리한다.
 8. `50-domain-model/.template/aggregate-entity.md`로 Aggregate와 Entity를 한 문서에 설계한다.
@@ -63,7 +63,7 @@ updated: 2026-07-06
 | `FP` | 요구사항 문서 하위 기능 포인트 | `REQ.A.01.FP.01` |
 | `NFP` | 요구사항 문서 하위 비기능 포인트 | `REQ.A.01.NFP.01` |
 | `FLOW` | 유저 플로우 단계 | `FLOW.A.01` |
-| `PAGE` | 사이트맵과 UI를 합친 페이지 | `PAGE.A.01` |
+| `PAGE` | 사이트맵의 단일 페이지 또는 페이지 그룹 | `PAGE.A.01` |
 | `UI` | 이미지, 문서, 와이어프레임 등 UI 에셋 | `UI.A.01` |
 | `UC` | 페이지/기능 기반 유스케이스 | `UC.A.01` |
 | `SCN` | 처리 시나리오 | `SCN.A.01` |
@@ -107,9 +107,21 @@ updated: 2026-07-06
 | `FP` | Functional Point | `REQ.A.01.FP.01` |
 | `NFP` | Non-Functional Point | `REQ.A.01.NFP.01` |
 
+## 페이지 문서 단위 규칙
+
+`PAGE` 문서는 반드시 물리적인 화면 하나만 뜻하지 않는다. 사용자 목적, 시나리오, 또는 flow가 하나로 묶이는 경우에는 페이지 그룹 폴더 안에 여러 페이지 문서를 함께 둘 수 있다.
+
+- 단일 페이지가 독립적인 목적과 상태를 가지면 문서 하나에 페이지 하나를 둔다.
+- 여러 화면이 하나의 사용자 목적을 공유하면 `PAGE_A_300_auth_member/`처럼 그룹 시작 ID와 그룹 이름으로 폴더를 만들고, 대표 문서는 `PAGE_A_300_auth_member.md`처럼 하나로 관리한다.
+- 대표 문서의 front matter에는 `page_ids`로 포함 화면을 적고, 본문에서는 `PAGE.A.300`, `PAGE.A.301`처럼 고유한 `PAGE` ID를 유지한다.
+- 페이지 그룹의 포함 페이지 목록과 대표 flow는 해당 그룹의 시작 페이지 문서나 폴더 README 중 하나에 적는다.
+- 요구사항, UI, 유스케이스, API, 시나리오는 문서 파일명이 아니라 필요한 `PAGE` ID를 기준으로 참조한다.
+- 상태 전이, redirect, 인증/권한, 실패 처리처럼 화면 사이 관계가 중요한 내용은 페이지 그룹 폴더 안에서 서로 링크해 설명한다.
+- 같은 페이지 그룹에 대응하는 UI 문서는 `UI_A_300_auth_member/`처럼 같은 그룹 이름의 UI 폴더를 만들고, 대표 문서 `UI_A_300_auth_member.md` 안에서 포함 `UI` ID와 에셋을 함께 관리한다.
+
 ## 예제 세트
 
-주문 결제 예제는 요구사항부터 시나리오까지 같은 식별자 묶음으로 연결되어 있다. 처음 볼 때는 각 폴더의 README를 기준으로 [요구사항](00-requirements/README.md), [사이트맵](10-sitemap/README.md), [UI](20-ui/README.md), [유스케이스](30-uc/README.md), [이벤트스토밍과 BC](40-event-storming-bounded-context/README.md), [도메인 모델](50-domain-model/README.md), [영속성 설계](55-persistence/README.md), [서비스](60-service/README.md), [API](70-api/README.md), [시나리오](80-scenario/README.md) 순서로 보면 된다.
+주문 결제 예제는 요구사항부터 시나리오까지 같은 식별자 묶음으로 연결되어 있다. 처음 볼 때는 각 폴더의 README를 기준으로 [요구사항](00-requirements/README.md), [사이트맵](10-sitemap/README.md), [UI](20-ui/README.md), [유스케이스 작성 컨텍스트](30-uc/README.md), [유스케이스 인덱스](30-uc/INDEX.md), [이벤트스토밍과 BC](40-event-storming-bounded-context/README.md), [도메인 모델](50-domain-model/README.md), [영속성 설계](55-persistence/README.md), [서비스](60-service/README.md), [API](70-api/README.md), [시나리오](80-scenario/README.md) 순서로 보면 된다.
 
 샘플 문서는 [REQ.A.01](00-requirements/.example/REQ_A_01_order_checkout.md), [PAGE.A.01](10-sitemap/.examples/PAGE_A_01_order_checkout.md), [UI.A.01](20-ui/.examples/UI_A_01_order_checkout_wireframe.md), [UC.A.01](30-uc/.examples/UC_A_01_place_order.md), [BC.A.01](40-event-storming-bounded-context/.examples/BC_A_01_order.md), [AGG.A.01](50-domain-model/.examples/AGG_A_01_order.md), [PST.A.01](55-persistence/.examples/PST_A_01_order_persistence.md), [SVC.A.01](60-service/.examples/SVC_A_01_order_service.md), [API.A.01](70-api/.examples/API_A_01_place_order.md), [SCN.A.01](80-scenario/.examples/SCN_A_01_place_order.md)로 이어진다.
 
@@ -139,12 +151,12 @@ updated: 2026-07-06
 
 ## 폴더
 
-각 문서 폴더의 `README.md`는 해당 설계 유형의 인덱스다. 폴더에 새 문서를 추가하면 먼저 해당 폴더 README의 실제 문서 목록과 연관 태그를 갱신한다.
+각 문서 폴더의 `README.md`는 해당 설계 유형의 기본 진입점이다. 폴더에 별도 `INDEX.md`가 있으면 실제 문서 목록은 `INDEX.md`에서 관리한다.
 
 - [00-requirements](00-requirements/README.md): 요구사항, 사용자, 제약, 제외 범위, 수용 기준.
 - [10-sitemap](10-sitemap/README.md): 전체 사이트맵 인덱스와 페이지 중심 허브 문서.
 - [20-ui](20-ui/README.md): 스크린샷, 이미지, 문서, 와이어프레임 같은 UI 근거.
-- [30-uc](30-uc/README.md): 기준 페이지에서 사용자가 확인하거나 실행하거나 연결할 수 있는 대상을 mindmap으로 정리한다.
+- [30-uc](30-uc/README.md): 유스케이스 작성 컨텍스트. 실제 유스케이스 문서 목록은 [INDEX](30-uc/INDEX.md)에서 관리한다.
 - [40-event-storming-bounded-context](40-event-storming-bounded-context/README.md): 이벤트스토밍 결과, 도메인 언어, 바운디드 컨텍스트 경계.
 - [50-domain-model](50-domain-model/README.md): Aggregate와 Entity를 함께 설명하는 도메인 모델.
 - [55-persistence](55-persistence/README.md): 데이터베이스 스키마, Repository 설계 근거, 읽기/쓰기 전략.
@@ -173,7 +185,9 @@ updated: 2026-07-06
 
 - 요구사항 문서는 구현 목록이 아니라 사용자의 문제, 목표, 제약, 판단 기준을 먼저 적는다.
 - 페이지 문서는 사용자에게 보이는 것과 사용자가 할 수 있는 행동을 먼저 적는다.
+- 페이지 그룹 폴더는 포함 페이지 목록, 대표 사용자 목적, 페이지 사이 이동과 상태 전이를 찾기 쉽게 둔다.
 - 페이지 문서의 상태와 이동 가능 페이지는 `연관 사이트맵` flowchart의 노드와 edge label로 표현한다.
+- 전역 내비게이션은 앱 공통 구조로 보고, 개별 페이지 문서에는 사용자 목적에 직접 필요한 진입, 복귀, 상태 전이만 적는다.
 - UI 문서에는 실제 에셋 경로와 캡처 기준을 남긴다.
 - 시나리오는 화면 이벤트나 API 호출 같은 시작점에서 처리 과정을 설명한다.
 - Aggregate/Entity는 UI 필드 목록이 아니라 도메인 책임과 불변조건 기준으로 모델링한다.
