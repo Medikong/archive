@@ -301,11 +301,13 @@ Use one rectangle shape for every node type. Element type is already communicate
 | Hotspot | Rectangle | `hotspotCoupon[Hotspot<br>쿠폰 검증 시점]` |
 | External System | Rectangle | `kakao[External System<br>알림톡]` |
 | Read Model | Rectangle | `summary[Read Model<br>주문 결제 요약]` |
-| Bounded Context | `subgraph` with explicit title | `subgraph CouponBC[Coupon Context]` |
+| Bounded Context | `subgraph` with explicit title | `subgraph CouponBC[Context 쿠폰]` |
 
 Keep shape syntax consistent even when Mermaid supports richer shapes. Do not use double-circles, hexagons, stadium nodes, or cylinders for event-storming elements in this folder.
 
 Style bounded contexts with `style SubgraphId ...` because Mermaid renderers handle subgraph classes inconsistently. Keep the context identifier in English or ASCII so it can be referenced safely.
+
+Bounded Context labels should use `Context <한국어 명칭>`. Put `Context` first and write the domain name in Korean, for example `Context 쿠폰` or `Context 고객 지원`.
 
 ## Components
 
@@ -358,7 +360,7 @@ flowchart LR
 
   buyer[Actor<br>구매자]
 
-  subgraph CouponBC[Coupon Context]
+  subgraph CouponBC[Context 쿠폰]
     direction LR
     cmdRegister[Command<br>쿠폰 코드 등록]
     coupon[Aggregate<br>Coupon]
@@ -404,7 +406,7 @@ flowchart LR
 
   buyer[Actor<br>구매자]
 
-  subgraph CouponBC[Coupon Context]
+  subgraph CouponBC[Context 쿠폰]
     direction LR
     cmdRegister[Command<br>쿠폰 코드 등록]
     coupon[Aggregate<br>Coupon]

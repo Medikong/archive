@@ -42,7 +42,7 @@ flowchart LR
   buyer[Actor<br>구매자]
   payment[External System<br>결제 시스템]
 
-  subgraph OrderBC[Order Context]
+  subgraph OrderBC[Context 주문]
     direction LR
     cmdCreate[Command<br>주문 생성]
     order[Aggregate<br>Order]
@@ -89,14 +89,14 @@ flowchart LR
 | 유형 | 식별자 | 이름 | 소속 컨텍스트 | 설명 |
 | --- | --- | --- | --- | --- |
 | Actor | ACTOR.A.01 | 구매자 | Context 외부 | 주문 결제 페이지에서 주문 생성을 요청한다. |
-| Command | CMD.A.01 | 주문 생성 | Order Context | 주문 생성 요청을 처리한다. |
-| Aggregate | AGG.A.01 | Order | Order Context | 주문 라인, 주문 금액 스냅샷, 주문 상태를 보존한다. |
-| Domain Event | EVT.A.01 | 주문 생성됨 | Order Context | 주문이 생성된 뒤 발행된다. |
-| Policy | POLICY.A.01 | 주문 금액 변조 차단 | Order Context | 클라이언트가 보낸 금액을 신뢰하지 않고 서버 계산 금액만 허용한다. |
-| Business Rule | RULE.A.01 | 주문 금액 스냅샷 보존 | Order Context | 주문 생성 시점의 금액과 주문 라인을 이후 변경과 분리해 보존한다. |
-| Hotspot | HOTSPOT.A.01 | 쿠폰 검증 시점 | Order Context | 쿠폰 할인 결과를 주문 생성 전 조회 모델에 포함할지 결정이 필요하다. |
+| Command | CMD.A.01 | 주문 생성 | Context 주문 | 주문 생성 요청을 처리한다. |
+| Aggregate | AGG.A.01 | Order | Context 주문 | 주문 라인, 주문 금액 스냅샷, 주문 상태를 보존한다. |
+| Domain Event | EVT.A.01 | 주문 생성됨 | Context 주문 | 주문이 생성된 뒤 발행된다. |
+| Policy | POLICY.A.01 | 주문 금액 변조 차단 | Context 주문 | 클라이언트가 보낸 금액을 신뢰하지 않고 서버 계산 금액만 허용한다. |
+| Business Rule | RULE.A.01 | 주문 금액 스냅샷 보존 | Context 주문 | 주문 생성 시점의 금액과 주문 라인을 이후 변경과 분리해 보존한다. |
+| Hotspot | HOTSPOT.A.01 | 쿠폰 검증 시점 | Context 주문 | 쿠폰 할인 결과를 주문 생성 전 조회 모델에 포함할지 결정이 필요하다. |
 | External System | EXT.A.01 | 결제 시스템 | Context 외부 | 결제 승인과 실패 응답을 제공한다. |
-| Read Model | RM.A.01 | 주문 결제 요약 | Order Context | 주문 결제 화면에 필요한 요약 정보를 제공한다. |
+| Read Model | RM.A.01 | 주문 결제 요약 | Context 주문 | 주문 결제 화면에 필요한 요약 정보를 제공한다. |
 
 ## Element Evidence
 

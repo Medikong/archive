@@ -41,7 +41,7 @@ updated: YYYY-MM-DD
 flowchart LR
   actor[Actor<br>]
 
-  subgraph ContextId[Bounded Context Name]
+  subgraph ContextId[Context 이름]
     direction LR
     command[Command<br>]
     aggregate[Aggregate<br>]
