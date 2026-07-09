@@ -6,7 +6,7 @@ type: page-spec
 status: draft
 path: /my
 parent_pages: [홈 화면, 주문 완료, 주문 내역]
-child_pages: [주문 내역, 장바구니, 주소록, 쿠폰함, 포인트, 결제수단 관리, 문의하기, FAQ, 공지사항, 이벤트, 친구 초대, 찜리스트, 설정, 알림]
+child_pages: [주문 내역, 장바구니, 주소록, 보유 쿠폰, 포인트, 결제수단 관리, 문의하기, FAQ, 공지사항, 이벤트, 친구 초대, 찜리스트, 설정, 알림]
 actors: [구매자]
 tags: [page, sitemap, my, account, profile, order-summary, dropmong, limited-commerce]
 source: local
@@ -32,9 +32,9 @@ DropMong에서는 한정 드롭 참여 이후 주문 추적과 혜택 확인이 
 | --- | --- | --- | --- |
 | 상단 헤더 바 | DropMong 로고, 알림 아이콘, 설정 아이콘 | 알림 확인, 설정 이동 | 알림, 설정 |
 | 프로필 히어로 카드 | 프로필 이미지, 닉네임, VIP 배지, 인사말, 등급 진행 칩 | 프로필 확인, 등급 진행 확인, 프로필 이미지 변경 | 프로필, 등급 혜택 |
-| 요약 정보 카드 | 전체 주문, 배송중, 보유쿠폰, 포인트 | 주요 계정 지표 확인 | 주문 내역, 배송 조회, 쿠폰함, 포인트 |
+| 요약 정보 카드 | 전체 주문, 배송중, 보유쿠폰, 포인트 | 주요 계정 지표 확인 | 주문 내역, 배송 조회, 보유 쿠폰, 포인트 |
 | 주문내역 미리보기 카드 | 최근 주문 상품, 배송 상태, 주문일, 가격, 전체보기 | 최근 주문 확인, 주문 내역 전체 이동 | 주문 내역, 주문 상세 |
-| 전체 메뉴 그리드 | 배송지 관리, 쿠폰함, 포인트, 결제수단 관리, 문의하기, FAQ, 공지사항, 이벤트, 친구 초대, 찜리스트 | 계정/혜택/지원 메뉴 이동 | 각 하위 페이지 |
+| 전체 메뉴 그리드 | 배송지 관리, 보유 쿠폰, 포인트, 결제수단 관리, 문의하기, FAQ, 공지사항, 이벤트, 친구 초대, 찜리스트 | 계정/혜택/지원 메뉴 이동 | 각 하위 페이지 |
 | 친구 초대 프로모션 배너 | 친구 초대 포인트 혜택 | 친구 초대 이동 | 친구 초대 |
 | 하단 내비게이션 | 홈, 드롭, 알림, 장바구니, 마이 | 주요 탭 이동 | 홈, 드롭, 알림, 장바구니, 마이 |
 
@@ -49,7 +49,7 @@ flowchart TD
     Notification["알림"]
     Settings["설정"]
     AddressBook["주소록"]
-    CouponBox["쿠폰함"]
+    CouponBox["PAGE.A.19 보유 쿠폰"]
     Point["포인트"]
     PaymentMethod["결제수단 관리"]
     Wishlist["찜리스트"]
@@ -62,7 +62,7 @@ flowchart TD
     My -->|"알림 아이콘 / 알림 탭"| Notification
     My -->|"설정 아이콘"| Settings
     My -->|"배송지 관리"| AddressBook
-    My -->|"쿠폰함"| CouponBox
+    My -->|"보유쿠폰 / 쿠폰함"| CouponBox
     My -->|"포인트"| Point
     My -->|"결제수단 관리"| PaymentMethod
     My -->|"찜리스트"| Wishlist
@@ -72,6 +72,7 @@ flowchart TD
     click Home "./PAGE_A_01_homepage.md"
     click Cart "./PAGE_A_06_shopping_cart.md"
     click OrderHistory "./PAGE_A_15_order_history.md"
+    click CouponBox "./PAGE_A_19_coupon_wallet/PAGE_A_19_owned_coupon.md"
 ```
 
 ## 진입 경로
@@ -93,7 +94,7 @@ flowchart TD
 | 등급 진행 칩 선택 | 등급 혜택 | 회원 등급 정책 필요 |
 | 전체 주문 선택 | 주문 내역 | 로그인 필요 |
 | 배송중 선택 | 주문 내역 | 배송중 필터 적용 가능 |
-| 보유쿠폰 선택 | 쿠폰함 | 로그인 필요 |
+| 보유쿠폰 선택 | [PAGE.A.19 보유 쿠폰](./PAGE_A_19_coupon_wallet/PAGE_A_19_owned_coupon.md) | 로그인 필요 |
 | 포인트 선택 | 포인트 | 포인트 내역 조회 |
 | 주문내역 전체보기 선택 | 주문 내역 | 최근 주문 목록 전체 이동 |
 | 최근 주문 카드 선택 | 주문 상세 | 주문 소유자만 조회 |
@@ -136,7 +137,7 @@ flowchart TD
 | `PAGE.A.15` | [주문 내역](./PAGE_A_15_order_history.md) | 작성 완료 | 전체 주문, 최근 주문 전체보기 |
 | `PAGE.A.16` | [배송 조회](./PAGE_A_16_track_order.md) | 작성 완료 | 배송중 요약 |
 | `PAGE.A.18` | 주소록/배송지 관리 | 문서 예정 | 배송지 관리 |
-| `PAGE.A.19` | 쿠폰함 | 문서 예정 | 보유쿠폰, 쿠폰함 |
+| `PAGE.A.19` | [보유 쿠폰](./PAGE_A_19_coupon_wallet/PAGE_A_19_owned_coupon.md) | 작성 완료 | 보유쿠폰, 쿠폰함 |
 | `PAGE.A.20` | 포인트 | 문서 예정 | 포인트 |
 | `PAGE.A.21` | 결제수단 관리 | 문서 예정 | 결제수단 관리 |
 | `PAGE.A.22` | 찜리스트 | 문서 예정 | 찜리스트 |
