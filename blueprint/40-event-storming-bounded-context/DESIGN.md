@@ -275,15 +275,15 @@ Use Mermaid `flowchart LR` as the default direction for cross-context diagrams. 
 - Place `Actor` and `External System` nodes outside bounded-context subgraphs.
 - Place `Aggregate` near the center of its bounded context.
 - Place `Command` nodes before the aggregate and `Domain Event` nodes after the aggregate.
-- Place `Policy`, `Business Rule`, and `Hotspot` nodes near the command or aggregate they constrain, define, or question.
+- Place `Policy` nodes near the event they react to, the Command they request or constrain, and the Aggregate whose current state they read. Place `Business Rule` and `Hotspot` nodes near the element they define or question.
 - Keep one bounded context per `subgraph`; do not mix page, API, or read-model convenience groupings into the context boundary.
 
 ## Elevation & Depth
 
 Mermaid diagrams should stay flat. Use color, border, and line style rather than shadows or decorative effects.
 
-- Solid arrows represent direct intent or command handling.
-- Dotted arrows represent constraints, rules, or unresolved questions attached to a command or aggregate.
+- Solid arrows represent direct domain relationships: actor intent, Command handling, Aggregate event publication, Domain Event activation of a Policy, Read Model projection, and External System reference or delivery.
+- Dotted arrows represent a Policy that requests or constrains a Command or reads an Aggregate, a Business Rule, or an unresolved question attached to another element. They also represent the exceptional pre-Event application failure path from a failed Command to an error-recording Command; label that edge `애플리케이션 오류 처리기 실패 감지`. Use a solid arrow from a Domain Event to the Policy that reacts to it.
 - Thick strokes are reserved for node borders and context boundaries, not for ordinary relationships.
 
 ## Shapes
