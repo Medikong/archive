@@ -1,0 +1,91 @@
+get:
+  tags:
+    - Development
+  summary: 가상 인증 메시지 조회
+  description: |
+    개발 및 테스트 환경에서 Virtual Verification Adapter가 전달한 인증번호를 조회한다.
+    `ready.data.code`는 공통 VerificationCode schema의 6자리 숫자 형식을 따른다.
+    운영 환경에는 이 Route를 등록하지 않는다.
+
+    `DevAccessToken`과 Challenge 소유 credential 하나를 함께 제출해야 한다. 아래 네 소유 인증
+    방식은 서로 OR 관계이고 각 방식은 DevAccessToken과 AND 관계다. 공유 개발 및 demo 환경에서는
+    Gateway의 개발 네트워크 allowlist도 통과해야 한다.
+
+    개발 접근 token이나 소유 인증 정보가 없거나 유효하지 않거나 binding이 다르면 리소스 존재
+    여부를 숨기기 위해 `404 AUTH_VIRTUAL_MESSAGE_NOT_FOUND`로 통합한다. Gateway도 같은
+    `application/problem+json` 계약을 반환한다.
+  operationId: getVirtualVerificationMessage
+  x-api-id: API.A.300-30
+  x-use-case: UC.A.300
+  x-service-design: SD.A.30040
+  x-design-doc: ../../API_A_300_30_get_virtual_verification_message.md
+  x-error-codes:
+    AUTH_VIRTUAL_MESSAGE_NOT_FOUND: 404
+    AUTH_VIRTUAL_MESSAGE_UNAVAILABLE: 410
+    AUTH_RATE_LIMITED: 429
+    AUTH_SERVICE_UNAVAILABLE: 503
+  x-environments:
+    - local
+    - test
+    - demo-restricted
+  x-virtual-projection-contract:
+    scope: dev_test_only
+    readyCodeSchema: VerificationCode
+    codeAtRest: envelope_encrypted
+    terminalTransition: atomic_destroy_and_secret_clear
+  security:
+    - DevAccessToken: []
+      WebAuthFlowCookie: []
+    - DevAccessToken: []
+      WebSessionCookie: []
+    - DevAccessToken: []
+      MobileAuthFlowToken: []
+    - DevAccessToken: []
+      MobileBearerAuth: []
+  parameters:
+    - $ref: ../components/parameters.yaml#/ChallengeId
+    - $ref: ../components/parameters.yaml#/XRequestId
+    - $ref: ../components/parameters.yaml#/Traceparent
+    - $ref: ../components/parameters.yaml#/XDeviceInstallationId
+  responses:
+    '200':
+      description: 가상 인증 메시지가 준비됐거나 Adapter 전달을 기다리고 있다. pending일 때 재조회 간격은 body의 retryAfterSeconds로만 전달하며 HTTP Retry-After는 사용하지 않는다.
+      headers:
+        X-Request-Id:
+          $ref: ../components/headers.yaml#/XRequestId
+        Cache-Control:
+          $ref: ../components/headers.yaml#/CacheControlNoStore
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas.yaml#/VirtualVerificationMessageResponse
+          examples:
+            ready:
+              summary: 인증번호 조회 가능
+              value:
+                data:
+                  challengeId: vch_01JXYZ1234567890ABCDEFGHJK
+                  channel: email_code
+                  status: ready
+                  code: '123456'
+                  maskedDestination: b***@example.com
+                  expiresAt: '2026-07-10T08:08:00Z'
+                meta:
+                  requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
+            pending:
+              summary: Virtual Adapter 전달 대기
+              value:
+                data:
+                  challengeId: vch_01JXYZ1234567890ABCDEFGHJK
+                  status: pending
+                  retryAfterSeconds: 1
+                meta:
+                  requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
+    '404':
+      $ref: ../components/responses.yaml#/VirtualMessageNotFound
+    '410':
+      $ref: ../components/responses.yaml#/VirtualMessageUnavailable
+    '429':
+      $ref: ../components/responses.yaml#/VirtualMessageRateLimited
+    '503':
+      $ref: ../components/responses.yaml#/VirtualMessageServiceUnavailable

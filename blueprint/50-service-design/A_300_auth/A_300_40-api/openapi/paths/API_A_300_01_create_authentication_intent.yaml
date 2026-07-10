@@ -1,0 +1,217 @@
+post:
+  tags:
+    - Bootstrap
+  summary: AuthenticationIntent 생성
+  description: |
+    로그인 전에 검증된 내부 복귀 위치와 허용된 행동을 단기 Intent로 보존한다.
+    웹은 Origin과 Fetch Metadata를, 모바일은 설치 ID와 활성화된 attestation 정책을
+    Gateway에서 검증한다. 이 bootstrap 요청에는 아직 사전 인증 credential이 없다.
+  operationId: createAuthenticationIntent
+  x-api-id: API.A.300-01
+  x-use-case: UC.A.300
+  x-service-design: SD.A.30040
+  x-design-doc: ../../API_A_300_01_create_authentication_intent.md
+  x-error-codes:
+    AUTH_INPUT_INVALID: 400
+    AUTH_REDIRECT_INVALID: 400
+    AUTH_IDEMPOTENCY_CONFLICT: 409
+    AUTH_RATE_LIMITED: 429
+    AUTH_SERVICE_UNAVAILABLE: 503
+  security: []
+  x-channel-security:
+    web:
+      required:
+        - Origin allowlist
+        - Fetch Metadata policy
+    mobile:
+      required:
+        - verified X-Client-Channel
+        - X-Device-Installation-Id
+      conditional:
+        - X-App-Attestation when the runtime policy is enabled
+  x-idempotent-credential-reissue:
+    intent: reuse the existing AuthenticationIntent
+    ownerProof: rotate atomically on every same-key same-body replay
+    webCsrfToken: rotate atomically with the web owner proof
+    persistence: store only keyed digests; never store plaintext or encrypted replay credentials
+  parameters:
+    - $ref: ../components/parameters.yaml#/XRequestId
+    - $ref: ../components/parameters.yaml#/Traceparent
+    - $ref: ../components/parameters.yaml#/XClientChannel
+    - $ref: ../components/parameters.yaml#/XDeviceInstallationId
+    - $ref: ../components/parameters.yaml#/XAppAttestation
+    - $ref: ../components/parameters.yaml#/IdempotencyKey
+    - name: Sec-Fetch-Site
+      in: header
+      required: false
+      description: 웹 채널에서 Gateway가 Fetch Metadata 정책에 사용하는 값이다.
+      schema:
+        type: string
+        enum:
+          - same-origin
+          - same-site
+      example: same-origin
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          oneOf:
+            - type: object
+              required:
+                - returnPath
+                - intentType
+              additionalProperties: false
+              properties:
+                returnPath:
+                  type: string
+                  minLength: 1
+                  maxLength: 1024
+                  pattern: ^/.*$
+                  description: 서버 allowlist를 통과해야 하는 내부 상대 경로다.
+                intentType:
+                  type: string
+                  enum:
+                    - navigation
+            - type: object
+              required:
+                - returnPath
+                - intentType
+                - actionContext
+              additionalProperties: false
+              properties:
+                returnPath:
+                  type: string
+                  minLength: 1
+                  maxLength: 1024
+                  pattern: ^/.*$
+                  description: 서버 allowlist를 통과해야 하는 내부 상대 경로다.
+                intentType:
+                  type: string
+                  enum:
+                    - purchase
+                actionContext:
+                  type: object
+                  required:
+                    - dropId
+                    - optionId
+                    - quantity
+                  additionalProperties: false
+                  properties:
+                    dropId:
+                      type: string
+                      minLength: 1
+                    optionId:
+                      type: string
+                      minLength: 1
+                    quantity:
+                      type: integer
+                      minimum: 1
+          discriminator:
+            propertyName: intentType
+        examples:
+          navigation:
+            value:
+              returnPath: /mypage/orders
+              intentType: navigation
+          purchase:
+            value:
+              returnPath: /drops/drop_123
+              intentType: purchase
+              actionContext:
+                dropId: drop_123
+                optionId: opt_456
+                quantity: 1
+  responses:
+    '201':
+      description: 채널에 묶인 AuthenticationIntent와 소유 proof를 발급했다.
+      headers:
+        X-Request-Id:
+          $ref: ../components/headers.yaml#/XRequestId
+        Cache-Control:
+          $ref: ../components/headers.yaml#/CacheControlNoStore
+        Set-Cookie:
+          description: 웹 채널에서만 사전 인증 credential을 __Host-dm_auth cookie로 전달한다.
+          schema:
+            type: string
+          example: __Host-dm_auth=opaque-random; Path=/; HttpOnly; Secure; SameSite=Lax
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+              - meta
+            additionalProperties: false
+            properties:
+              data:
+                oneOf:
+                  - type: object
+                    required:
+                      - authIntentId
+                      - expiresAt
+                      - nextPath
+                      - csrfToken
+                    additionalProperties: false
+                    properties:
+                      authIntentId:
+                        $ref: ../components/schemas.yaml#/AuthenticationIntentId
+                      expiresAt:
+                        type: string
+                        format: date-time
+                      nextPath:
+                        type: string
+                        pattern: ^/.*$
+                      csrfToken:
+                        type: string
+                        minLength: 1
+                        x-sensitive: true
+                  - type: object
+                    required:
+                      - authIntentId
+                      - expiresAt
+                      - nextPath
+                      - authFlowToken
+                    additionalProperties: false
+                    properties:
+                      authIntentId:
+                        $ref: ../components/schemas.yaml#/AuthenticationIntentId
+                      expiresAt:
+                        type: string
+                        format: date-time
+                      nextPath:
+                        type: string
+                        pattern: ^/.*$
+                      authFlowToken:
+                        type: string
+                        minLength: 1
+                        x-sensitive: true
+              meta:
+                $ref: ../components/schemas.yaml#/ResponseMeta
+          examples:
+            web:
+              value:
+                data:
+                  authIntentId: aint_01JXYZ1234567890ABCDEFGHJK
+                  expiresAt: '2026-07-10T08:10:00Z'
+                  nextPath: /auth/signin
+                  csrfToken: <auth-flow-csrf-token>
+                meta:
+                  requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
+            mobile:
+              value:
+                data:
+                  authIntentId: aint_01JXYZ1234567890ABCDEFGHJK
+                  expiresAt: '2026-07-10T08:10:00Z'
+                  nextPath: /auth/signin
+                  authFlowToken: <opaque-auth-flow-token>
+                meta:
+                  requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
+    '400':
+      $ref: ../components/responses.yaml#/AuthProblem400InputInvalidOrRedirectInvalid
+    '409':
+      $ref: ../components/responses.yaml#/Conflict
+    '429':
+      $ref: ../components/responses.yaml#/RateLimited
+    '503':
+      $ref: ../components/responses.yaml#/AuthServiceUnavailable

@@ -1,0 +1,58 @@
+post:
+  tags:
+    - Session
+  summary: 로그아웃
+  description: |
+    웹은 현재 Session을 폐기하고 모바일은 `X-Refresh-Token` header의 refresh token이 속한 family를 폐기한다.
+    두 채널 모두 request body를 생략하거나 빈 JSON 객체만 제출한다.
+  operationId: logoutSession
+  x-api-id: API.A.300-15
+  x-use-case: UC.A.300
+  x-service-design: SD.A.30040
+  x-design-doc: ../../API_A_300_15_logout_session.md
+  x-channel-security:
+    web: WebSessionCookie AND WebCsrfToken AND WebOrigin, request body 없음
+    mobile: MobileRefreshToken (`X-Refresh-Token`), request body 없음
+  x-error-codes:
+    AUTH_INPUT_INVALID: 400
+    AUTH_SESSION_REQUIRED: 401
+    AUTH_CSRF_INVALID: 403
+    AUTH_IDEMPOTENCY_CONFLICT: 409
+    AUTH_SERVICE_UNAVAILABLE: 503
+  security:
+    - WebSessionCookie: []
+      WebCsrfToken: []
+      WebOrigin: []
+    - MobileRefreshToken: []
+  parameters:
+    - $ref: ../components/parameters.yaml#/XRequestId
+    - $ref: ../components/parameters.yaml#/Traceparent
+    - $ref: ../components/parameters.yaml#/XDeviceInstallationId
+    - $ref: ../components/parameters.yaml#/IdempotencyKey
+  requestBody:
+    required: false
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas.yaml#/EmptyRequest
+        example: {}
+  responses:
+    '204':
+      description: 현재 Session 또는 refresh family를 폐기했다. 이미 폐기된 대상도 같은 결과를 반환한다.
+      headers:
+        X-Request-Id:
+          $ref: ../components/headers.yaml#/XRequestId
+        Cache-Control:
+          $ref: ../components/headers.yaml#/CacheControlNoStore
+        Set-Cookie:
+          $ref: ../components/headers.yaml#/ClearSessionCookie
+    '400':
+      $ref: ../components/responses.yaml#/InputInvalid
+    '401':
+      $ref: ../components/responses.yaml#/AuthenticationRequired
+    '403':
+      $ref: ../components/responses.yaml#/AuthProblem403CsrfInvalid
+    '409':
+      $ref: ../components/responses.yaml#/Conflict
+    '503':
+      $ref: ../components/responses.yaml#/AuthServiceUnavailable

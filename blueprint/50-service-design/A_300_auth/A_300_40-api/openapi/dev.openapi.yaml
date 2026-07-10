@@ -1,0 +1,28 @@
+openapi: 3.0.4
+info:
+  title: DropMong Context 인증 개발 API
+  version: 0.2.0
+  description: |
+    개발 및 테스트 환경에만 등록하는 `SD.A.30040`의 HTTP 계약 원장이다.
+    운영 서버와 운영 코드 생성 입력에는 이 문서를 포함하지 않는다.
+servers:
+  - url: https://api.dev.dropmong.example
+    description: 접근이 제한된 개발 및 테스트 Gateway 예시 주소
+tags:
+  - name: Development
+    description: 개발 및 테스트 환경 전용 API
+paths:
+  /api/v1/dev/auth/verification-messages/{challengeId}:
+    $ref: ./paths/API_A_300_30_get_virtual_verification_message.yaml
+components:
+  securitySchemes:
+    DevAccessToken:
+      $ref: ./components/security-schemes.yaml#/DevAccessToken
+    WebAuthFlowCookie:
+      $ref: ./components/security-schemes.yaml#/WebAuthFlowCookie
+    WebSessionCookie:
+      $ref: ./components/security-schemes.yaml#/WebSessionCookie
+    MobileAuthFlowToken:
+      $ref: ./components/security-schemes.yaml#/MobileAuthFlowToken
+    MobileBearerAuth:
+      $ref: ./components/security-schemes.yaml#/MobileBearerAuth

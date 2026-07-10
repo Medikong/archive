@@ -29,7 +29,7 @@ updated: 2026-07-10
 - 🏷️ 도메인 참조: [SD.A.30010](../50-service-design/A_300_auth/A_300_10-domain-model/SD_A_30010_auth_domain_model.md)
 - 🏷️ 영속성 참조: [SD.A.30020](../50-service-design/A_300_auth/A_300_20-persistence/README.md)
 - 🏷️ 서비스 참조: [SD.A.30030](../50-service-design/A_300_auth/A_300_30-service/README.md)
-- 🏷️ 시나리오 참조: SCN.A.300 예정
+- 🏷️ 시퀀스 참조: [SCN.A.300](../80-sequence/A_300_auth/README.md)
 - 🏷️ API 참조: [SD.A.30040](../50-service-design/A_300_auth/A_300_40-api/README.md)
 
 ## 컨텍스트 경계
@@ -63,6 +63,7 @@ flowchart LR
     cmdVerifyEmail[Command<br>이메일 소유 확인]
     cmdVerifyPhone[Command<br>휴대폰 소유 확인]
     cmdLinkUser[Command<br>인증 식별자 연결]
+    cmdApplyRegistrationLink[Command<br>회원가입 사용자 연결 반영]
     cmdEmailSignin[Command<br>이메일 로그인]
     cmdPhoneSignin[Command<br>휴대폰 번호 로그인]
     cmdIssueSession[Command<br>세션 발급]
@@ -75,6 +76,7 @@ flowchart LR
 
     identity[Aggregate<br>Identity]
     identityLink[Aggregate<br>IdentityLink]
+    registration[Aggregate<br>Registration]
     session[Aggregate<br>Session]
 
     evtGateApplied[Domain Event<br>인증 게이트 적용됨]
@@ -82,6 +84,9 @@ flowchart LR
     evtUserLinked[Domain Event<br>인증 식별자 연결됨]
     evtEmailVerified[Domain Event<br>이메일 인증 식별자 확인됨]
     evtPhoneLinked[Domain Event<br>휴대폰 인증 식별자 확인됨]
+    evtRegistrationVerified[Domain Event<br>회원가입 인증 완료됨]
+    evtRegistrationUserLinked[Domain Event<br>회원가입 사용자 연결됨]
+    evtRegistrationUserLinkRejected[Domain Event<br>회원가입 사용자 연결 거부됨]
     evtSignedIn[Domain Event<br>사용자 로그인됨]
     evtSessionIssued[Domain Event<br>세션 발급됨]
     evtTokenRefreshed[Domain Event<br>토큰 재발급됨]
@@ -91,13 +96,13 @@ flowchart LR
     evtPhoneChangeRequested[Domain Event<br>휴대폰 번호 변경 요청됨]
     evtNewPhoneVerified[Domain Event<br>새 휴대폰 인증 식별자 확인됨]
     evtPhoneAuthReplaced[Domain Event<br>휴대폰 인증 식별자 교체됨]
-    evtSigninAuditSent[Domain Event<br>로그인 성공 감사 전송됨]
-    evtSigninFailureAuditSent[Domain Event<br>로그인 실패 감사 전송됨]
-    evtTokenAuditSent[Domain Event<br>토큰 재발급 감사 전송됨]
-    evtLogoutAuditSent[Domain Event<br>로그아웃 감사 전송됨]
-    evtLinkAuditSent[Domain Event<br>인증 수단 변경 감사 전송됨]
-    evtPhoneChangeAuditSent[Domain Event<br>휴대폰 번호 변경 감사 전송됨]
-    evtLockAuditSent[Domain Event<br>계정 잠금 감사 전송됨]
+    evtSigninAuditSent[Outbox Delivery Result<br>로그인 성공 감사 전송됨]
+    evtSigninFailureAuditSent[Outbox Delivery Result<br>로그인 실패 감사 전송됨]
+    evtTokenAuditSent[Outbox Delivery Result<br>토큰 재발급 감사 전송됨]
+    evtLogoutAuditSent[Outbox Delivery Result<br>로그아웃 감사 전송됨]
+    evtLinkAuditSent[Outbox Delivery Result<br>인증 수단 변경 감사 전송됨]
+    evtPhoneChangeAuditSent[Outbox Delivery Result<br>휴대폰 번호 변경 감사 전송됨]
+    evtLockAuditSent[Outbox Delivery Result<br>계정 잠금 감사 전송됨]
 
     policyPublic[Policy<br>공개 탐색 허용]
     policyRedirect[Policy<br>내부 복귀 위치만 허용]
@@ -147,6 +152,7 @@ flowchart LR
   session --> evtIntentSaved
 
   cmdSignup --> identity
+  cmdSignup --> registration
   cmdSignup --> cmdVerifyEmail
   cmdSignup --> cmdVerifyPhone
   cmdVerifyEmail --> emailProvider
@@ -155,11 +161,19 @@ flowchart LR
   cmdVerifyPhone --> smsProvider
   cmdVerifyPhone --> identity
   identity --> evtPhoneLinked
-  cmdSignup --> userContext
+  identity --> registration
+  registration --> evtRegistrationVerified
+  evtRegistrationVerified --> userContext
+  userContext --> cmdApplyRegistrationLink
+  cmdApplyRegistrationLink --> registration
+  cmdApplyRegistrationLink --> cmdLinkUser
   identity --> cmdLinkUser
-  userContext --> cmdLinkUser
   cmdLinkUser --> identityLink
   identityLink --> evtUserLinked
+  registration --> evtRegistrationUserLinked
+  registration --> evtRegistrationUserLinkRejected
+  evtRegistrationUserLinked --> userContext
+  evtRegistrationUserLinkRejected --> userContext
 
   cmdEmailSignin --> identity
   cmdPhoneSignin --> identity
@@ -235,6 +249,7 @@ flowchart LR
   classDef command fill:#DBEAFE,stroke:#111827,color:#111827,stroke-width:2px;
   classDef aggregate fill:#FEF3C7,stroke:#111827,color:#111827,stroke-width:2px;
   classDef event fill:#FED7AA,stroke:#111827,color:#111827,stroke-width:2px;
+  classDef delivery fill:#D1FAE5,stroke:#111827,color:#111827,stroke-width:2px;
   classDef policy fill:#E9D5FF,stroke:#111827,color:#111827,stroke-width:2px;
   classDef rule fill:#DCFCE7,stroke:#111827,color:#111827,stroke-width:2px;
   classDef hotspot fill:#FEE2E2,stroke:#111827,color:#111827,stroke-width:2px;
@@ -243,9 +258,10 @@ flowchart LR
   classDef context fill:#F9FAFB,stroke:#111827,color:#111827,stroke-width:2px;
 
   class guest,buyer,cs,operator actor;
-  class cmdCheckGate,cmdPreserveIntent,cmdSignup,cmdVerifyEmail,cmdVerifyPhone,cmdLinkUser,cmdEmailSignin,cmdPhoneSignin,cmdIssueSession,cmdRefreshToken,cmdLogout,cmdRequestLink,cmdSelfPhoneChange,cmdPhoneChangeReauth,cmdManualLink command;
-  class identity,identityLink,session aggregate;
-  class evtGateApplied,evtIntentSaved,evtUserLinked,evtEmailVerified,evtPhoneLinked,evtSignedIn,evtSessionIssued,evtTokenRefreshed,evtLoggedOut,evtLinkRequested,evtLinkChanged,evtPhoneChangeRequested,evtNewPhoneVerified,evtPhoneAuthReplaced,evtSigninAuditSent,evtSigninFailureAuditSent,evtTokenAuditSent,evtLogoutAuditSent,evtLinkAuditSent,evtPhoneChangeAuditSent,evtLockAuditSent event;
+  class cmdCheckGate,cmdPreserveIntent,cmdSignup,cmdVerifyEmail,cmdVerifyPhone,cmdLinkUser,cmdApplyRegistrationLink,cmdEmailSignin,cmdPhoneSignin,cmdIssueSession,cmdRefreshToken,cmdLogout,cmdRequestLink,cmdSelfPhoneChange,cmdPhoneChangeReauth,cmdManualLink command;
+  class identity,identityLink,registration,session aggregate;
+  class evtGateApplied,evtIntentSaved,evtUserLinked,evtEmailVerified,evtPhoneLinked,evtRegistrationVerified,evtRegistrationUserLinked,evtRegistrationUserLinkRejected,evtSignedIn,evtSessionIssued,evtTokenRefreshed,evtLoggedOut,evtLinkRequested,evtLinkChanged,evtPhoneChangeRequested,evtNewPhoneVerified,evtPhoneAuthReplaced event;
+  class evtSigninAuditSent,evtSigninFailureAuditSent,evtTokenAuditSent,evtLogoutAuditSent,evtLinkAuditSent,evtPhoneChangeAuditSent,evtLockAuditSent delivery;
   class policyPublic,policyRedirect,policyUniqueAuth,policyLock,policyAuthChange,policyMvpProvider,policyMinimalAuth policy;
   class ruleSignup,rulePhoneSignin,ruleLinkOnly,ruleSessionTtl,ruleAudit,rulePhoneChange rule;
   class hotspotSms,hotspotManual,hotspotPhoneRecovery,hotspotProvider,hotspotTtl hotspot;
@@ -276,12 +292,19 @@ flowchart TB
       sgSignup[Command<br>이메일 회원가입]
       sgVerifyEmail[Command<br>이메일 소유 확인]
       sgVerifyPhone[Command<br>휴대폰 소유 확인]
+      sgApplyUserLink[Command<br>회원가입 사용자 연결 반영]
+      sgResumeSignup[Command<br>회원가입 완료 재개]
       sgIdentity[Aggregate<br>Identity]
       sgIdentityLink[Aggregate<br>IdentityLink]
+      sgRegistration[Aggregate<br>Registration]
+      sgSession[Aggregate<br>Session]
       sgEmailVerified[Domain Event<br>이메일 인증 식별자 확인됨]
       sgPhoneVerified[Domain Event<br>휴대폰 인증 식별자 확인됨]
+      sgRegistrationVerified[Domain Event<br>회원가입 인증 완료됨]
       sgIdentityLinked[Domain Event<br>인증 식별자 연결됨]
+      sgRegistrationUserLinked[Domain Event<br>회원가입 사용자 연결됨]
       sgSignedIn[Domain Event<br>사용자 로그인됨]
+      sgSessionIssued[Domain Event<br>세션 발급됨]
       sgRuleSignup[Business Rule<br>이메일과 휴대폰 모두 확인]
       sgRuleLinkOnly[Business Rule<br>인증 식별자 연결만 수행]
       sgPolicyUnique[Policy<br>인증 식별자 단일 연결]
@@ -295,7 +318,7 @@ flowchart TB
       esSession[Aggregate<br>Session]
       esSignedIn[Domain Event<br>사용자 로그인됨]
       esSessionIssued[Domain Event<br>세션 발급됨]
-      esSigninAudit[Domain Event<br>로그인 성공 감사 전송됨]
+      esSigninAudit[Outbox Delivery Result<br>로그인 성공 감사 전송됨]
       esRuleSession[Business Rule<br>세션 TTL과 회전 관리]
       esPolicyLock[Policy<br>로그인 실패 5회 잠금]
     end
@@ -320,7 +343,7 @@ flowchart TB
       lsIdentity[Aggregate<br>Identity]
       lsIdentityLink[Aggregate<br>IdentityLink]
       lsLinkRequested[Domain Event<br>인증 수단 연동 요청됨]
-      lsLinkAudit[Domain Event<br>인증 수단 변경 감사 전송됨]
+      lsLinkAudit[Outbox Delivery Result<br>인증 수단 변경 감사 전송됨]
       lsRuleLinkOnly[Business Rule<br>인증 식별자 연결만 수행]
       lsPolicyUnique[Policy<br>인증 식별자 단일 연결]
       lsPolicyAuthChange[Policy<br>고위험 인증 수단 변경 분기]
@@ -336,7 +359,7 @@ flowchart TB
       pcRequested[Domain Event<br>휴대폰 번호 변경 요청됨]
       pcNewPhoneVerified[Domain Event<br>새 휴대폰 인증 식별자 확인됨]
       pcReplaced[Domain Event<br>휴대폰 인증 식별자 교체됨]
-      pcAudit[Domain Event<br>휴대폰 번호 변경 감사 전송됨]
+      pcAudit[Outbox Delivery Result<br>휴대폰 번호 변경 감사 전송됨]
       pcRulePhoneChange[Business Rule<br>휴대폰 번호 변경은 계정 병합이 아님]
       pcPolicyAuthChange[Policy<br>고위험 인증 수단 변경 분기]
       pcHotspotRecovery[Hotspot<br>번호 변경 복구 기준]
@@ -349,7 +372,7 @@ flowchart TB
       msManual[Command<br>인증 수단 수동 처리]
       msIdentityLink[Aggregate<br>IdentityLink]
       msChanged[Domain Event<br>인증 수단 수동 변경됨]
-      msAudit[Domain Event<br>인증 수단 변경 감사 전송됨]
+      msAudit[Outbox Delivery Result<br>인증 수단 변경 감사 전송됨]
       msPolicyAuthChange[Policy<br>고위험 인증 수단 변경 분기]
       msHotspotManual[Hotspot<br>수동 처리 승인 필드]
     end
@@ -370,11 +393,23 @@ flowchart TB
   sgVerifyPhone --> sgIdentity
   sgIdentity --> sgEmailVerified
   sgIdentity --> sgPhoneVerified
-  sgSignup --> userContextS
-  userContextS --> sgIdentityLink
+  sgSignup --> sgRegistration
+  sgIdentity --> sgRegistration
+  sgRegistration --> sgRegistrationVerified
+  sgRegistrationVerified --> userContextS
+  userContextS --> sgApplyUserLink
+  sgApplyUserLink --> sgRegistration
+  sgApplyUserLink --> sgIdentityLink
   sgIdentity --> sgIdentityLink
   sgIdentityLink --> sgIdentityLinked
-  sgIdentityLinked --> sgSignedIn
+  sgRegistration --> sgRegistrationUserLinked
+  sgRegistrationUserLinked --> userContextS
+  sgGuest --> sgResumeSignup
+  sgRegistration -->|linked 상태 확인| sgResumeSignup
+  sgResumeSignup --> sgRegistration
+  sgResumeSignup --> sgSession
+  sgSession --> sgSignedIn
+  sgSession --> sgSessionIssued
   sgRuleSignup -.-> sgSignup
   sgRuleLinkOnly -.-> sgIdentityLink
   sgPolicyUnique -.-> sgIdentityLink
@@ -436,6 +471,7 @@ flowchart TB
   classDef command fill:#DBEAFE,stroke:#111827,color:#111827,stroke-width:2px;
   classDef aggregate fill:#FEF3C7,stroke:#111827,color:#111827,stroke-width:2px;
   classDef event fill:#FED7AA,stroke:#111827,color:#111827,stroke-width:2px;
+  classDef delivery fill:#D1FAE5,stroke:#111827,color:#111827,stroke-width:2px;
   classDef policy fill:#E9D5FF,stroke:#111827,color:#111827,stroke-width:2px;
   classDef rule fill:#DCFCE7,stroke:#111827,color:#111827,stroke-width:2px;
   classDef hotspot fill:#FEE2E2,stroke:#111827,color:#111827,stroke-width:2px;
@@ -443,9 +479,10 @@ flowchart TB
   classDef context fill:#F9FAFB,stroke:#111827,color:#111827,stroke-width:2px;
 
   class sgGuest,esBuyer,psBuyer,lsBuyer,pcBuyer,msCs,msOperator actor;
-  class sgSignup,sgVerifyEmail,sgVerifyPhone,esSignin,psPhoneSignin,lsRequestLink,pcSelfChange,pcReauth,msManual command;
-  class sgIdentity,sgIdentityLink,esIdentity,esSession,psIdentity,psIdentityLink,psSession,lsIdentity,lsIdentityLink,pcIdentity,pcIdentityLink,msIdentityLink aggregate;
-  class sgEmailVerified,sgPhoneVerified,sgIdentityLinked,sgSignedIn,esSignedIn,esSessionIssued,esSigninAudit,psSignedIn,psSessionIssued,lsLinkRequested,lsLinkAudit,pcRequested,pcNewPhoneVerified,pcReplaced,pcAudit,msChanged,msAudit event;
+  class sgSignup,sgVerifyEmail,sgVerifyPhone,sgApplyUserLink,sgResumeSignup,esSignin,psPhoneSignin,lsRequestLink,pcSelfChange,pcReauth,msManual command;
+  class sgIdentity,sgIdentityLink,sgRegistration,sgSession,esIdentity,esSession,psIdentity,psIdentityLink,psSession,lsIdentity,lsIdentityLink,pcIdentity,pcIdentityLink,msIdentityLink aggregate;
+  class sgEmailVerified,sgPhoneVerified,sgRegistrationVerified,sgIdentityLinked,sgRegistrationUserLinked,sgSignedIn,sgSessionIssued,esSignedIn,esSessionIssued,psSignedIn,psSessionIssued,lsLinkRequested,pcRequested,pcNewPhoneVerified,pcReplaced,msChanged event;
+  class esSigninAudit,lsLinkAudit,pcAudit,msAudit delivery;
   class sgPolicyUnique,esPolicyLock,psPolicyUnique,lsPolicyUnique,lsPolicyAuthChange,pcPolicyAuthChange,msPolicyAuthChange policy;
   class sgRuleSignup,sgRuleLinkOnly,esRuleSession,psRulePhone,lsRuleLinkOnly,pcRulePhoneChange rule;
   class pcHotspotRecovery,msHotspotManual hotspot;
@@ -473,7 +510,7 @@ flowchart TB
 | Command | CMD.A.300-03 | 이메일 회원가입 시작 | Context 인증 | BFF가 받은 프로필/동의 opaque reference와 이메일, 비밀번호, 휴대폰 번호로 가입 예약을 시작한다. |
 | Command | CMD.A.300-04 | 이메일 소유 확인 | Context 인증 | 회원가입 또는 복구 과정에서 이메일 소유를 확인한다. |
 | Command | CMD.A.300-05 | 휴대폰 소유 확인 | Context 인증 | 가상 SMS 인증으로 휴대폰 소유를 확인한다. |
-| Command | CMD.A.300-06 | 인증 식별자 연결 | Context 인증 | Context 사용자에서 발급한 `user_id`와 검증된 인증 식별자를 연결한다. |
+| Command | CMD.A.300-06 | 인증 식별자 연결 | Context 인증 | 검증된 Identity와 `user_id`를 Auth가 소유한 IdentityLink로 연결한다. 신규 가입에서는 CMD.A.300-25가 검증한 요청만 사용한다. |
 | Command | CMD.A.300-07 | 이메일 로그인 | Context 인증 | 이메일과 비밀번호로 기존 인증 식별자를 검증한다. |
 | Command | CMD.A.300-08 | 휴대폰 번호 로그인 | Context 인증 | 연결된 휴대폰 인증 식별자로 기존 `user_id` 로그인을 요청한다. |
 | Command | CMD.A.300-09 | 세션 발급 | Context 인증 | access token, refresh token, remember-me 세션을 발급한다. |
@@ -483,7 +520,7 @@ flowchart TB
 | Command | CMD.A.300-13 | 인증 수단 수동 처리 | Context 인증 | CS/플랫폼 운영자의 승인과 사유로 인증 수단 해제 또는 재연동을 처리한다. |
 | Command | CMD.A.300-14 | 휴대폰 번호 셀프 변경 | Context 인증 | 안전하게 로그인된 사용자가 대체 인증 수단으로 재인증한 뒤 새 휴대폰 번호로 교체한다. |
 | Command | CMD.A.300-15 | 이메일 재인증 | Context 인증 | 현재 비밀번호를 확인하고 Session을 email Link에 재바인딩해 목적 한정 proof를 발급한다. 새 번호 확인은 CMD.A.300-18이 담당한다. |
-| Command | CMD.A.300-16 | 회원가입 진행 | Context 인증 | 검증 완료 뒤 `user_id` 요청, Link, Session 단계를 현재 상태부터 재개한다. |
+| Command | CMD.A.300-16 | 회원가입 진행 | Context 인증 | 검증 완료 통지와 클라이언트 완료 요청의 Session 발급 단계를 현재 상태부터 재개한다. |
 | Command | CMD.A.300-17 | 인증 Challenge 발급 | Context 인증 | API의 명시적 요청으로 목적별 Challenge와 발송 outbox를 만든다. |
 | Command | CMD.A.300-18 | 인증 Challenge 검증 | Context 인증 | Challenge를 검증하고 성공 또는 실패 횟수를 반영한다. |
 | Command | CMD.A.300-19 | 비밀번호 재설정 요청 | Context 인증 | 존재 여부를 숨긴 PasswordReset을 만들고 Challenge 발급은 별도 요청으로 둔다. |
@@ -492,11 +529,12 @@ flowchart TB
 | Command | CMD.A.300-22 | 세션 일괄 폐기 | Context 인증 | 보안 사건과 사용자 상태 변경에 맞는 Session 범위를 폐기한다. |
 | Command | CMD.A.300-23 | 인증 정책 변경 | Context 인증 | TTL, rotation, 잠금, Challenge 정책 version을 변경한다. |
 | Command | CMD.A.300-24 | 인증 후 행동 복구 | Context 인증 | 로그인 전 보존한 action payload를 소비 Session에 한 번 전달한다. |
+| Command | CMD.A.300-25 | 회원가입 사용자 연결 반영 | Context 인증 | Context 사용자의 멱등 계정 연동 요청을 검증하고 두 가입 IdentityLink를 활성화하거나 거부한다. |
 | Aggregate | AGG.A.300-01 | Identity | Context 인증 | 이메일, 휴대폰 번호, ProviderSubject 같은 인증 식별자와 검증 상태를 관리한다. |
 | Aggregate | AGG.A.300-02 | IdentityLink | Context 인증 | `identity_id`와 Context 사용자에서 발급한 `user_id`의 연결 상태를 관리한다. |
 | Aggregate | AGG.A.300-03 | Session | Context 인증 | access token, refresh token, remember-me, rotation, 만료 상태를 관리한다. |
 | Aggregate | AGG.A.300-04 | VerificationChallenge | Context 인증 | 목적별 이메일/SMS 소유 확인의 발급, 검증, 만료, 제한을 관리한다. |
-| Aggregate | AGG.A.300-05 | Registration | Context 인증 | 두 소유 확인부터 `user_id` 연결과 자동 로그인까지의 장기 작업을 관리한다. |
+| Aggregate | AGG.A.300-05 | Registration | Context 인증 | 두 소유 확인, 가입 인증 완료 통지, Context 사용자의 계정 연동 요청 반영과 자동 로그인까지의 장기 작업을 관리한다. |
 | Aggregate | AGG.A.300-06 | PasswordReset | Context 인증 | 선택한 인증 수단 확인과 비밀번호 교체를 단일 사용 작업으로 관리한다. |
 | Aggregate | AGG.A.300-07 | AuthenticationIntent | Context 인증 | 검증된 복귀 위치, 사전 인증 소유 proof, action payload 참조를 관리한다. |
 | Aggregate | AGG.A.300-08 | AccessGrant | Context 인증 | 사용자별 role/permission snapshot과 claim version을 관리한다. |
@@ -535,6 +573,9 @@ flowchart TB
 | Domain Event | EVT.A.300-32 | 인증 식별자 잠김 | Context 인증 | LoginLockPolicy 임계치에 따라 Identity가 잠긴 사실이다. |
 | Domain Event | EVT.A.300-33 | 인증 Challenge 확인됨 | Context 인증 | 목적별 Challenge가 verified된 사실이다. purpose/channel과 비민감 참조만 전달한다. |
 | Domain Event | EVT.A.300-34 | 사용자 인증 제한 상태 변경됨 | Context 인증 | Context 사용자 restriction version이 반영되어 새 인증 허용 상태가 바뀐 사실이다. |
+| Domain Event | EVT.A.300-35 | 회원가입 인증 완료됨 | Context 인증 | 이메일·휴대폰 소유 확인이 모두 끝나 Context 사용자에 가입 인증 완료를 통지할 수 있게 된 사실이다. |
+| Domain Event | EVT.A.300-36 | 회원가입 사용자 연결됨 | Context 인증 | Context 사용자의 계정 연동 요청에 따라 두 가입 IdentityLink가 같은 `user_id`로 활성화된 사실이다. |
+| Domain Event | EVT.A.300-37 | 회원가입 사용자 연결 거부됨 | Context 인증 | binding이 확인된 사용자 생성 거부, 계정 연동 기한 만료 또는 유효한 요청의 Identity 귀속 충돌로 가입 연결을 거부한 사실이다. 오래되었거나 binding이 일치하지 않는 메시지는 Registration을 바꾸지 않는다. |
 | Policy | POLICY.A.300-01 | 공개 탐색 허용 | Context 인증 | 홈, 목록, 상세, 검색, 공지는 비회원 접근을 막지 않는다. |
 | Policy | POLICY.A.300-02 | 내부 복귀 위치만 허용 | Context 인증 | redirect target은 검증된 내부 경로 또는 intent id만 허용한다. |
 | Policy | POLICY.A.300-03 | 인증 식별자 단일 연결 | Context 인증 | 하나의 인증 식별자는 하나의 `user_id`에만 연결된다. |
@@ -598,6 +639,7 @@ flowchart TB
 | CMD.A.300-13 인증 수단 수동 처리 | [REQ.A.05](../00-requirements/REQ_A_05_auth_member.md), [UC.A.300](../30-uc/UC_A_300_auth_member.md) | 계정 접근이 불가능하거나 대체 인증을 통과할 수 없는 고위험 인증 수단 변경은 CS/플랫폼 운영자 수동 처리로 다룬다. |
 | CMD.A.300-14 휴대폰 번호 셀프 변경 | [REQ.A.05](../00-requirements/REQ_A_05_auth_member.md), [UC.A.300](../30-uc/UC_A_300_auth_member.md), [당근 고객센터 FAQ](https://cs.kr.karrotmarket.com/wv/faqs/32) | 휴대폰 번호가 계정 접근 수단이면 번호 변경/기기 변경 시 복구 문제가 생기므로, 안전한 로그인과 대체 인증을 통과한 사용자는 새 번호 SMS 인증으로 셀프 교체할 수 있어야 한다. |
 | CMD.A.300-15 이메일 재인증 | [REQ.A.05](../00-requirements/REQ_A_05_auth_member.md), [UC.A.300](../30-uc/UC_A_300_auth_member.md) | 휴대폰 번호 셀프 변경 등 고위험 작업은 이메일 비밀번호 재인증을 선행해야 한다. |
+| CMD.A.300-25 회원가입 사용자 연결 반영 | [REQ.A.05](../00-requirements/REQ_A_05_auth_member.md), [UC.A.300](../30-uc/UC_A_300_auth_member.md) | Context 사용자가 발급한 새 `user_id`에 검증된 가입 Identity를 연결하되 Auth가 사용자 생성이나 계정 병합을 수행하지 않아야 한다. |
 | AGG.A.300-01 Identity | [REQ.A.05](../00-requirements/REQ_A_05_auth_member.md), [UC.A.300](../30-uc/UC_A_300_auth_member.md) | 이메일 인증 식별자, 휴대폰 인증 식별자, ProviderSubject의 검증 상태가 필요하다. |
 | AGG.A.300-02 IdentityLink | [REQ.A.05](../00-requirements/REQ_A_05_auth_member.md), [UC.A.300](../30-uc/UC_A_300_auth_member.md) | 하나의 인증 식별자는 하나의 `user_id`에만 연결되고, 이미 다른 `user_id`에 연결된 인증 식별자는 거부된다. |
 | AGG.A.300-03 Session | [REQ.A.05](../00-requirements/REQ_A_05_auth_member.md), [UI.A.300](../20-ui/UI_A_300_auth_member/UI_A_300_auth_member.md) | 로그인 상태 유지, token TTL, refresh rotation, 세션 만료 시각이 요구된다. |
@@ -662,17 +704,23 @@ flowchart TB
 | Session | 발행한다 | 로그인 의도 보존됨 | 로그인 성공 후 사용할 복귀 기준이 남는다. |
 | 비회원 | 요청한다 | 이메일 회원가입 | 이메일 기반 가입을 시작한다. |
 | 이메일 회원가입 | 변경한다 | Identity | 이메일/휴대폰 인증 식별자의 검증 상태를 만든다. |
+| 이메일 회원가입 | 변경한다 | Registration | 가입 인증과 Context 간 연동 상태를 추적한다. |
 | 이메일 회원가입 | 요청한다 | 이메일 소유 확인 | 이메일 인증 메일 검증을 요구한다. |
 | 이메일 회원가입 | 요청한다 | 휴대폰 소유 확인 | 가상 SMS 휴대폰 인증을 요구한다. |
-| 이메일 회원가입 | 요청한다 | Context 사용자 | 인증 검증이 끝나면 `user_id` 발급을 요청한다. |
 | 이메일 소유 확인 | 요청한다 | 이메일 발송 시스템 | 이메일 소유 확인 메시지를 보낸다. |
 | 휴대폰 소유 확인 | 요청한다 | 가상 SMS 시스템 | 휴대폰 인증번호 발송과 검증을 수행한다. |
 | Identity | 발행한다 | 이메일 인증 식별자 확인됨 | 이메일 소유 확인 결과를 남긴다. |
 | Identity | 발행한다 | 휴대폰 인증 식별자 확인됨 | 휴대폰 소유 확인 결과를 남긴다. |
-| Identity | 요청한다 | 인증 식별자 연결 | 확인된 이메일/휴대폰 인증 식별자를 연결 대상으로 전달한다. |
-| Context 사용자 | 요청한다 | 인증 식별자 연결 | 발급한 `user_id`를 Context 인증에 전달한다. |
+| Registration | 발행한다 | 회원가입 인증 완료됨 | 두 소유 확인과 verification binding을 Context 사용자에 전달한다. |
+| 회원가입 인증 완료됨 | 제공한다 | Context 사용자 | Context 사용자가 사용자 계정과 `user_id`를 만들 수 있는 비민감 근거를 제공한다. |
+| Context 사용자 | 요청한다 | 회원가입 사용자 연결 반영 | 발급한 `user_id`, `link_request_id`, verification binding을 Context 인증에 멱등하게 전달한다. |
+| 회원가입 사용자 연결 반영 | 요청한다 | 인증 식별자 연결 | 검증된 이메일·휴대폰 Identity를 연결 대상으로 전달한다. |
 | 인증 식별자 연결 | 변경한다 | IdentityLink | `identity_id`와 `user_id` 연결을 확정한다. |
 | IdentityLink | 발행한다 | 인증 식별자 연결됨 | 인증 식별자와 사용자 식별자의 연결 결과를 남긴다. |
+| Registration | 발행한다 | 회원가입 사용자 연결됨 | 두 가입 IdentityLink가 활성화된 결과를 Context 사용자에 전달한다. |
+| Registration | 발행한다 | 회원가입 사용자 연결 거부됨 | binding이 확인된 업무 거부, 계정 연동 기한 만료 또는 유효한 요청의 귀속 충돌을 일반화해 Context 사용자에 전달한다. |
+| 회원가입 사용자 연결됨 | 제공한다 | Context 사용자 | 임시 사용자 계정의 인증 연결 완료 근거를 제공한다. |
+| 회원가입 사용자 연결 거부됨 | 제공한다 | Context 사용자 | 임시 사용자 계정의 실패·운영 처리 근거를 제공한다. |
 | 구매자 | 요청한다 | 이메일 로그인 | 기존 이메일 인증 식별자로 로그인을 시도한다. |
 | 구매자 | 요청한다 | 휴대폰 번호 로그인 | 기존 휴대폰 인증 식별자로 로그인을 시도한다. |
 | 이메일 로그인 | 변경한다 | Identity | 이메일/비밀번호 검증과 실패 횟수를 반영한다. |
@@ -770,10 +818,10 @@ flowchart TB
 | --- | --- | --- |
 | 도메인 모델 | `Identity`, `IdentityLink`, `VerificationChallenge`, `Registration`, `PasswordReset`, `AuthenticationIntent`, `Session`, `AccessGrant`와 하위 Entity/상태를 상세화한다. | [SD.A.30010](../50-service-design/A_300_auth/A_300_10-domain-model/SD_A_30010_auth_domain_model.md) |
 | 영속성 | 인증 식별자 암호화/조회 키, 영구 단일 귀속, Challenge/Session TTL, refresh rotation, idempotency, transactional outbox를 정한다. | [SD.A.30020](../50-service-design/A_300_auth/A_300_20-persistence/README.md) |
-| 서비스 | 인증 게이트, 회원가입 조정, 인증 검증, Context 사용자 `user_id` 발급 요청, 로그인/복구, token 갱신, 로그아웃, 인증 수단 변경, 권한 Grant 처리를 분리한다. | [SD.A.30030](../50-service-design/A_300_auth/A_300_30-service/README.md) |
+| 서비스 | 인증 게이트, 회원가입 인증 완료 통지, Context 사용자의 계정 연동 요청 반영, 클라이언트 완료 요청의 자동 로그인, 로그인/복구, token 갱신, 로그아웃, 인증 수단 변경, 권한 Grant 처리를 분리한다. | [SD.A.30030](../50-service-design/A_300_auth/A_300_30-service/README.md) |
 | API | 공개/선택적 인증/필수 인증 API, redirect target, 회원가입/Challenge, 로그인/복구, 세션, 인증 수단 변경, 운영 정책 오류 계약을 정한다. | [SD.A.30040](../50-service-design/A_300_auth/A_300_40-api/README.md) |
-| 발행 Event | 기존 `EVT.A.300-01~21`과 상세 설계에서 추가한 Challenge/회원가입/복구/세션 폐기/권한 변경 사실을 outbox integration event로 전달한다. | [SD.A.30010](../50-service-design/A_300_auth/A_300_10-domain-model/SD_A_30010_auth_domain_model.md), SCN.A.300 예정 |
-| 구독 Event | Context 사용자의 `user_id` 발급 결과와 role/permission 변경 결과를 멱등하게 반영한다. | [SD.A.30030](../50-service-design/A_300_auth/A_300_30-service/README.md) |
+| 발행 Event | 기존 `EVT.A.300-01~21`과 상세 설계의 Challenge/회원가입 인증 완료/사용자 연결·거부/복구/세션 폐기/권한 변경 사실을 outbox integration event로 전달한다. | [SD.A.30010](../50-service-design/A_300_auth/A_300_10-domain-model/SD_A_30010_auth_domain_model.md), [SCN.A.300](../80-sequence/A_300_auth/README.md) |
+| 구독 Event | Context 사용자의 `User.AuthLinkRequested`/`User.AuthLinkRejected` version 1과 role/permission 변경 결과를 Inbox에서 멱등하게 반영한다. | [SD.A.30030](../50-service-design/A_300_auth/A_300_30-service/README.md) |
 | 외부 연동 | 이메일/SMS 발송과 Context 감사 전송을 adapter로 분리하고, Apple/Google/국내 인증/passkey는 MVP 이후 확장으로 둔다. | [SD.A.30030](../50-service-design/A_300_auth/A_300_30-service/README.md), [SD.A.30040](../50-service-design/A_300_auth/A_300_40-api/README.md) |
 | 정책/불변조건 | 사용자 생성 비소유, 인증 식별자 영구 단일 귀속, 고위험 변경, 민감 원문 금지, 채널별 Session, 세션 강제 폐기를 구현 규칙으로 옮긴다. | [SD.A.30010](../50-service-design/A_300_auth/A_300_10-domain-model/SD_A_30010_auth_domain_model.md), [SD.A.30020](../50-service-design/A_300_auth/A_300_20-persistence/README.md), [SD.A.30030](../50-service-design/A_300_auth/A_300_30-service/README.md) |
-| 열린 질문 | Challenge/잠금/TTL 정책, 번호 변경 복구, 수동 승인, ProviderSubject, role/permission 원천, 세션 폐기 범위를 확정한다. | [SD.A.300](../50-service-design/A_300_auth/README.md), SCN.A.300 예정 |
+| 열린 질문 | Challenge/잠금/TTL 정책, 번호 변경 복구, 수동 승인, ProviderSubject, role/permission 원천, 세션 폐기 범위를 확정한다. | [SD.A.300](../50-service-design/A_300_auth/README.md), [SCN.A.300](../80-sequence/A_300_auth/README.md) |

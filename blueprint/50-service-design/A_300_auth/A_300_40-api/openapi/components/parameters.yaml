@@ -1,0 +1,155 @@
+RegistrationId:
+  name: registrationId
+  in: path
+  required: true
+  description: 회원가입 처리의 opaque 식별자다. 구체적인 길이와 문자 집합은 아직 확정하지 않았다.
+  schema:
+    $ref: ./schemas.yaml#/RegistrationId
+  example: reg_01JXYZ1234567890ABCDEFGHJK
+
+ChallengeId:
+  name: challengeId
+  in: path
+  required: true
+  description: 인증 Challenge의 opaque 식별자다. UUID 또는 prefix 식별자 여부는 아직 확정하지 않았다.
+  schema:
+    $ref: ./schemas.yaml#/ChallengeId
+  example: vch_01JXYZ1234567890ABCDEFGHJK
+
+AuthenticationIntentIdQuery:
+  name: intentId
+  in: query
+  required: true
+  description: 현재 사전 인증 credential에 바인딩된 AuthenticationIntent 식별자다.
+  schema:
+    $ref: ./schemas.yaml#/AuthenticationIntentId
+
+AuthenticationIntentIdPath:
+  name: intentId
+  in: path
+  required: true
+  description: 인증 후 행동을 전달할 AuthenticationIntent 식별자다.
+  schema:
+    $ref: ./schemas.yaml#/AuthenticationIntentId
+
+PasswordResetId:
+  name: passwordResetId
+  in: path
+  required: true
+  description: 현재 사전 인증 credential에 바인딩된 비밀번호 재설정 식별자다.
+  schema:
+    $ref: ./schemas.yaml#/PasswordResetId
+
+LinkIntentId:
+  name: linkIntentId
+  in: path
+  required: true
+  description: 현재 사용자 Session에 바인딩된 requested IdentityLink 식별자다.
+  schema:
+    $ref: ./schemas.yaml#/LinkIntentId
+
+ReplacementId:
+  name: replacementId
+  in: path
+  required: true
+  description: 현재 사용자 Session에 바인딩된 휴대폰 교체 IdentityLink 식별자다.
+  schema:
+    $ref: ./schemas.yaml#/ReplacementId
+
+UserId:
+  name: userId
+  in: path
+  required: true
+  description: 운영자가 인증 상태를 조회할 Context 사용자 식별자다.
+  schema:
+    $ref: ./schemas.yaml#/UserId
+
+PolicyName:
+  name: policyName
+  in: path
+  required: true
+  description: 새 전체 정책 snapshot에서 변경할 정책 영역 이름이다.
+  schema:
+    $ref: ./schemas.yaml#/PolicyName
+
+XRequestId:
+  name: X-Request-Id
+  in: header
+  required: false
+  description: 클라이언트가 선택적으로 보내는 요청 식별자다. 비어 있거나 유효하지 않으면 Gateway가 새 UUID를 발급한다.
+  schema:
+    type: string
+  example: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
+
+Traceparent:
+  name: traceparent
+  in: header
+  required: false
+  description: W3C Trace Context의 traceparent 값이다.
+  schema:
+    type: string
+  example: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
+
+XClientChannel:
+  name: X-Client-Channel
+  in: header
+  required: true
+  description: Gateway가 검증하는 클라이언트 채널이다. 응답 credential 종류는 이 값만으로 결정하지 않는다.
+  schema:
+    type: string
+    enum:
+      - web
+      - ios
+      - android
+  example: web
+
+XDeviceInstallationId:
+  name: X-Device-Installation-Id
+  in: header
+  required: false
+  description: 모바일 요청에서 사용하는 앱 설치 단위의 opaque 난수 식별자다.
+  schema:
+    type: string
+  example: inst_01JXYZ1234567890ABCDEFGHJK
+
+XAppAttestation:
+  name: X-App-Attestation
+  in: header
+  required: false
+  description: 모바일 bootstrap 정책이 활성화된 경우 Gateway가 검증하는 Apple 또는 Google app attestation 원문이다. Auth 서비스에는 전달하지 않는다.
+  schema:
+    type: string
+    minLength: 1
+  x-sensitive: true
+
+IdempotencyKey:
+  name: Idempotency-Key
+  in: header
+  required: true
+  description: 같은 API와 actor 또는 사전 인증 컨텍스트 안에서 하나의 논리 실행을 식별하는 UUID다.
+  schema:
+    type: string
+    format: uuid
+  example: 04bbeb3a-5576-4e95-acb1-89f74ef9eae2
+
+IfMatch:
+  name: If-Match
+  in: header
+  required: true
+  description: 현재 활성 정책 snapshot의 strong ETag다. 값이 다르면 변경하지 않는다.
+  schema:
+    type: string
+    pattern: '^"policy-[0-9]+"$'
+  example: '"policy-7"'
+
+XAuditReasonCode:
+  name: X-Audit-Reason-Code
+  in: header
+  required: true
+  description: 운영자 조회 목적을 나타내는 PII 없는 안정적인 사유 코드다.
+  schema:
+    type: string
+    minLength: 1
+    maxLength: 64
+    pattern: '^[A-Z][A-Z0-9_]+$'
+  example: CUSTOMER_SUPPORT_CASE

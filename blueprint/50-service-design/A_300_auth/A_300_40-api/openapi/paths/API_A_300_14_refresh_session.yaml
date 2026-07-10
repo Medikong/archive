@@ -1,0 +1,115 @@
+post:
+  tags:
+    - Session
+  summary: 모바일 Session 갱신
+  description: |
+    request body의 opaque refresh token을 검증하고 credential을 회전한다.
+    이 operation은 body credential을 사용하므로 OpenAPI security scheme을 적용하지 않는다.
+  operationId: refreshSession
+  x-api-id: API.A.300-14
+  x-use-case: UC.A.300
+  x-service-design: SD.A.30040
+  x-sequences:
+    - SCN.A.300-02
+  x-design-doc: ../../API_A_300_14_refresh_session.md
+  x-error-codes:
+    AUTH_INPUT_INVALID: 400
+    AUTH_SESSION_REVOKED: 401
+    AUTH_USER_RESTRICTED: 403
+    AUTH_IDEMPOTENCY_CONFLICT: 409
+    AUTH_REFRESH_RETRY_EXPIRED: 410
+    AUTH_RATE_LIMITED: 429
+    AUTH_SERVICE_UNAVAILABLE: 503
+  security: []
+  parameters:
+    - $ref: ../components/parameters.yaml#/XRequestId
+    - $ref: ../components/parameters.yaml#/Traceparent
+    - $ref: ../components/parameters.yaml#/XDeviceInstallationId
+    - $ref: ../components/parameters.yaml#/IdempotencyKey
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          additionalProperties: false
+          required:
+            - refreshToken
+          properties:
+            refreshToken:
+              type: string
+              minLength: 1
+              writeOnly: true
+              x-sensitive: true
+              description: 모바일 보안 저장소에 보관한 opaque refresh token이다.
+        example:
+          refreshToken: <opaque-refresh-token>
+  responses:
+    '200':
+      description: refresh credential을 회전하고 새 access JWT를 발급했다.
+      headers:
+        X-Request-Id:
+          $ref: ../components/headers.yaml#/XRequestId
+        Cache-Control:
+          $ref: ../components/headers.yaml#/CacheControlNoStore
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required:
+              - data
+              - meta
+            properties:
+              data:
+                type: object
+                additionalProperties: false
+                required:
+                  - sessionId
+                  - accessToken
+                  - accessTokenExpiresAt
+                  - refreshToken
+                  - refreshTokenExpiresAt
+                properties:
+                  sessionId:
+                    type: string
+                    minLength: 1
+                  accessToken:
+                    type: string
+                    minLength: 1
+                    x-sensitive: true
+                  accessTokenExpiresAt:
+                    type: string
+                    format: date-time
+                  refreshToken:
+                    type: string
+                    minLength: 1
+                    x-sensitive: true
+                  refreshTokenExpiresAt:
+                    type: string
+                    format: date-time
+              meta:
+                $ref: ../components/schemas.yaml#/ResponseMeta
+          example:
+            data:
+              sessionId: ses_01JXYZ1234567890ABCDEFGHJK
+              accessToken: <short-lived-jwt>
+              accessTokenExpiresAt: '2026-07-10T08:15:00Z'
+              refreshToken: <rotated-opaque-token>
+              refreshTokenExpiresAt: '2026-07-24T08:00:00Z'
+            meta:
+              requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
+    '400':
+      $ref: ../components/responses.yaml#/InputInvalid
+    '401':
+      $ref: ../components/responses.yaml#/AuthProblem401SessionRevoked
+    '403':
+      $ref: ../components/responses.yaml#/AuthProblem403UserRestricted
+    '409':
+      $ref: ../components/responses.yaml#/Conflict
+    '410':
+      $ref: ../components/responses.yaml#/AuthProblem410RefreshRetryExpired
+    '429':
+      $ref: ../components/responses.yaml#/RateLimited
+    '503':
+      $ref: ../components/responses.yaml#/AuthServiceUnavailable

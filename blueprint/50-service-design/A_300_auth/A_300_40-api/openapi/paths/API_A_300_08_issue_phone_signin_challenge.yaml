@@ -1,0 +1,121 @@
+post:
+  tags:
+    - SignIn
+  summary: 휴대폰 로그인 Challenge 발급
+  description: 계정 연결 여부를 조회하지 않고 abuse control을 통과한 번호에 실제 SMS Challenge와 delivery를 만든다.
+  operationId: issuePhoneSignInChallenge
+  x-api-id: API.A.300-08
+  x-use-case: UC.A.300
+  x-service-design: SD.A.30040
+  x-sequences:
+    - SCN.A.300-02
+  x-design-doc: ../../API_A_300_08_issue_phone_signin_challenge.md
+  x-state-binding:
+    source: AuthenticationIntent
+    bindOnFirstRequest:
+      - rememberMe
+    requireMatch:
+      - clientChannel
+      - rememberMe
+  x-account-enumeration-protection:
+    delivery: always enqueue after abuse controls pass
+    identityLinkLookup: defer until code verification
+  x-error-codes:
+    AUTH_INPUT_INVALID: 400
+    AUTH_CSRF_INVALID: 403
+    AUTH_INTENT_NOT_FOUND: 404
+    AUTH_IDEMPOTENCY_CONFLICT: 409
+    AUTH_INTENT_EXPIRED: 410
+    AUTH_RATE_LIMITED: 429
+    AUTH_SERVICE_UNAVAILABLE: 503
+  security:
+    - WebAuthFlowCookie: []
+      WebCsrfToken: []
+      WebOrigin: []
+    - MobileAuthFlowToken: []
+  parameters:
+    - $ref: ../components/parameters.yaml#/XRequestId
+    - $ref: ../components/parameters.yaml#/Traceparent
+    - $ref: ../components/parameters.yaml#/XDeviceInstallationId
+    - $ref: ../components/parameters.yaml#/IdempotencyKey
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - authIntentId
+            - phone
+            - rememberMe
+          additionalProperties: false
+          properties:
+            authIntentId:
+              $ref: ../components/schemas.yaml#/AuthenticationIntentId
+            phone:
+              $ref: ../components/schemas.yaml#/PhoneNumber
+            rememberMe:
+              type: boolean
+        example:
+          authIntentId: aint_01JXYZ1234567890ABCDEFGHJK
+          phone:
+            countryCode: '+82'
+            nationalNumber: '01012345678'
+          rememberMe: true
+  responses:
+    '202':
+      description: 휴대폰 로그인 Challenge 요청을 접수했다.
+      headers:
+        X-Request-Id:
+          $ref: ../components/headers.yaml#/XRequestId
+        Cache-Control:
+          $ref: ../components/headers.yaml#/CacheControlNoStore
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+              - meta
+            additionalProperties: false
+            properties:
+              data:
+                type: object
+                required:
+                  - status
+                  - challengeId
+                  - expiresAt
+                additionalProperties: false
+                properties:
+                  status:
+                    type: string
+                    enum:
+                      - accepted
+                  challengeId:
+                    $ref: ../components/schemas.yaml#/ChallengeId
+                  expiresAt:
+                    type: string
+                    format: date-time
+              meta:
+                $ref: ../components/schemas.yaml#/ResponseMeta
+          example:
+            data:
+              status: accepted
+              challengeId: vch_01JXYZ1234567890ABCDEFGHJK
+              expiresAt: '2026-07-10T08:08:00Z'
+            meta:
+              requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
+    '400':
+      $ref: ../components/responses.yaml#/InputInvalid
+    '403':
+      $ref: ../components/responses.yaml#/AuthProblem403CsrfInvalid
+    '404':
+      $ref: ../components/responses.yaml#/AuthProblem404IntentNotFound
+    '409':
+      $ref: ../components/responses.yaml#/Conflict
+    '410':
+      $ref: ../components/responses.yaml#/Gone
+    '429':
+      $ref: ../components/responses.yaml#/RateLimited
+    '503':
+      $ref: ../components/responses.yaml#/AuthServiceUnavailable

@@ -95,9 +95,9 @@ flowchart TD
     EmailSignin -->|"로그인 성공"| ReturnTarget
     PhoneSignin -->|"로그인 성공"| ReturnTarget
 
-    click Home "../PAGE_A_01_homepage.md"
-    click ProductDetail "../PAGE_A_02_product_detail.md"
-    click My "../PAGE_A_10_my.md"
+    click Home "../buyer-mobile-web/PAGE_A_01_homepage.md"
+    click ProductDetail "../buyer-mobile-web/PAGE_A_02_product_detail.md"
+    click My "../buyer-mobile-web/PAGE_A_10_my.md"
     click PasswordReset "../PAGE_A_310_password_find/PAGE_A_310_password_find.md"
 ```
 
@@ -169,7 +169,7 @@ flowchart TD
 - 영속성 참조: [SD.A.30020](../../50-service-design/A_300_auth/A_300_20-persistence/README.md)
 - 서비스 참조: [SD.A.30030](../../50-service-design/A_300_auth/A_300_30-service/README.md)
 - API 참조: [SD.A.30040](../../50-service-design/A_300_auth/A_300_40-api/README.md)
-- 시나리오 참조: SCN.A.300 예정
+- 시퀀스 참조: [SCN.A.300](../../80-sequence/A_300_auth/README.md)
 
 ## 확인 필요
 

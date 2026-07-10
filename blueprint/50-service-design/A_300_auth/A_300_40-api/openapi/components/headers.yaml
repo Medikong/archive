@@ -1,0 +1,82 @@
+XRequestId:
+  description: Gateway가 확정해 응답 본문 meta.requestId와 동일하게 반환하는 요청 식별자다.
+  schema:
+    type: string
+    format: uuid
+  example: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
+
+Location:
+  description: 회원가입 상태 조회 API의 상대 경로다.
+  schema:
+    type: string
+    format: uri-reference
+    pattern: ^/api/v1/auth/registrations/[^/?#]+$
+  example: /api/v1/auth/registrations/reg_01JXYZ1234567890ABCDEFGHJK
+
+RetryAfter:
+  description: 클라이언트가 다음 요청을 보내기 전에 기다려야 하는 최소 초다.
+  schema:
+    type: integer
+    minimum: 1
+  example: 1
+
+CacheControlNoStore:
+  description: 응답을 브라우저, CDN 또는 중간 캐시에 저장하지 못하게 한다.
+  schema:
+    type: string
+    enum:
+      - no-store
+  example: no-store
+
+SetSessionCookie:
+  description: |
+    웹에서 새 Session credential을 전달하거나 기존 credential을 회전한다.
+    `rememberMe=false`이면 브라우저 session cookie로, `rememberMe=true`이면 서버의
+    absolute expiry를 넘지 않는 Max-Age를 포함해 발급한다.
+  schema:
+    type: string
+  x-multiple: true
+  example: __Host-dm_session=opaque-random; Path=/; HttpOnly; Secure; SameSite=Lax
+
+SetSessionAndClearAuthCookies:
+  description: |
+    로그인 또는 회원가입 완료 응답에서 두 개의 Set-Cookie 필드를 보낸다. 첫 필드는
+    `__Host-dm_session`을 새로 발급하며 rememberMe가 true일 때만 서버 absolute expiry를
+    넘지 않는 Max-Age를 포함한다. 둘째 필드는 `__Host-dm_auth`를 Max-Age=0으로 폐기한다.
+    클라이언트와 중간 계층은 반복된 Set-Cookie 필드를 쉼표로 합치지 않는다.
+  schema:
+    type: string
+  x-multiple: true
+  example: __Host-dm_session=opaque-random; Path=/; HttpOnly; Secure; SameSite=Lax
+  x-required-set-cookie-fields:
+    - __Host-dm_session
+    - __Host-dm_auth
+
+ClearSessionCookie:
+  description: 웹 Session cookie를 즉시 폐기하는 Set-Cookie 필드다.
+  schema:
+    type: string
+  x-multiple: true
+  example: __Host-dm_session=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0
+
+ClearAuthFlowCookie:
+  description: 웹 사전 인증 cookie를 즉시 폐기하는 Set-Cookie 필드다.
+  schema:
+    type: string
+  x-multiple: true
+  example: __Host-dm_auth=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0
+
+ETag:
+  description: 새로 활성화한 전체 인증 정책 snapshot의 strong ETag다.
+  schema:
+    type: string
+    pattern: '^"policy-[0-9]+"$'
+  example: '"policy-8"'
+
+VaryCredential:
+  description: 선택적 인증 응답을 공유 캐시가 credential별로 구분하도록 하는 값이다.
+  schema:
+    type: string
+    enum:
+      - Cookie, Authorization
+  example: Cookie, Authorization

@@ -1,0 +1,185 @@
+post:
+  tags:
+    - Registration
+  summary: 이메일 회원가입 시작
+  description: Registration, 이메일·휴대폰 Identity 예약과 PasswordCredential을 만든다. Challenge는 별도 API에서 발급한다.
+  operationId: startEmailRegistration
+  x-api-id: API.A.300-03
+  x-use-case: UC.A.300
+  x-service-design: SD.A.30040
+  x-sequences:
+    - SCN.A.300-01
+  x-design-doc: ../../API_A_300_03_start_email_registration.md
+  x-parent-lifetime-extension: Registration, AuthenticationIntent, and its active owner proof share the child expiry capped by the maximum auth-flow lifetime.
+  x-registration-status-proof:
+    credential: registrationStatusToken
+    storage: keyed hash and independent expiry only
+    authority: read registration status only
+    lifetime: valid through the short terminal status-retention period
+    replay: rotate the token and hash atomically for the same idempotency key and body
+  x-error-codes:
+    AUTH_INPUT_INVALID: 400
+    AUTH_CSRF_INVALID: 403
+    AUTH_INTENT_NOT_FOUND: 404
+    AUTH_IDENTIFIER_UNAVAILABLE: 409
+    AUTH_IDEMPOTENCY_CONFLICT: 409
+    AUTH_INTENT_EXPIRED: 410
+    AUTH_RATE_LIMITED: 429
+    AUTH_SERVICE_UNAVAILABLE: 503
+  security:
+    - WebAuthFlowCookie: []
+      WebCsrfToken: []
+      WebOrigin: []
+    - MobileAuthFlowToken: []
+  parameters:
+    - $ref: ../components/parameters.yaml#/XRequestId
+    - $ref: ../components/parameters.yaml#/Traceparent
+    - $ref: ../components/parameters.yaml#/XDeviceInstallationId
+    - $ref: ../components/parameters.yaml#/IdempotencyKey
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - authIntentId
+            - email
+            - password
+            - phone
+            - profileRequestId
+            - agreementReceiptId
+            - rememberMe
+          additionalProperties: false
+          properties:
+            authIntentId:
+              $ref: ../components/schemas.yaml#/AuthenticationIntentId
+            email:
+              type: string
+              format: email
+              minLength: 3
+              maxLength: 254
+            password:
+              type: string
+              format: password
+              minLength: 1
+              maxLength: 1024
+              writeOnly: true
+              x-sensitive: true
+              description: 세부 강도는 현재 PasswordPolicy로 검증한다.
+            phone:
+              $ref: ../components/schemas.yaml#/PhoneNumber
+            profileRequestId:
+              type: string
+              minLength: 1
+              maxLength: 128
+            agreementReceiptId:
+              type: string
+              minLength: 1
+              maxLength: 128
+            rememberMe:
+              type: boolean
+        example:
+          authIntentId: aint_01JXYZ1234567890ABCDEFGHJK
+          email: buyer@example.com
+          password: <user-entered-password>
+          phone:
+            countryCode: '+82'
+            nationalNumber: '01012345678'
+          profileRequestId: profile_req_01JXYZ1234567890ABC
+          agreementReceiptId: agreement_receipt_01JXYZ1234567890ABC
+          rememberMe: true
+  responses:
+    '201':
+      description: 이메일·휴대폰 소유 확인을 기다리는 Registration을 만들었다.
+      headers:
+        X-Request-Id:
+          $ref: ../components/headers.yaml#/XRequestId
+        Cache-Control:
+          $ref: ../components/headers.yaml#/CacheControlNoStore
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+              - meta
+            additionalProperties: false
+            properties:
+              data:
+                type: object
+                required:
+                  - registrationId
+                  - status
+                  - requiredVerifications
+                  - verifiedMethods
+                  - expiresAt
+                  - registrationStatusToken
+                  - registrationStatusTokenExpiresAt
+                additionalProperties: false
+                properties:
+                  registrationId:
+                    $ref: ../components/schemas.yaml#/RegistrationId
+                  status:
+                    type: string
+                    enum:
+                      - pending_verification
+                  requiredVerifications:
+                    type: array
+                    minItems: 2
+                    maxItems: 2
+                    uniqueItems: true
+                    items:
+                      type: string
+                      enum:
+                        - email
+                        - phone
+                  verifiedMethods:
+                    type: array
+                    maxItems: 0
+                    items:
+                      type: string
+                      enum:
+                        - email
+                        - phone
+                  expiresAt:
+                    type: string
+                    format: date-time
+                  registrationStatusToken:
+                    type: string
+                    minLength: 32
+                    x-sensitive: true
+                    description: API 28 회원가입 상태 조회에만 사용할 수 있는 opaque proof다.
+                  registrationStatusTokenExpiresAt:
+                    type: string
+                    format: date-time
+                    description: terminal 상태의 짧은 조회 보존 기간을 포함한 상태 조회 proof 만료 시각이다.
+              meta:
+                $ref: ../components/schemas.yaml#/ResponseMeta
+          example:
+            data:
+              registrationId: reg_01JXYZ1234567890ABCDEFGHJK
+              status: pending_verification
+              requiredVerifications:
+                - email
+                - phone
+              verifiedMethods: []
+              expiresAt: '2026-07-10T08:30:00Z'
+              registrationStatusToken: <opaque-registration-status-token>
+              registrationStatusTokenExpiresAt: '2026-07-10T09:00:00Z'
+            meta:
+              requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
+    '400':
+      $ref: ../components/responses.yaml#/InputInvalid
+    '403':
+      $ref: ../components/responses.yaml#/AuthProblem403CsrfInvalid
+    '404':
+      $ref: ../components/responses.yaml#/AuthProblem404IntentNotFound
+    '409':
+      $ref: ../components/responses.yaml#/AuthProblem409IdempotencyConflictOrIdentifierUnavailable
+    '410':
+      $ref: ../components/responses.yaml#/Gone
+    '429':
+      $ref: ../components/responses.yaml#/RateLimited
+    '503':
+      $ref: ../components/responses.yaml#/AuthServiceUnavailable

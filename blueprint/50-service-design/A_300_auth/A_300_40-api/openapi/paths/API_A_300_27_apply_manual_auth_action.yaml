@@ -1,0 +1,249 @@
+post:
+  tags:
+    - OperatorAuth
+  summary: 운영자 인증 수동 처리
+  description: |
+    승인된 인증 수동 작업을 동기 실행한다. `Idempotency-Key` UUID를 operation ID로
+    사용하며 `expectedTargetVersion`으로 낙관적 동시성을 확인한다.
+  operationId: applyManualAuthAction
+  x-api-id: API.A.300-27
+  x-use-case: UC.A.300
+  x-use-case-goals:
+    - UC.A.300-14
+  x-service-design: SD.A.30040
+  x-command-ids:
+    - CMD.A.300-13
+    - CMD.A.300-22
+  x-design-doc: ../../API_A_300_27_apply_manual_auth_action.md
+  x-required-permissions:
+    - auth.case.execute
+  x-required-assurance: strong
+  x-action-authorization:
+    unlock_identity:
+      permission: auth.identity.unlock
+      requiredApproval: platform_operator
+    revoke_identity_link:
+      permission: auth.identity_link.revoke
+      requiredApproval: platform_operator
+    approve_relink:
+      permission: auth.identity_link.relink
+      requiredApproval: platform_operator
+    revoke_sessions:
+      permission: auth.session.revoke
+      requiredApproval: platform_operator
+  x-idempotency-key-role: operation_id
+  x-target-action-rules:
+    identity:
+      - unlock_identity
+    identity_link:
+      - revoke_identity_link
+      - approve_relink
+    session:
+      - revoke_sessions
+  x-error-codes:
+    AUTH_INPUT_INVALID: 400
+    AUTH_SESSION_REQUIRED: 401
+    AUTH_CSRF_INVALID: 403
+    AUTH_FORBIDDEN: 403
+    AUTH_REAUTH_REQUIRED: 403
+    AUTH_OPERATOR_TARGET_NOT_FOUND: 404
+    AUTH_APPROVAL_REQUIRED: 409
+    AUTH_IDEMPOTENCY_CONFLICT: 409
+    AUTH_RESOURCE_PRECONDITION_FAILED: 412
+    AUTH_RATE_LIMITED: 429
+    AUTH_SERVICE_UNAVAILABLE: 503
+  security:
+    - WebSessionCookie: []
+      WebCsrfToken: []
+      WebOrigin: []
+  parameters:
+    - $ref: ../components/parameters.yaml#/XRequestId
+    - $ref: ../components/parameters.yaml#/Traceparent
+    - $ref: ../components/parameters.yaml#/IdempotencyKey
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          additionalProperties: false
+          required:
+            - caseId
+            - target
+            - action
+            - reasonCode
+            - approvalId
+            - evidenceRef
+            - expectedTargetVersion
+          properties:
+            caseId:
+              type: string
+              minLength: 1
+              maxLength: 128
+            target:
+              type: object
+              additionalProperties: false
+              required:
+                - type
+                - id
+              properties:
+                type:
+                  type: string
+                  enum:
+                    - identity
+                    - identity_link
+                    - session
+                id:
+                  type: string
+                  minLength: 1
+                  maxLength: 128
+            action:
+              type: string
+              enum:
+                - unlock_identity
+                - revoke_identity_link
+                - approve_relink
+                - revoke_sessions
+            reasonCode:
+              type: string
+              minLength: 1
+              maxLength: 64
+              pattern: ^[A-Z][A-Z0-9_]*$
+            approvalId:
+              type: string
+              minLength: 1
+              maxLength: 128
+            evidenceRef:
+              type: string
+              minLength: 1
+              maxLength: 512
+              pattern: ^case-evidence://[A-Za-z0-9._~:/?#\[\]@!$&'()*+,;=%-]+$
+            expectedTargetVersion:
+              type: integer
+              format: int64
+              minimum: 0
+          allOf:
+            - oneOf:
+                - required:
+                    - action
+                    - target
+                  properties:
+                    action:
+                      enum:
+                        - unlock_identity
+                    target:
+                      required:
+                        - type
+                      properties:
+                        type:
+                          enum:
+                            - identity
+                - required:
+                    - action
+                    - target
+                  properties:
+                    action:
+                      enum:
+                        - revoke_identity_link
+                        - approve_relink
+                    target:
+                      required:
+                        - type
+                      properties:
+                        type:
+                          enum:
+                            - identity_link
+                - required:
+                    - action
+                    - target
+                  properties:
+                    action:
+                      enum:
+                        - revoke_sessions
+                    target:
+                      required:
+                        - type
+                      properties:
+                        type:
+                          enum:
+                            - session
+        example:
+          caseId: case_01JXYZ1234567890ABCDEFGHJK
+          target:
+            type: identity_link
+            id: ilnk_01JXYZ1234567890ABCDEFGHJK
+          action: approve_relink
+          reasonCode: ACCOUNT_RECOVERY_VERIFIED
+          approvalId: approval_01JXYZ1234567890ABCDEFGHJK
+          evidenceRef: case-evidence://case_01JXYZ1234567890ABCDEFGHJK
+          expectedTargetVersion: 4
+  responses:
+    '200':
+      description: 승인된 수동 작업을 완료했다.
+      headers:
+        X-Request-Id:
+          $ref: ../components/headers.yaml#/XRequestId
+        Cache-Control:
+          $ref: ../components/headers.yaml#/CacheControlNoStore
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required:
+              - data
+              - meta
+            properties:
+              data:
+                type: object
+                additionalProperties: false
+                required:
+                  - actionId
+                  - action
+                  - status
+                  - targetVersion
+                properties:
+                  actionId:
+                    type: string
+                    format: uuid
+                  action:
+                    type: string
+                    enum:
+                      - unlock_identity
+                      - revoke_identity_link
+                      - approve_relink
+                      - revoke_sessions
+                  status:
+                    type: string
+                    enum:
+                      - completed
+                  targetVersion:
+                    type: integer
+                    format: int64
+                    minimum: 0
+              meta:
+                $ref: ../components/schemas.yaml#/ResponseMeta
+          example:
+            data:
+              actionId: 04bbeb3a-5576-4e95-acb1-89f74ef9eae2
+              action: approve_relink
+              status: completed
+              targetVersion: 5
+            meta:
+              requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
+    '400':
+      $ref: ../components/responses.yaml#/InputInvalid
+    '401':
+      $ref: ../components/responses.yaml#/AuthenticationRequired
+    '403':
+      $ref: ../components/responses.yaml#/AuthProblem403CsrfInvalidOrForbiddenOrReauthRequired
+    '404':
+      $ref: ../components/responses.yaml#/AuthProblem404OperatorTargetNotFound
+    '409':
+      $ref: ../components/responses.yaml#/AuthProblem409ApprovalRequiredOrIdempotencyConflict
+    '412':
+      $ref: ../components/responses.yaml#/AuthProblem412ResourcePreconditionFailed
+    '429':
+      $ref: ../components/responses.yaml#/RateLimited
+    '503':
+      $ref: ../components/responses.yaml#/AuthServiceUnavailable

@@ -29,7 +29,7 @@ updated: 2026-07-10
 - `REQ.A.05`는 그 여정에서 필요한 로그인, 회원가입, 세션, 사용자 계정 식별, 권한 확인을 독립 요구사항으로 분리한다.
 - 공개 탐색 화면은 비회원 접근을 허용하고, 드롭 참여와 개인/결제 정보 화면은 인증 게이트를 통과해야 한다.
 - 하나의 페이지 안에서도 공개 영역, 선택적 개인화 영역, 필수 인증 행동을 분리한다. 예를 들어 홈 화면은 공개 접근을 허용하되, 사용자 쿠폰/알림/최근 주문 같은 개인화 영역은 로그인 상태에서만 조회하거나 비회원 대체 상태로 표시한다.
-- 휴대폰 번호 인증은 독립적인 사용자 계정 생성 수단이 아니라, 이메일 회원가입 과정에서 User Context가 발급한 `user_id`에 연결되는 인증 식별자다. 휴대폰 번호 로그인은 이미 연결된 휴대폰 인증 식별자를 검증한 뒤 해당 `user_id`로 로그인한다.
+- 휴대폰 번호 인증은 독립적인 사용자 계정 생성 수단이 아니라, 이메일 회원가입 과정에서 Context 사용자가 발급한 `user_id`에 연결되는 인증 식별자다. Auth가 이메일·휴대폰 소유 확인 완료를 알리면 Context 사용자가 사용자 계정과 `user_id`를 만들고 Auth에 계정 연동을 요청한다. 휴대폰 번호 로그인은 이미 연결된 휴대폰 인증 식별자를 검증한 뒤 해당 `user_id`로 로그인한다.
 - 인증 서비스는 `user_id`와 인증/세션/권한 판단에 필요한 최소 정보만 다루고, 사용자 프로필과 표시 정보는 회원/사용자 서비스 책임으로 분리한다.
 
 ### 용어 구분
@@ -89,7 +89,7 @@ updated: 2026-07-10
 | `REQ.A.05.PP-006` | 이메일, 휴대폰, 소셜 인증 수단이 늘어나면 같은 사용자가 여러 인증 경로를 쓰고 싶어질 수 있다. | 사용자 계정을 병합하지 않고, 사용자가 선택한 기존 `user_id`에 새 인증 식별자를 연동한다. 이미 다른 `user_id`에 연결된 인증 식별자는 연동할 수 없으며, 고위험 인증 수단 변경은 셀프 변경 조건과 CS/운영자 수동 처리 조건을 나눈다. | `REQ.A.05.FR-016`, `REQ.A.05.FR-017`, `REQ.A.05.FR-018`, `REQ.A.05.FR-030` | `REQ.A.05.NFR-009`, `REQ.A.05.NFR-010`, `REQ.A.05.NFR-020` | [Mercari Global Identity](https://engineering.mercari.com/en/blog/entry/20251014-toward-a-global-identity-platform/) |
 | `REQ.A.05.PP-007` | 판매자와 운영자 사용자 계정 탈취는 구매자 사용자 계정보다 영향 범위가 크다. | 판매자/운영자에는 passkey 요구사항을 두고, MVP 이후 강한 인증과 팀장급 승인 기반 복구 절차로 확장한다. | `REQ.A.05.FR-020`, `REQ.A.05.FR-021`, `REQ.A.05.FR-031` | `REQ.A.05.NFR-011`, `REQ.A.05.NFR-012`, `REQ.A.05.NFR-021` | [Mercari passkey](https://engineering.mercari.com/en/blog/entry/20251106-mercari-phishing-resistant-accounts-with-passkey/) |
 | `REQ.A.05.PP-008` | OAuth/OIDC 토큰을 잘못 신뢰하면 인증과 권한 경계가 흐려진다. | ID token, access token, 내부 session token의 용도를 구분하고 token trust model을 문서화한다. | `REQ.A.05.FR-014`, `REQ.A.05.FR-015`, `REQ.A.05.FR-019` | `REQ.A.05.NFR-013`, `REQ.A.05.NFR-014` | [Mercari OIDC/OAuth Security](https://engineering.mercari.com/en/blog/entry/20251221-tales-of-oidc-oauth-security-what-it-takes-to-trust-a-token/) |
-| `REQ.A.05.PP-009` | 홈 화면처럼 공개 페이지 안에도 사용자 관련 정보가 섞이면 전체 페이지를 로그인 전용으로 오해하기 쉽다. | 인증 정책을 페이지 단위뿐 아니라 영역, 행동, API 단위로 나누고 선택적 개인화 영역은 비회원 대체 상태를 제공한다. | `REQ.A.05.FR-001`, `REQ.A.05.FR-002`, `REQ.A.05.FR-023`, `REQ.A.05.FR-024` | `REQ.A.05.NFR-001`, `REQ.A.05.NFR-016`, `REQ.A.05.NFR-017` | [PAGE.A.01](../10-sitemap/PAGE_A_01_homepage.md) |
+| `REQ.A.05.PP-009` | 홈 화면처럼 공개 페이지 안에도 사용자 관련 정보가 섞이면 전체 페이지를 로그인 전용으로 오해하기 쉽다. | 인증 정책을 페이지 단위뿐 아니라 영역, 행동, API 단위로 나누고 선택적 개인화 영역은 비회원 대체 상태를 제공한다. | `REQ.A.05.FR-001`, `REQ.A.05.FR-002`, `REQ.A.05.FR-023`, `REQ.A.05.FR-024` | `REQ.A.05.NFR-001`, `REQ.A.05.NFR-016`, `REQ.A.05.NFR-017` | [PAGE.A.01](../10-sitemap/buyer-mobile-web/PAGE_A_01_homepage.md) |
 | `REQ.A.05.PP-010` | 사용자가 휴대폰 번호를 바꿨거나 기존 번호를 더 이상 쓸 수 없으면 휴대폰 로그인과 계정 복구가 CS 문의로 몰릴 수 있다. | 안전하게 로그인된 상태에서 이메일 재인증과 새 번호 SMS 인증을 통과하면 휴대폰 번호 셀프 변경을 허용하고, 대체 인증이 불가능하면 CS/운영자 복구로 보낸다. | `REQ.A.05.FR-030`, `REQ.A.05.FR-032`, `REQ.A.05.FR-033`, `REQ.A.05.FR-034` | `REQ.A.05.NFR-020`, `REQ.A.05.NFR-022` | [당근 고객센터 FAQ](https://cs.kr.karrotmarket.com/wv/faqs/32) |
 
 ## 목표
@@ -113,13 +113,13 @@ updated: 2026-07-10
 
 | Req ID | 요구사항 | 사용자 | 우선순위 | 연결 Page/UC |
 | --- | --- | --- | --- | --- |
-| `REQ.A.05.FR-001` | 사용자는 로그인하지 않아도 홈, 드롭 목록, 드롭 상세, 검색, 공지처럼 개인 정보나 결제 정보가 필요 없는 화면을 탐색할 수 있다. | 비회원, 구매자 | Must | [PAGE.A.01](../10-sitemap/PAGE_A_01_homepage.md), [PAGE.A.02](../10-sitemap/PAGE_A_02_product_detail.md) |
+| `REQ.A.05.FR-001` | 사용자는 로그인하지 않아도 홈, 드롭 목록, 드롭 상세, 검색, 공지처럼 개인 정보나 결제 정보가 필요 없는 화면을 탐색할 수 있다. | 비회원, 구매자 | Must | [PAGE.A.01](../10-sitemap/buyer-mobile-web/PAGE_A_01_homepage.md), [PAGE.A.02](../10-sitemap/buyer-mobile-web/PAGE_A_02_product_detail.md) |
 | `REQ.A.05.FR-002` | 시스템은 비회원이 알림 신청, 관심, 장바구니, 바로 구매, 마이, 주문 내역, 결제수단처럼 개인 정보나 드롭 참여가 필요한 행동을 시도하면 로그인 페이지로 이동시킨다. | 비회원 | Must | [PAGE.A.300](../10-sitemap/PAGE_A_300_auth_member/PAGE_A_300_auth_member.md) |
 | `REQ.A.05.FR-003` | 시스템은 로그인 진입 시 원래 가려던 화면과 의도한 행동을 보존하고, 로그인 성공 후 해당 화면 또는 행동으로 복귀시킨다. | 비회원, 구매자 | Must | [PAGE.A.300](../10-sitemap/PAGE_A_300_auth_member/PAGE_A_300_auth_member.md) |
 | `REQ.A.05.FR-004` | 사용자는 이메일 주소, 비밀번호, 이름, 휴대폰 번호, 추천인 코드, 약관 동의를 입력해 이메일 회원가입을 요청한다. | 비회원 | Must | [PAGE.A.301](../10-sitemap/PAGE_A_300_auth_member/PAGE_A_300_auth_member.md) |
-| `REQ.A.05.FR-005` | 사용자는 이메일 회원가입 중 가상 SMS 휴대폰 인증을 완료해 User Context가 발급하는 `user_id`에 휴대폰 인증 식별자를 연결한다. | 비회원 | Must | [PAGE.A.300](../10-sitemap/PAGE_A_300_auth_member/PAGE_A_300_auth_member.md) |
+| `REQ.A.05.FR-005` | 사용자는 이메일 회원가입 중 가상 SMS 휴대폰 인증을 완료한다. Context 사용자는 Auth의 가입 인증 완료 통지를 받은 뒤 새 `user_id`를 발급하고 Auth에 휴대폰 인증 식별자 연결을 요청한다. | 비회원 | Must | [PAGE.A.300](../10-sitemap/PAGE_A_300_auth_member/PAGE_A_300_auth_member.md) |
 | `REQ.A.05.FR-006` | 시스템은 이메일 형식, 이메일 중복, 비밀번호 규칙, 비밀번호 일치, 필수 약관 동의, 휴대폰 번호 형식, 가상 SMS 인증번호를 검증한 뒤 회원가입을 처리한다. | 비회원 | Must | [PAGE.A.301](../10-sitemap/PAGE_A_300_auth_member/PAGE_A_300_auth_member.md) |
-| `REQ.A.05.FR-007` | 시스템은 이메일 인증 메일 검증과 가상 SMS 휴대폰 인증이 완료되어 회원가입에 성공하면 User Context가 발급한 새 `user_id`에 인증 식별자를 연결하고 사용자를 자동 로그인 상태로 전환한다. | 비회원 | Must | [PAGE.A.301](../10-sitemap/PAGE_A_300_auth_member/PAGE_A_300_auth_member.md) |
+| `REQ.A.05.FR-007` | 시스템은 이메일 인증 메일 검증과 가상 SMS 휴대폰 인증이 끝나면 Auth가 가입 인증 완료를 통지하고, Context 사용자가 새 `user_id`를 발급해 Auth에 계정 연동을 요청하도록 처리한다. Auth는 요청을 멱등하게 반영해 인증 식별자를 연결하고 클라이언트 완료 요청에서 사용자를 자동 로그인 상태로 전환한다. | 비회원 | Must | [PAGE.A.301](../10-sitemap/PAGE_A_300_auth_member/PAGE_A_300_auth_member.md) |
 | `REQ.A.05.FR-008` | 사용자는 이메일과 비밀번호로 로그인하고, 필요하면 로그인 상태 유지를 선택한다. | 비회원, 구매자 | Must | [PAGE.A.302](../10-sitemap/PAGE_A_300_auth_member/PAGE_A_300_auth_member.md) |
 | `REQ.A.05.FR-009` | 시스템은 로그인 성공 후 redirect target이 있으면 해당 위치로 이동하고, 없으면 홈 화면으로 이동한다. | 구매자 | Must | [PAGE.A.300](../10-sitemap/PAGE_A_300_auth_member/PAGE_A_300_auth_member.md), [PAGE.A.302](../10-sitemap/PAGE_A_300_auth_member/PAGE_A_300_auth_member.md) |
 | `REQ.A.05.FR-010` | 시스템은 드롭 참여 전 로그인 상태, 사용자 인증 정보 보유 여부, 구매 제한 조건, 차단된 사용자 계정 여부를 확인하고 진행 가능 여부를 결정한다. | 구매자 | Must | [REQ.A.01](./REQ_A_01_limited_drop_commerce.md) |
@@ -136,7 +136,7 @@ updated: 2026-07-10
 | `REQ.A.05.FR-021` | 운영자 사용자 계정은 운영자 사이트 접근 시 RBAC를 통과해야 하고, 판매자/운영자 passkey는 MVP 이후 강한 인증 요구사항으로 둔다. | 플랫폼 운영자 | Must | [REQ.A.04](./REQ_A_04_platform_operator_admin.md) |
 | `REQ.A.05.FR-022` | 시스템은 로그인 성공/실패, 회원가입, 휴대폰 인증, token 발급/갱신, 로그아웃, 인증 식별자 잠금, 권한 변경, 인증 수단 연동/변경을 의미별 감사 이벤트로 구분해 Audit Context로 전송한다. | 시스템, CS, 운영자 | Must | 운영자 사이트 예정 |
 | `REQ.A.05.FR-023` | 시스템은 화면 영역과 사용자 행동을 공개, 선택적 인증, 필수 인증, 권한 필요로 분류하고 각 분류별 처리 방식을 정의한다. | 시스템 | Must | PAGE.A.01, PAGE.A.300 예정 |
-| `REQ.A.05.FR-024` | 공개 페이지 안의 사용자 개인화 컴포넌트는 Auth Boundary 또는 Permission Boundary 안에서 렌더링하며, 인증/권한 오류가 발생해도 페이지 전체 실패로 전파하지 않고 해당 컴포넌트의 대체 상태로 제한한다. | 비회원, 구매자 | Must | [PAGE.A.01](../10-sitemap/PAGE_A_01_homepage.md) |
+| `REQ.A.05.FR-024` | 공개 페이지 안의 사용자 개인화 컴포넌트는 Auth Boundary 또는 Permission Boundary 안에서 렌더링하며, 인증/권한 오류가 발생해도 페이지 전체 실패로 전파하지 않고 해당 컴포넌트의 대체 상태로 제한한다. | 비회원, 구매자 | Must | [PAGE.A.01](../10-sitemap/buyer-mobile-web/PAGE_A_01_homepage.md) |
 | `REQ.A.05.FR-025` | API는 공개 데이터, 선택적 개인화 데이터, 필수 인증 데이터를 구분해 제공하고, 선택적 개인화 데이터 실패가 공개 페이지 전체 실패로 번지지 않게 한다. | 시스템 | Must | [SD.A.30040](../50-service-design/A_300_auth/A_300_40-api/README.md) |
 | `REQ.A.05.FR-026` | 시스템은 휴대폰 번호 로그인 시 가상 SMS 인증을 통과한 휴대폰 인증 식별자가 기존 `user_id`에 연결되어 있을 때만 해당 사용자 계정으로 로그인시킨다. 연결된 `user_id`가 없으면 로그인 실패와 이메일 회원가입/연동 안내를 반환한다. | 비회원, 구매자 | Must | [PAGE.A.300](../10-sitemap/PAGE_A_300_auth_member/PAGE_A_300_auth_member.md) |
 | `REQ.A.05.FR-027` | 시스템은 이메일 인증 메일 검증을 이메일 회원가입 완료의 필수 조건으로 둔다. 휴대폰 인증 식별자가 연결되어 있어도 이메일 인증을 생략하지 않는다. | 비회원 | Must | [PAGE.A.301](../10-sitemap/PAGE_A_300_auth_member/PAGE_A_300_auth_member.md) |
@@ -168,7 +168,7 @@ updated: 2026-07-10
 | `REQ.A.05.NFR-014` | 인증 서비스는 사용자 프로필 의미를 알지 않아야 한다. | auth-service는 `user_id`, credential, session, role/permission claim만 다루고 표시명, 주소, 마케팅 속성은 회원/사용자 서비스가 다룬다. | [SD.A.30030](../50-service-design/A_300_auth/A_300_30-service/README.md) |
 | `REQ.A.05.NFR-015` | 인증 관련 감사 이벤트는 민감 정보를 포함하지 않아야 한다. | 비밀번호, 인증번호, token 원문, provider secret은 로그/trace/event에 남기지 않는다. | 운영 대시보드 예정 |
 | `REQ.A.05.NFR-016` | 인증 정책은 페이지 단위에만 고정되지 않아야 한다. | page, section, action, API endpoint 단위로 공개, 선택적 인증, 필수 인증, 권한 필요 정책을 선언할 수 있다. | PAGE.A.01, [SD.A.30040](../50-service-design/A_300_auth/A_300_40-api/README.md) |
-| `REQ.A.05.NFR-017` | 선택적 개인화 API의 인증 실패는 공개 페이지 전체를 실패시키지 않아야 한다. | 홈 화면 공개 데이터는 유지하고, Auth Boundary 또는 Permission Boundary 안의 개인화 컴포넌트만 비회원 상태, 로그인 유도, 권한 없음, 또는 일시 실패 상태로 처리한다. | [PAGE.A.01](../10-sitemap/PAGE_A_01_homepage.md) |
+| `REQ.A.05.NFR-017` | 선택적 개인화 API의 인증 실패는 공개 페이지 전체를 실패시키지 않아야 한다. | 홈 화면 공개 데이터는 유지하고, Auth Boundary 또는 Permission Boundary 안의 개인화 컴포넌트만 비회원 상태, 로그인 유도, 권한 없음, 또는 일시 실패 상태로 처리한다. | [PAGE.A.01](../10-sitemap/buyer-mobile-web/PAGE_A_01_homepage.md) |
 | `REQ.A.05.NFR-018` | 이메일 인증은 휴대폰 인증보다 낮은 우선순위의 선택 절차가 아니어야 한다. | 이메일 회원가입은 이메일 인증 메일 검증과 가상 SMS 휴대폰 인증 식별자 연동을 모두 만족해야 완료된다. | [PAGE.A.301](../10-sitemap/PAGE_A_300_auth_member/PAGE_A_300_auth_member.md) |
 | `REQ.A.05.NFR-019` | 로그인 실패 횟수와 인증 식별자 잠금 시간은 전역 정책으로 관리해야 한다. | 기본 실패 허용 횟수는 5회로 두고, 실패 횟수 기준과 잠금 시간은 배포 없이 설정으로 조정할 수 있다. | [SD.A.30030](../50-service-design/A_300_auth/A_300_30-service/README.md) |
 | `REQ.A.05.NFR-020` | 인증 수단 해제와 재연동은 기본 셀프서비스로 열지 않아야 한다. | 안전한 로그인, 대체 인증, 새 번호 SMS 인증을 만족한 휴대폰 번호 교체만 셀프 변경으로 허용하고, 그 외 고위험 변경은 CS/운영자 수동 처리로 제한한다. | 운영자 사이트 예정 |
@@ -192,11 +192,11 @@ updated: 2026-07-10
 - 로그인 성공 후 redirect target이 있으면 원래 화면 또는 행동으로 돌아간다.
 - 이메일 회원가입은 필수 입력과 필수 약관 동의를 통과해야 완료된다.
 - 이메일 인증 메일 검증은 이메일 회원가입 필수 조건이다.
-- 이메일 회원가입 중 가상 SMS 휴대폰 인증을 완료하면 휴대폰 인증 식별자가 User Context가 발급한 새 `user_id`에 연결된다.
+- 이메일·휴대폰 소유 확인이 끝나면 Context 사용자가 발급한 새 `user_id`와 계정 연동 요청이 Auth에 멱등하게 반영되고 두 인증 식별자가 연결된다.
 - 휴대폰 번호 로그인은 이미 `user_id`에 연결된 휴대폰 인증 식별자가 있을 때만 성공한다.
 - 비밀번호 재설정은 이메일 인증과 휴대폰 번호 인증을 모두 지원한다.
 - 로그인 실패 5회가 발생하면 전역 인증 식별자 잠금 정책이 적용된다.
-- 회원가입 성공 후 사용자는 자동 로그인 상태가 된다.
+- 계정 연동과 Session 전달이 끝나면 사용자는 추가 credential 입력 없이 자동 로그인 상태가 된다.
 - 이메일 로그인은 로그인 상태 유지 옵션을 제공한다.
 - access token, refresh token, 로그인 상태 유지 TTL은 설정으로 변경 가능하고 초기 기본값을 가진다.
 - 드롭 참여 전에는 로그인 상태와 사용자 인증 정보 보유 여부를 확인한다.
@@ -224,7 +224,7 @@ updated: 2026-07-10
 - 영속성 참조: [SD.A.30020](../50-service-design/A_300_auth/A_300_20-persistence/README.md)
 - 서비스 참조: [SD.A.30030](../50-service-design/A_300_auth/A_300_30-service/README.md)
 - API 참조: [SD.A.30040](../50-service-design/A_300_auth/A_300_40-api/README.md)
-- 시나리오 참조: SCN.A.300 예정, SCN.A.310 예정
+- 시퀀스 참조: [SCN.A.300](../80-sequence/A_300_auth/README.md), [SCN.A.310-01](../80-sequence/A_300_auth/SCN_A_310_01_password_reset.md)
 
 ## 열린 질문
 

@@ -1,0 +1,359 @@
+patch:
+  tags:
+    - AuthPolicy
+  summary: 인증 정책 변경
+  description: |
+    선택한 정책 묶음을 변경하고 나머지 active 값을 복제해 새 global 정책
+    snapshot을 만든다. `If-Match`는 정책별 version이 아니라 global version이다.
+  operationId: updateAuthPolicy
+  x-api-id: API.A.300-26
+  x-use-case: UC.A.300
+  x-use-case-goals:
+    - UC.A.300-17
+  x-service-design: SD.A.30040
+  x-command-ids:
+    - CMD.A.300-23
+  x-design-doc: ../../API_A_300_26_update_auth_policy.md
+  x-required-permissions:
+    - auth.policy.write
+  x-required-assurance: strong
+  x-path-body-binding:
+    pathParameter: policyName
+    bodyProperty: policyName
+    comparison: exact
+  x-merged-snapshot-constraints:
+    session-ttl:
+      - webIdleSeconds <= webAbsoluteSeconds
+      - mobileAccessSeconds < mobileRefreshSeconds
+      - mobileRefreshSeconds <= webRememberMeSeconds
+    verification:
+      uniqueBy:
+        - purpose
+        - channel
+      channelByPurpose:
+        signup_email:
+          - email_code
+        signup_phone:
+          - sms_code
+        phone_signin:
+          - sms_code
+        password_reset:
+          - email_code
+          - sms_code
+        identity_link:
+          - sms_code
+        phone_change:
+          - sms_code
+    session-revocation:
+      uniqueBy:
+        - trigger
+      passwordResetRequiredScopes:
+        - user_sessions
+        - refresh_family
+  x-error-codes:
+    AUTH_INPUT_INVALID: 400
+    AUTH_SESSION_REQUIRED: 401
+    AUTH_CSRF_INVALID: 403
+    AUTH_FORBIDDEN: 403
+    AUTH_REAUTH_REQUIRED: 403
+    AUTH_IDEMPOTENCY_CONFLICT: 409
+    AUTH_POLICY_PRECONDITION_FAILED: 412
+    AUTH_SERVICE_UNAVAILABLE: 503
+  security:
+    - WebSessionCookie: []
+      WebCsrfToken: []
+      WebOrigin: []
+  parameters:
+    - $ref: ../components/parameters.yaml#/PolicyName
+    - $ref: ../components/parameters.yaml#/XRequestId
+    - $ref: ../components/parameters.yaml#/Traceparent
+    - $ref: ../components/parameters.yaml#/IdempotencyKey
+    - $ref: ../components/parameters.yaml#/IfMatch
+  requestBody:
+    required: true
+    description: |
+      path와 body의 policyName이 정확히 일치하는 patch schema 하나를 사용한다.
+      모든 변경은 사유와 적어도 한 개의 정책 필드를 포함해야 한다. `rules` 배열은
+      지정한 policyName의 기존 규칙 전체를 교체한다.
+    content:
+      application/json:
+        schema:
+          oneOf:
+            - title: LoginLockPolicyPatch
+              type: object
+              additionalProperties: false
+              minProperties: 3
+              required:
+                - policyName
+                - changeReason
+              properties:
+                policyName:
+                  type: string
+                  enum:
+                    - login-lock
+                failureThreshold:
+                  type: integer
+                  minimum: 1
+                  maximum: 20
+                windowSeconds:
+                  type: integer
+                  minimum: 1
+                  maximum: 86400
+                lockSeconds:
+                  type: integer
+                  minimum: 1
+                  maximum: 604800
+                resetFailureOnSuccess:
+                  type: boolean
+                changeReason:
+                  type: string
+                  minLength: 1
+                  maxLength: 500
+            - title: SessionTtlPolicyPatch
+              type: object
+              additionalProperties: false
+              minProperties: 3
+              required:
+                - policyName
+                - changeReason
+              properties:
+                policyName:
+                  type: string
+                  enum:
+                    - session-ttl
+                webIdleSeconds:
+                  type: integer
+                  minimum: 1
+                  maximum: 604800
+                webAbsoluteSeconds:
+                  type: integer
+                  minimum: 1
+                  maximum: 31536000
+                mobileAccessSeconds:
+                  type: integer
+                  minimum: 1
+                  maximum: 86400
+                mobileRefreshSeconds:
+                  type: integer
+                  minimum: 1
+                  maximum: 31536000
+                webRememberMeSeconds:
+                  type: integer
+                  minimum: 1
+                  maximum: 31536000
+                internalContextSeconds:
+                  type: integer
+                  minimum: 1
+                  maximum: 86400
+                changeReason:
+                  type: string
+                  minLength: 1
+                  maxLength: 500
+            - title: RefreshRotationPolicyPatch
+              type: object
+              additionalProperties: false
+              minProperties: 3
+              required:
+                - policyName
+                - changeReason
+              properties:
+                policyName:
+                  type: string
+                  enum:
+                    - refresh-rotation
+                enabled:
+                  type: boolean
+                reuseAction:
+                  type: string
+                  enum:
+                    - revoke_family_and_session
+                changeReason:
+                  type: string
+                  minLength: 1
+                  maxLength: 500
+            - title: VerificationPolicyPatch
+              type: object
+              additionalProperties: false
+              required:
+                - policyName
+                - rules
+                - changeReason
+              properties:
+                policyName:
+                  type: string
+                  enum:
+                    - verification
+                rules:
+                  type: array
+                  description: 이 배열은 verification 정책의 기존 규칙 전체를 교체한다.
+                  minItems: 1
+                  maxItems: 50
+                  x-unique-by:
+                    - purpose
+                    - channel
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required:
+                      - purpose
+                      - channel
+                      - ttlSeconds
+                      - maxAttempts
+                      - maxSends
+                      - resendIntervalSeconds
+                    properties:
+                      purpose:
+                        type: string
+                        enum:
+                          - signup_email
+                          - signup_phone
+                          - phone_signin
+                          - password_reset
+                          - identity_link
+                          - phone_change
+                      channel:
+                        type: string
+                        enum:
+                          - email_code
+                          - sms_code
+                      ttlSeconds:
+                        type: integer
+                        minimum: 1
+                        maximum: 86400
+                      maxAttempts:
+                        type: integer
+                        minimum: 1
+                        maximum: 20
+                      maxSends:
+                        type: integer
+                        minimum: 1
+                        maximum: 20
+                      resendIntervalSeconds:
+                        type: integer
+                        minimum: 1
+                        maximum: 86400
+                changeReason:
+                  type: string
+                  minLength: 1
+                  maxLength: 500
+            - title: SessionRevocationPolicyPatch
+              type: object
+              additionalProperties: false
+              required:
+                - policyName
+                - rules
+                - changeReason
+              properties:
+                policyName:
+                  type: string
+                  enum:
+                    - session-revocation
+                rules:
+                  type: array
+                  description: 이 배열은 session-revocation 정책의 기존 규칙 전체를 교체한다.
+                  minItems: 1
+                  maxItems: 50
+                  x-unique-by:
+                    - trigger
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required:
+                      - trigger
+                      - scopes
+                    properties:
+                      trigger:
+                        type: string
+                        minLength: 1
+                        maxLength: 32
+                        pattern: ^[a-z][a-z0-9_]*$
+                      scopes:
+                        type: array
+                        minItems: 1
+                        maxItems: 4
+                        uniqueItems: true
+                        items:
+                          type: string
+                          enum:
+                            - current_session
+                            - identity_sessions
+                            - user_sessions
+                            - refresh_family
+                changeReason:
+                  type: string
+                  minLength: 1
+                  maxLength: 500
+          discriminator:
+            propertyName: policyName
+        examples:
+          loginLock:
+            summary: 로그인 잠금 정책 일부 변경
+            value:
+              policyName: login-lock
+              failureThreshold: 5
+              windowSeconds: 900
+              lockSeconds: 1800
+              changeReason: SECURITY_BASELINE_UPDATE
+  responses:
+    '200':
+      description: 새 global 정책 snapshot을 활성화했다.
+      headers:
+        X-Request-Id:
+          $ref: ../components/headers.yaml#/XRequestId
+        Cache-Control:
+          $ref: ../components/headers.yaml#/CacheControlNoStore
+        ETag:
+          $ref: ../components/headers.yaml#/ETag
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required:
+              - data
+              - meta
+            properties:
+              data:
+                type: object
+                additionalProperties: false
+                required:
+                  - name
+                  - version
+                  - status
+                  - effectiveAt
+                properties:
+                  name:
+                    $ref: ../components/schemas.yaml#/PolicyName
+                  version:
+                    type: integer
+                    format: int64
+                    minimum: 1
+                  status:
+                    type: string
+                    enum:
+                      - active
+                  effectiveAt:
+                    type: string
+                    format: date-time
+              meta:
+                $ref: ../components/schemas.yaml#/ResponseMeta
+          example:
+            data:
+              name: login-lock
+              version: 8
+              status: active
+              effectiveAt: '2026-07-10T08:05:00Z'
+            meta:
+              requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
+    '400':
+      $ref: ../components/responses.yaml#/InputInvalid
+    '401':
+      $ref: ../components/responses.yaml#/AuthenticationRequired
+    '403':
+      $ref: ../components/responses.yaml#/AuthProblem403CsrfInvalidOrForbiddenOrReauthRequired
+    '409':
+      $ref: ../components/responses.yaml#/Conflict
+    '412':
+      $ref: ../components/responses.yaml#/PreconditionFailed
+    '503':
+      $ref: ../components/responses.yaml#/AuthServiceUnavailable
