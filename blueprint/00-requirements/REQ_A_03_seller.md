@@ -6,7 +6,7 @@ status: draft
 tags: [requirements, dropmong, seller, reseller, business-seller, seller-portal, seller-analytics, limited-commerce]
 source: local
 created: 2026-07-07
-updated: 2026-07-07
+updated: 2026-07-10
 ---
 
 # 판매자 요구사항 정의
@@ -98,31 +98,31 @@ updated: 2026-07-07
 
 | Req ID | 요구사항 | 사용자 | 우선순위 | 연결 Page/UC |
 | --- | --- | --- | --- | --- |
-| `REQ.A.03.FR-001` | 판매자 대표 관리자는 판매자 포털에 로그인한다. | 판매자 대표 관리자, 판매자 상품 담당자 | Must | TBD |
-| `REQ.A.03.FR-002` | 판매자 대표 관리자는 판매자명, 판매자 유형, 프로필 이미지, 소개, 사업자 정보 또는 본인 인증 정보, 고객 안내 연락처, 배송/교환/환불 기본 문구를 등록한다. | 판매자 대표 관리자 | Must | TBD |
-| `REQ.A.03.FR-003` | 판매자 대표 관리자는 판매자 내부 운영자를 초대하고 역할별 권한을 부여한다. | 판매자 대표 관리자 | Must | TBD |
-| `REQ.A.03.FR-004` | 판매자는 자기 드롭 목록을 예정, 검수 중, 승인, 반려, 진행 중, 종료 상태로 조회한다. | 판매자 | Must | TBD |
-| `REQ.A.03.FR-005` | 판매자는 드롭 상품의 상품명, 카테고리, 썸네일, 상세 이미지, 상세 설명, 가격, 옵션, 판매 수량을 등록한다. | 판매자 상품 담당자 | Must | TBD |
-| `REQ.A.03.FR-006` | 판매자는 드롭 오픈 시각, 종료 시각, 노출 시작 시각, 1인 구매 제한, 배송/반품 조건, 판매자 고지 문구를 설정한다. | 판매자 상품 담당자 | Must | TBD |
-| `REQ.A.03.FR-007` | 판매자는 옵션별 판매 수량, 출고 가능 수량, 재고 기준 시각, 공급 가능 여부를 입력한다. | 판매자 상품 담당자 | Must | TBD |
-| `REQ.A.03.FR-008` | 판매자는 등록한 드롭을 임시 저장하거나 플랫폼 운영자에게 검수 요청으로 제출한다. | 판매자 상품 담당자 | Must | TBD |
-| `REQ.A.03.FR-009` | 판매자는 플랫폼 운영자의 승인, 반려, 보류 결과와 반려 사유를 확인한다. | 판매자 상품 담당자 | Must | TBD |
-| `REQ.A.03.FR-010` | 판매자는 승인 전 드롭 정보를 수정할 수 있다. | 판매자 상품 담당자 | Must | TBD |
-| `REQ.A.03.FR-011` | 판매자는 승인 후 가격, 판매 수량, 오픈 시각, 구매 제한 같은 핵심 조건 변경이 필요하면 변경 요청을 제출한다. | 판매자 상품 담당자 | Must | TBD |
-| `REQ.A.03.FR-012` | 판매자는 진행 중인 드롭의 노출 상태, 품절 상태, 주문 가능 상태를 조회한다. | 판매자 | Must | TBD |
-| `REQ.A.03.FR-013` | 판매자는 드롭별 조회 수, 알림 신청 수, 구매 시도 수, 재고 배정 수, 주문 성공 수, 결제 실패 수, 품절 시각을 조회한다. | 판매자, 판매자 성과 조회자 | Must | TBD |
-| `REQ.A.03.FR-014` | 판매자는 드롭 종료 후 판매 결과 요약, 실패 사유 분포, 쿠폰 사용 수, 취소/환불 요청 수를 조회한다. | 판매자, 판매자 성과 조회자 | Should | TBD |
-| `REQ.A.03.FR-015` | 판매자 출고 담당자는 자기 판매 주문 목록을 조회하고 출고에 필요한 주문 자료를 다운로드한다. | 판매자 출고 담당자 | Must | TBD |
-| `REQ.A.03.FR-016` | 시스템은 주문 자료 다운로드 시 다운로드 목적, 요청자, 다운로드 범위, 요청 시각을 기록한다. | 시스템 | Must | TBD |
-| `REQ.A.03.FR-017` | 판매자는 판매자 귀책 취소, 출고 지연, 재고 부족, 상품 정보 오류 같은 운영 이슈를 사유 코드와 함께 신고하거나 확인한다. | 판매자 | Should | TBD |
-| `REQ.A.03.FR-018` | 판매자는 구매자에게 노출되는 판매자명, 판매 책임 고지, 배송/반품 안내가 상품 상세와 주문 화면에 어떻게 표시되는지 미리보기로 확인한다. | 판매자 | Should | TBD |
-| `REQ.A.03.FR-019` | 판매자는 정산 예정 대상 주문, 정산 보류 사유, 판매자 귀책 차감 대상 여부를 조회한다. | 판매자 대표 관리자 | Should | TBD |
-| `REQ.A.03.FR-020` | 판매자 대표 관리자는 판매자 내부 운영자 계정을 비활성화하고 권한 변경 이력을 조회한다. | 판매자 대표 관리자 | Must | TBD |
-| `REQ.A.03.FR-021` | 판매자는 선택적으로 스토어명, 로고, 소개 문구, 대표 이미지 같은 브랜딩 정보를 등록한다. | 판매자 대표 관리자 | Could | TBD |
-| `REQ.A.03.FR-022` | 판매자는 상품 판매 통계를 상품, 옵션, 드롭 회차, 기간, 유입 경로, 쿠폰 사용 여부, 취소/환불 여부 기준으로 분석한다. | 판매자, 판매자 성과 조회자 | Should | TBD |
-| `REQ.A.03.FR-023` | 판매자는 자기 상품 또는 자기 드롭에 적용되는 판매자 쿠폰의 할인 방식, 발급 기간, 사용 기간, 발급 수량, 1인 제한, 최소 주문 금액을 등록한다. | 판매자 대표 관리자, 판매자 상품 담당자 | Should | TBD |
-| `REQ.A.03.FR-024` | 판매자는 판매자 쿠폰별 발급 수, 사용 수, 취소/회수 수, 할인 비용, 주문 전환 효과를 조회한다. | 판매자, 판매자 성과 조회자 | Should | TBD |
-| `REQ.A.03.FR-025` | 판매자는 플랫폼 운영자가 제안한 제휴 쿠폰의 비용 부담, 적용 범위, 노출 기간, 연결 드롭을 확인하고 참여 여부를 응답한다. | 판매자 대표 관리자 | Could | TBD |
+| `REQ.A.03.FR-001` | 판매자 대표 관리자는 판매자 포털에 로그인한다. | 판매자 대표 관리자, 판매자 상품 담당자 | Must | [PAGE.A.200](../10-sitemap/PAGE_A_200_seller_portal/README.md), [UC.A.300](../30-uc/UC_A_300_auth_member.md) |
+| `REQ.A.03.FR-002` | 판매자 대표 관리자는 판매자명, 판매자 유형, 프로필 이미지, 소개, 사업자 정보 또는 본인 인증 정보, 고객 안내 연락처, 배송/교환/환불 기본 문구를 등록한다. | 판매자 대표 관리자 | Must | [PAGE.A.209](../10-sitemap/PAGE_A_200_seller_portal/README.md), [UC.A.02-01](../30-uc/UC_A_02_seller_manage_drop.md) |
+| `REQ.A.03.FR-003` | 판매자 대표 관리자는 판매자 내부 운영자를 초대하고 역할별 권한을 부여한다. | 판매자 대표 관리자 | Must | [PAGE.A.210](../10-sitemap/PAGE_A_200_seller_portal/README.md), [UC.A.02-02~03](../30-uc/UC_A_02_seller_manage_drop.md) |
+| `REQ.A.03.FR-004` | 판매자는 자기 드롭 목록을 예정, 검수 중, 승인, 반려, 진행 중, 종료 상태로 조회한다. | 판매자 | Must | [PAGE.A.201](../10-sitemap/PAGE_A_200_seller_portal/README.md), [UC.A.02-10](../30-uc/UC_A_02_seller_manage_drop.md) |
+| `REQ.A.03.FR-005` | 판매자는 드롭 상품의 상품명, 카테고리, 썸네일, 상세 이미지, 상세 설명, 가격, 옵션, 판매 수량을 등록한다. | 판매자 상품 담당자 | Must | [PAGE.A.202~203](../10-sitemap/PAGE_A_200_seller_portal/README.md), [UC.A.02-04](../30-uc/UC_A_02_seller_manage_drop.md) |
+| `REQ.A.03.FR-006` | 판매자는 드롭 오픈 시각, 종료 시각, 노출 시작 시각, 1인 구매 제한, 배송/반품 조건, 판매자 고지 문구를 설정한다. | 판매자 상품 담당자 | Must | [PAGE.A.203](../10-sitemap/PAGE_A_200_seller_portal/README.md), [UC.A.02-05](../30-uc/UC_A_02_seller_manage_drop.md) |
+| `REQ.A.03.FR-007` | 판매자는 옵션별 판매 수량, 출고 가능 수량, 재고 기준 시각, 공급 가능 여부를 입력한다. | 판매자 상품 담당자 | Must | [PAGE.A.203](../10-sitemap/PAGE_A_200_seller_portal/README.md), [UC.A.02-04~05](../30-uc/UC_A_02_seller_manage_drop.md) |
+| `REQ.A.03.FR-008` | 판매자는 등록한 드롭을 임시 저장하거나 플랫폼 운영자에게 검수 요청으로 제출한다. | 판매자 상품 담당자 | Must | [PAGE.A.203~204](../10-sitemap/PAGE_A_200_seller_portal/README.md), [UC.A.02-07](../30-uc/UC_A_02_seller_manage_drop.md) |
+| `REQ.A.03.FR-009` | 판매자는 플랫폼 운영자의 승인, 반려, 보류 결과와 반려 사유를 확인한다. | 판매자 상품 담당자 | Must | [PAGE.A.204](../10-sitemap/PAGE_A_200_seller_portal/README.md), [UC.A.02-08](../30-uc/UC_A_02_seller_manage_drop.md) |
+| `REQ.A.03.FR-010` | 판매자는 승인 전 드롭 정보를 수정할 수 있다. | 판매자 상품 담당자 | Must | [PAGE.A.202~203](../10-sitemap/PAGE_A_200_seller_portal/README.md), [UC.A.02-04~05](../30-uc/UC_A_02_seller_manage_drop.md) |
+| `REQ.A.03.FR-011` | 판매자는 승인 후 가격, 판매 수량, 오픈 시각, 구매 제한 같은 핵심 조건 변경이 필요하면 변경 요청을 제출한다. | 판매자 상품 담당자 | Must | [PAGE.A.204](../10-sitemap/PAGE_A_200_seller_portal/README.md), [UC.A.02-09](../30-uc/UC_A_02_seller_manage_drop.md) |
+| `REQ.A.03.FR-012` | 판매자는 진행 중인 드롭의 노출 상태, 품절 상태, 주문 가능 상태를 조회한다. | 판매자 | Must | [PAGE.A.200~201](../10-sitemap/PAGE_A_200_seller_portal/README.md), [UC.A.02-10](../30-uc/UC_A_02_seller_manage_drop.md) |
+| `REQ.A.03.FR-013` | 판매자는 드롭별 조회 수, 알림 신청 수, 구매 시도 수, 재고 배정 수, 주문 성공 수, 결제 실패 수, 품절 시각을 조회한다. | 판매자, 판매자 성과 조회자 | Must | [PAGE.A.200](../10-sitemap/PAGE_A_200_seller_portal/README.md), [PAGE.A.207](../10-sitemap/PAGE_A_200_seller_portal/README.md), [UC.A.02-10](../30-uc/UC_A_02_seller_manage_drop.md), [UC.A.02-12](../30-uc/UC_A_02_seller_manage_drop.md) |
+| `REQ.A.03.FR-014` | 판매자는 드롭 종료 후 판매 결과 요약, 실패 사유 분포, 쿠폰 사용 수, 취소/환불 요청 수를 조회한다. | 판매자, 판매자 성과 조회자 | Should | [PAGE.A.207](../10-sitemap/PAGE_A_200_seller_portal/README.md), [UC.A.02-12](../30-uc/UC_A_02_seller_manage_drop.md) |
+| `REQ.A.03.FR-015` | 판매자 출고 담당자는 자기 판매 주문 목록을 조회하고 출고에 필요한 주문 자료를 다운로드한다. | 판매자 출고 담당자 | Must | [PAGE.A.205](../10-sitemap/PAGE_A_200_seller_portal/README.md), [UC.A.02-11](../30-uc/UC_A_02_seller_manage_drop.md) |
+| `REQ.A.03.FR-016` | 시스템은 주문 자료 다운로드 시 다운로드 목적, 요청자, 다운로드 범위, 요청 시각을 기록한다. | 시스템 | Must | [PAGE.A.205](../10-sitemap/PAGE_A_200_seller_portal/README.md), [UC.A.02-11](../30-uc/UC_A_02_seller_manage_drop.md) |
+| `REQ.A.03.FR-017` | 판매자는 판매자 귀책 취소, 출고 지연, 재고 부족, 상품 정보 오류 같은 운영 이슈를 사유 코드와 함께 신고하거나 확인한다. | 판매자 | Should | [PAGE.A.205](../10-sitemap/PAGE_A_200_seller_portal/README.md), [PAGE.A.211](../10-sitemap/PAGE_A_200_seller_portal/README.md), [UC.A.02](../30-uc/UC_A_02_seller_manage_drop.md) |
+| `REQ.A.03.FR-018` | 판매자는 구매자에게 노출되는 판매자명, 판매 책임 고지, 배송/반품 안내가 상품 상세와 주문 화면에 어떻게 표시되는지 미리보기로 확인한다. | 판매자 | Should | [PAGE.A.202](../10-sitemap/PAGE_A_200_seller_portal/README.md), [PAGE.A.209](../10-sitemap/PAGE_A_200_seller_portal/README.md), [UC.A.02-01](../30-uc/UC_A_02_seller_manage_drop.md), [UC.A.02-04](../30-uc/UC_A_02_seller_manage_drop.md) |
+| `REQ.A.03.FR-019` | 판매자는 정산 예정 대상 주문, 정산 보류 사유, 판매자 귀책 차감 대상 여부를 조회한다. | 판매자 대표 관리자 | Should | [PAGE.A.208](../10-sitemap/PAGE_A_200_seller_portal/README.md), [UC.A.02](../30-uc/UC_A_02_seller_manage_drop.md) |
+| `REQ.A.03.FR-020` | 판매자 대표 관리자는 판매자 내부 운영자 계정을 비활성화하고 권한 변경 이력을 조회한다. | 판매자 대표 관리자 | Must | [PAGE.A.210](../10-sitemap/PAGE_A_200_seller_portal/README.md), [UC.A.02-03](../30-uc/UC_A_02_seller_manage_drop.md) |
+| `REQ.A.03.FR-021` | 판매자는 선택적으로 스토어명, 로고, 소개 문구, 대표 이미지 같은 브랜딩 정보를 등록한다. | 판매자 대표 관리자 | Could | [PAGE.A.209](../10-sitemap/PAGE_A_200_seller_portal/README.md), [UC.A.02-01](../30-uc/UC_A_02_seller_manage_drop.md) |
+| `REQ.A.03.FR-022` | 판매자는 상품 판매 통계를 상품, 옵션, 드롭 회차, 기간, 유입 경로, 쿠폰 사용 여부, 취소/환불 여부 기준으로 분석한다. | 판매자, 판매자 성과 조회자 | Should | [PAGE.A.207](../10-sitemap/PAGE_A_200_seller_portal/README.md), [UC.A.02-12](../30-uc/UC_A_02_seller_manage_drop.md) |
+| `REQ.A.03.FR-023` | 판매자는 자기 상품 또는 자기 드롭에 적용되는 판매자 쿠폰의 할인 방식, 발급 기간, 사용 기간, 발급 수량, 1인 제한, 최소 주문 금액을 등록한다. | 판매자 대표 관리자, 판매자 상품 담당자 | Should | [PAGE.A.206](../10-sitemap/PAGE_A_200_seller_portal/README.md), [UC.A.02-06](../30-uc/UC_A_02_seller_manage_drop.md) |
+| `REQ.A.03.FR-024` | 판매자는 판매자 쿠폰별 발급 수, 사용 수, 취소/회수 수, 할인 비용, 주문 전환 효과를 조회한다. | 판매자, 판매자 성과 조회자 | Should | [PAGE.A.206~207](../10-sitemap/PAGE_A_200_seller_portal/README.md), [UC.A.02-06](../30-uc/UC_A_02_seller_manage_drop.md), [UC.A.02-12](../30-uc/UC_A_02_seller_manage_drop.md) |
+| `REQ.A.03.FR-025` | 판매자는 플랫폼 운영자가 제안한 제휴 쿠폰의 비용 부담, 적용 범위, 노출 기간, 연결 드롭을 확인하고 참여 여부를 응답한다. | 판매자 대표 관리자 | Could | [PAGE.A.206](../10-sitemap/PAGE_A_200_seller_portal/README.md), [UC.A.02](../30-uc/UC_A_02_seller_manage_drop.md) |
 
 ## 비기능 요구사항
 
@@ -183,7 +183,14 @@ updated: 2026-07-07
 
 ## 연관 태그
 
-🏷️ 플로우 참조: FLOW.A.03 | 페이지 참조: TBD | UI 참조: TBD | UC 참조: TBD | 영속성 참조: TBD | 서비스 참조: TBD | 시나리오 참조: TBD | API 참조: TBD
+- 🏷️ 플로우 참조: FLOW.A.03
+- 🏷️ 페이지 참조: [PAGE.A.200~211 판매자 웹 포털](../10-sitemap/PAGE_A_200_seller_portal/README.md)
+- 🏷️ UI 참조: [UI.A.200~211 판매자 웹 포털](../20-ui/UI_A_200_seller_portal/README.md)
+- 🏷️ UC 참조: [UC.A.02 판매자 드롭 운영](../30-uc/UC_A_02_seller_manage_drop.md), [UC.A.300 인증 및 회원](../30-uc/UC_A_300_auth_member.md)
+- 🏷️ 영속성 참조: TBD
+- 🏷️ 서비스 참조: TBD
+- 🏷️ 시나리오 참조: TBD
+- 🏷️ API 참조: TBD
 
 ## 열린 질문
 

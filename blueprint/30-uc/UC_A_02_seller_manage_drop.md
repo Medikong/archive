@@ -6,7 +6,7 @@ status: draft
 tags: [use-case, seller, seller-portal, drop, product, coupon, analytics, dropmong]
 source: local
 created: 2026-07-07
-updated: 2026-07-08
+updated: 2026-07-10
 ---
 
 # 판매자 드롭 운영 사용자 목표
@@ -15,7 +15,7 @@ updated: 2026-07-08
 
 - UC ID: `UC.A.02`
 - 사용자: 판매자 대표 관리자, 판매자 상품 담당자, 판매자 출고 담당자, 판매자 성과 조회자
-- 기준 페이지: 판매자 포털 페이지 예정
+- 기준 페이지: [PAGE.A.200~211 판매자 웹 포털](../10-sitemap/PAGE_A_200_seller_portal/README.md)
 - 기준 기능: 판매자 정보 관리, 운영자 초대, 역할 권한 관리, 상품 등록, 드롭 판매 조건, 판매자 쿠폰, 검수 요청, 검수 결과 확인, 변경 요청, 드롭 상태 조회, 주문/출고 자료, 판매 통계
 - 제외 범위: 플랫폼 전체 운영, 상품 제휴/이벤트 제휴 기획, CS 보상, 구매자 결제 승인, 최종 정산 회계
 
@@ -23,8 +23,8 @@ updated: 2026-07-08
 
 - 🏷️ 플로우 참조: FLOW.A.02
 - 🏷️ 요구사항 참조: [REQ.A.03](../00-requirements/REQ_A_03_seller.md), [REQ.A.02](../00-requirements/REQ_A_02_coupon_benefit.md)
-- 🏷️ 페이지 참조: 판매자 포털 페이지 예정
-- 🏷️ UI 참조: UI.A.02 예정
+- 🏷️ 페이지 참조: [PAGE.A.200~211 판매자 웹 포털](../10-sitemap/PAGE_A_200_seller_portal/README.md)
+- 🏷️ UI 참조: [UI.A.200~211 판매자 웹 포털](../20-ui/UI_A_200_seller_portal/README.md)
 - 🏷️ 영속성 참조: PST.A.02
 - 🏷️ 서비스 참조: SVC.A.02
 - 🏷️ 시나리오 참조: SCN.A.02
@@ -94,7 +94,21 @@ flowchart LR
 | `UC.A.02-06` | 판매자 상품 담당자 | 판매자 쿠폰 | 자기 상품 또는 드롭에 적용할 판매자 쿠폰을 등록한다. | `REQ.A.03.FR-023`, `REQ.A.02.FR-022` |
 | `UC.A.02-07` | 판매자 상품 담당자 | 검수 요청 | 공개 전 상품과 드롭을 플랫폼 검수 대상으로 제출한다. | `REQ.A.03.FR-008` |
 | `UC.A.02-08` | 판매자 대표 관리자, 판매자 상품 담당자 | 검수 결과 확인 | 승인, 반려, 보류 결과와 수정 필요 항목을 확인한다. | `REQ.A.03.FR-009` |
-| `UC.A.02-09` | 판매자 대표 관리자, 판매자 상품 담당자 | 변경 요청 | 승인 후 핵심 판매 조건 변경이 필요할 때 운영자 검토를 요청한다. | `REQ.A.03.FR-009` |
+| `UC.A.02-09` | 판매자 대표 관리자, 판매자 상품 담당자 | 변경 요청 | 승인 후 핵심 판매 조건 변경이 필요할 때 운영자 검토를 요청한다. | `REQ.A.03.FR-011` |
 | `UC.A.02-10` | 판매자 상품 담당자, 판매자 출고 담당자, 판매자 성과 조회자 | 드롭 상태 조회 | 노출, 품절, 주문 가능 상태와 주요 운영 지표를 확인한다. | `REQ.A.03.FR-012`, `REQ.A.03.FR-013` |
 | `UC.A.02-11` | 판매자 출고 담당자 | 주문/출고 자료 | 자기 판매 주문과 출고에 필요한 자료를 조회하거나 다운로드한다. | `REQ.A.03.FR-015`, `REQ.A.03.FR-016` |
 | `UC.A.02-12` | 판매자 성과 조회자 | 판매 통계 | 상품, 옵션, 기간, 유입 경로, 쿠폰 사용 여부 기준으로 성과를 확인한다. | `REQ.A.03.FR-022`, `REQ.A.03.FR-024` |
+
+## 페이지 연결
+
+| UC ID | Page ID | 페이지 |
+| --- | --- | --- |
+| `UC.A.02-01` | `PAGE.A.209` | [판매자·스토어 정보](../10-sitemap/PAGE_A_200_seller_portal/README.md) |
+| `UC.A.02-02~03` | `PAGE.A.210` | [팀·권한](../10-sitemap/PAGE_A_200_seller_portal/README.md) |
+| `UC.A.02-04` | `PAGE.A.202` | [상품 관리](../10-sitemap/PAGE_A_200_seller_portal/README.md) |
+| `UC.A.02-05` | `PAGE.A.203` | [드롭 등록·편집](../10-sitemap/PAGE_A_200_seller_portal/README.md) |
+| `UC.A.02-06` | `PAGE.A.206` | [쿠폰·프로모션](../10-sitemap/PAGE_A_200_seller_portal/README.md) |
+| `UC.A.02-07~09` | `PAGE.A.204` | [검수·변경 요청](../10-sitemap/PAGE_A_200_seller_portal/README.md) |
+| `UC.A.02-10` | `PAGE.A.200~201` | [대시보드·드롭 관리](../10-sitemap/PAGE_A_200_seller_portal/README.md) |
+| `UC.A.02-11` | `PAGE.A.205` | [주문·출고](../10-sitemap/PAGE_A_200_seller_portal/README.md) |
+| `UC.A.02-12` | `PAGE.A.207` | [판매 분석](../10-sitemap/PAGE_A_200_seller_portal/README.md) |

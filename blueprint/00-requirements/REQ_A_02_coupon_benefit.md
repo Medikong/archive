@@ -28,7 +28,7 @@ updated: 2026-07-07
 - `REQ.A.01`은 드롭 발견부터 구매 시도, 주문/결제, 결과 확인까지의 큰 사용자 여정을 다룬다.
 - `REQ.A.02`는 그 여정 안에서 쿠폰과 혜택이 맡는 독립 도메인 책임을 다룬다.
 - 주문 화면에서 보이는 할인 결과는 `REQ.A.01`에 남기되, 쿠폰 발급 가능 여부, 선착순 수량, 보유 상태, 적용 조건, 사용 확정, 사용 취소, 재처리는 이 문서에서 정의한다.
-- 구매자가 마이 페이지에서 보유 쿠폰을 조회하고 쿠폰 코드를 등록하는 화면은 [PAGE.A.19](../10-sitemap/PAGE_A_19_coupon_wallet/PAGE_A_19_owned_coupon.md)에서 함께 정의한다.
+- 구매자가 마이 페이지에서 보유 쿠폰을 조회하고 쿠폰 코드를 등록하는 화면은 [PAGE.A.19](../10-sitemap/buyer-mobile-web/PAGE_A_19_coupon_wallet/PAGE_A_19_owned_coupon.md)에서 함께 정의한다.
 - 쿠폰은 단순한 UI 할인 표시가 아니라 발급 원장, 사용 원장, 주문 금액 계산, 비동기 처리, 운영 복구가 함께 필요한 업무 객체로 본다.
 - 쿠폰 발급 주체는 `플랫폼 운영자`, `판매자`, `플랫폼-판매자 제휴`, `CS/운영 보상`으로 구분하고, 각 쿠폰은 비용 부담 주체와 적용 범위를 가진다.
 - 판매자 쿠폰은 판매자의 자기 상품 또는 자기 드롭 범위에서만 적용되며, 플랫폼 정책상 위험한 쿠폰은 운영자 승인 이후 발급된다.
@@ -109,11 +109,11 @@ updated: 2026-07-07
 | `REQ.A.02.FR-003` | 시스템은 쿠폰 발급 요청 시 로그인 사용자, 쿠폰 상태, 발급 기간, 발급 대상, 1인 제한, 차단 계정 여부를 검증한다. | 구매자 | Must | [UC.A.19](../30-uc/UC_A_19_coupon_wallet.md) |
 | `REQ.A.02.FR-004` | 시스템은 선착순 쿠폰 발급 요청을 수량 제한 안에서 원자적으로 승인하거나 실패 사유를 반환한다. | 구매자 | Must | [UC.A.19](../30-uc/UC_A_19_coupon_wallet.md) |
 | `REQ.A.02.FR-005` | 시스템은 동일 사용자와 동일 쿠폰에 대한 중복 발급 요청을 하나의 발급 결과로 처리한다. | 구매자 | Must | [UC.A.19](../30-uc/UC_A_19_coupon_wallet.md) |
-| `REQ.A.02.FR-006` | 사용자는 내 쿠폰함에서 보유 쿠폰, 사용 가능 쿠폰, 사용 완료 쿠폰, 만료 쿠폰, 발급 대기 쿠폰을 조회한다. | 구매자 | Must | [PAGE.A.19](../10-sitemap/PAGE_A_19_coupon_wallet/PAGE_A_19_owned_coupon.md), [UC.A.19](../30-uc/UC_A_19_coupon_wallet.md) |
-| `REQ.A.02.FR-007` | 사용자는 주문서에서 현재 주문에 적용 가능한 쿠폰 목록과 적용 불가 사유를 확인한다. | 구매자 | Must | [PAGE.A.11](../10-sitemap/PAGE_A_11_payment.md), [UC.A.01](../30-uc/UC_A_01_buyer_purchase_delivery.md), [UC.A.19](../30-uc/UC_A_19_coupon_wallet.md) |
-| `REQ.A.02.FR-008` | 시스템은 주문 적용 시 상품, 드롭, 판매자, 최소 주문 금액, 사용자 등급, 중복 적용 정책, 사용 기간을 서버 기준으로 검증한다. | 구매자 | Must | [PAGE.A.11](../10-sitemap/PAGE_A_11_payment.md), [UC.A.01](../30-uc/UC_A_01_buyer_purchase_delivery.md), [UC.A.19](../30-uc/UC_A_19_coupon_wallet.md) |
-| `REQ.A.02.FR-009` | 시스템은 쿠폰 적용 후 할인 금액과 최종 주문 금액을 서버에서 재계산하고 주문 서비스에 검증 가능한 금액 스냅샷을 제공한다. | 구매자 | Must | [PAGE.A.11](../10-sitemap/PAGE_A_11_payment.md), [UC.A.01](../30-uc/UC_A_01_buyer_purchase_delivery.md), [UC.A.19](../30-uc/UC_A_19_coupon_wallet.md) |
-| `REQ.A.02.FR-010` | 시스템은 주문 확정 시 쿠폰 사용을 확정하고, 같은 쿠폰이 다른 주문에 중복 사용되지 않도록 잠금 또는 상태 전이를 수행한다. | 구매자 | Must | [PAGE.A.11](../10-sitemap/PAGE_A_11_payment.md), [UC.A.01](../30-uc/UC_A_01_buyer_purchase_delivery.md), [UC.A.19](../30-uc/UC_A_19_coupon_wallet.md) |
+| `REQ.A.02.FR-006` | 사용자는 내 쿠폰함에서 보유 쿠폰, 사용 가능 쿠폰, 사용 완료 쿠폰, 만료 쿠폰, 발급 대기 쿠폰을 조회한다. | 구매자 | Must | [PAGE.A.19](../10-sitemap/buyer-mobile-web/PAGE_A_19_coupon_wallet/PAGE_A_19_owned_coupon.md), [UC.A.19](../30-uc/UC_A_19_coupon_wallet.md) |
+| `REQ.A.02.FR-007` | 사용자는 주문서에서 현재 주문에 적용 가능한 쿠폰 목록과 적용 불가 사유를 확인한다. | 구매자 | Must | [PAGE.A.11](../10-sitemap/buyer-mobile-web/PAGE_A_11_payment.md), [UC.A.01](../30-uc/UC_A_01_buyer_purchase_delivery.md), [UC.A.19](../30-uc/UC_A_19_coupon_wallet.md) |
+| `REQ.A.02.FR-008` | 시스템은 주문 적용 시 상품, 드롭, 판매자, 최소 주문 금액, 사용자 등급, 중복 적용 정책, 사용 기간을 서버 기준으로 검증한다. | 구매자 | Must | [PAGE.A.11](../10-sitemap/buyer-mobile-web/PAGE_A_11_payment.md), [UC.A.01](../30-uc/UC_A_01_buyer_purchase_delivery.md), [UC.A.19](../30-uc/UC_A_19_coupon_wallet.md) |
+| `REQ.A.02.FR-009` | 시스템은 쿠폰 적용 후 할인 금액과 최종 주문 금액을 서버에서 재계산하고 주문 서비스에 검증 가능한 금액 스냅샷을 제공한다. | 구매자 | Must | [PAGE.A.11](../10-sitemap/buyer-mobile-web/PAGE_A_11_payment.md), [UC.A.01](../30-uc/UC_A_01_buyer_purchase_delivery.md), [UC.A.19](../30-uc/UC_A_19_coupon_wallet.md) |
+| `REQ.A.02.FR-010` | 시스템은 주문 확정 시 쿠폰 사용을 확정하고, 같은 쿠폰이 다른 주문에 중복 사용되지 않도록 잠금 또는 상태 전이를 수행한다. | 구매자 | Must | [PAGE.A.11](../10-sitemap/buyer-mobile-web/PAGE_A_11_payment.md), [UC.A.01](../30-uc/UC_A_01_buyer_purchase_delivery.md), [UC.A.19](../30-uc/UC_A_19_coupon_wallet.md) |
 | `REQ.A.02.FR-011` | 시스템은 주문 생성 실패, 결제 실패, 결제 취소, 재고 회수, 주문 만료 시 쿠폰 사용을 취소하거나 회수한다. | 구매자, CS | Must | TBD |
 | `REQ.A.02.FR-012` | 시스템은 쿠폰 만료 시각 이후 신규 발급, 주문 적용, 사용 확정을 막고 만료 상태를 조회에 반영한다. | 구매자 | Must | TBD |
 | `REQ.A.02.FR-013` | 시스템은 비동기 발급 요청의 접수, 대기, 발급 성공, 발급 실패, 재처리 대기, 최종 실패 상태를 사용자/운영자 조회에 남긴다. | 구매자, DropMong 운영자 | Must | TBD |
@@ -128,7 +128,7 @@ updated: 2026-07-07
 | `REQ.A.02.FR-022` | 판매자는 자기 상품 또는 자기 드롭에만 적용되는 판매자 쿠폰을 등록한다. | 판매자 | Should | TBD |
 | `REQ.A.02.FR-023` | 운영자는 판매자 쿠폰 또는 제휴 쿠폰의 정책 위반, 과도한 할인, 책임 고지 누락 여부를 승인, 반려, 보류 처리한다. | DropMong 운영자 | Should | TBD |
 | `REQ.A.02.FR-024` | 시스템은 쿠폰 사용 시 할인 비용을 플랫폼 부담, 판매자 부담, 공동 부담, 보상 비용으로 구분해 기록한다. | 시스템, 정산 담당자 | Must | TBD |
-| `REQ.A.02.FR-025` | 사용자는 이벤트나 프로모션으로 받은 쿠폰 코드를 입력해 보유 쿠폰으로 등록할 수 있다. 시스템은 코드 존재 여부, 유효기간, 사용 완료 여부, 대상자 조건, 중복 등록 여부를 검증한다. | 구매자 | Should | [PAGE.A.19](../10-sitemap/PAGE_A_19_coupon_wallet/PAGE_A_19_owned_coupon.md) |
+| `REQ.A.02.FR-025` | 사용자는 이벤트나 프로모션으로 받은 쿠폰 코드를 입력해 보유 쿠폰으로 등록할 수 있다. 시스템은 코드 존재 여부, 유효기간, 사용 완료 여부, 대상자 조건, 중복 등록 여부를 검증한다. | 구매자 | Should | [PAGE.A.19](../10-sitemap/buyer-mobile-web/PAGE_A_19_coupon_wallet/PAGE_A_19_owned_coupon.md) |
 
 ## 비기능 요구사항
 
@@ -238,7 +238,7 @@ updated: 2026-07-07
 - `REQ.A.02.PP-013` 원자성과 성능 사이의 트레이드오프: Lua script로 원자성은 확보했지만 성능 저하가 발생했다. DropMong은 정합성 요구와 함께 latency/throughput 목표를 정의해야 한다. 근거: [올영세일 선착순 쿠폰, 미발급 0%를 향한 여정](https://oliveyoung.tech/2025-12-15/fcfs-coupon/)
 - `REQ.A.02.PP-014` 가격/할인 변경으로 쿠폰 조건이 바뀌는 문제: 주문서에서는 조건을 만족했지만 결제 전 상품 할인율 변경으로 쿠폰 조건이 깨졌다. DropMong은 결제 직전 서버 기준 가격 스냅샷으로 쿠폰 조건을 재검증해야 한다. 근거: [Kurly 쿠폰과 할인으로 앞다리살 하나 더 판매한 이야기](https://helloworld.kurly.com/blog/%EC%BF%A0%ED%8F%B0%EA%B3%BC-%ED%95%A0%EC%9D%B8%EC%9C%BC%EB%A1%9C-%EC%95%9E%EB%8B%A4%EB%A6%AC%EC%82%B4-%ED%95%98%EB%82%98-%EB%8D%94-%ED%8C%90%EB%A7%A4%ED%95%9C-%EC%9D%B4%EC%95%BC%EA%B8%B0)
 
-- Oliveyoung 분석: [Oliveyoung Tech 장애·개선·아키텍처 신호](../../../../knowledge-vault/work/tech-blog-library/analyses/oliveyoung/2026-07-01-engineering-signals-2020-2026.md)
+- Oliveyoung 분석: [Oliveyoung Tech 장애·개선·아키텍처 신호](../../../../../knowledge-vault/work/tech-blog-library/analyses/oliveyoung/2026-07-01-engineering-signals-2020-2026.md)
 - Kurly: [쿠폰과 할인으로 앞다리살 하나 더 판매한 이야기](https://helloworld.kurly.com/blog/%EC%BF%A0%ED%8F%B0%EA%B3%BC-%ED%95%A0%EC%9D%B8%EC%9C%BC%EB%A1%9C-%EC%95%9E%EB%8B%A4%EB%A6%AC%EC%82%B4-%ED%95%98%EB%82%98-%EB%8D%94-%ED%8C%90%EB%A7%A4%ED%95%9C-%EC%9D%B4%EC%95%BC%EA%B8%B0)
 - Oliveyoung: [올리브영 쿠폰 발급 개선 이야기](https://oliveyoung.tech/2022-09-28/Oliveyoung-Coupon-Count-Moving-Redis/)
 - Oliveyoung: [Redis Pub/Sub을 활용한 쿠폰 발급 비동기 처리](https://oliveyoung.tech/2023-08-07/async-process-of-coupon-issuance-using-redis/)
