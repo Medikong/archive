@@ -135,7 +135,7 @@ updated: 2026-07-09
 
 ## 연관 태그
 
-🏷️ 플로우 참조: FLOW.A.XX | 페이지 참조: [PAGE.A.01](../10-sitemap/PAGE_A_01_homepage.md), [PAGE.A.02](../10-sitemap/PAGE_A_02_product_detail.md), [PAGE.A.10](../10-sitemap/PAGE_A_10_my.md) | UI 참조: [UI.A.02](../20-ui/UI_A_02_product_detail.md), [UI.A.10](../20-ui/UI_A_10_my.md) | UC 참조: TBD | 영속성 참조: TBD | 서비스 참조: TBD | 시나리오 참조: TBD | API 참조: TBD
+🏷️ 플로우 참조: FLOW.A.XX | 페이지 참조: [PAGE.A.01](../10-sitemap/PAGE_A_01_homepage.md), [PAGE.A.02](../10-sitemap/PAGE_A_02_product_detail.md), [PAGE.A.10](../10-sitemap/PAGE_A_10_my.md) | UI 참조: [UI.A.02](../20-ui/UI_A_02_product_detail.md), [UI.A.10](../20-ui/UI_A_10_my.md) | UC 참조: [UC.A.07](../30-uc/UC_A_07_interest_ranking.md) | 영속성 참조: TBD | 서비스 참조: TBD | 시나리오 참조: TBD | API 참조: TBD
 
 ## 열린 질문
 

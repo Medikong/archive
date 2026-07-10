@@ -30,3 +30,4 @@ updated: 2026-07-10
 - [UC.A.04 CS 주문 및 쿠폰 지원 사용자 목표](UC_A_04_cs_order_coupon_support.md)
 - [UC.A.19 쿠폰 사용자 목표](UC_A_19_coupon_wallet.md)
 - [UC.A.300 인증 및 회원 사용자 목표](UC_A_300_auth_member.md)
+- [UC.A.07 관심 신호 및 인기 랭킹 사용자 목표](UC_A_07_interest_ranking.md)
