@@ -23,8 +23,8 @@ updated: 2026-07-10
 ## 연관 태그
 
 - 🏷️ 요구사항 참조: [REQ.A.01](../00-requirements/REQ_A_01_limited_drop_commerce.md), [REQ.A.05](../00-requirements/REQ_A_05_auth_member.md)
-- 🏷️ 페이지 참조: [PAGE.A.01](../10-sitemap/PAGE_A_01_homepage.md), [PAGE.A.10](../10-sitemap/PAGE_A_10_my.md), [PAGE.A.300](../10-sitemap/PAGE_A_300_auth_member/PAGE_A_300_auth_member.md)
-- 🏷️ UI 참조: [UI.A.01](../20-ui/UI_A_01_homepage.md), [UI.A.10](../20-ui/UI_A_10_my.md), [UI.A.300](../20-ui/UI_A_300_auth_member/UI_A_300_auth_member.md)
+- 🏷️ 페이지 참조: [PAGE.A.01](../10-sitemap/buyer-mobile-web/PAGE_A_01_homepage.md), [PAGE.A.10](../10-sitemap/buyer-mobile-web/PAGE_A_10_my.md), [PAGE.A.300](../10-sitemap/PAGE_A_300_auth_member/PAGE_A_300_auth_member.md)
+- 🏷️ UI 참조: [UI.A.01](../20-ui/buyer-mobile-web/UI_A_01_homepage.md), [UI.A.10](../20-ui/buyer-mobile-web/UI_A_10_my.md), [UI.A.300](../20-ui/UI_A_300_auth_member/UI_A_300_auth_member.md)
 - 🏷️ UC 참조: [UC.A.01](../30-uc/UC_A_01_buyer_purchase_delivery.md), [UC.A.300](../30-uc/UC_A_300_auth_member.md)
 - 🏷️ 영속성 참조: PST.A.01 예정
 - 🏷️ 서비스 참조: SVC.A.01 예정
@@ -571,21 +571,21 @@ flowchart LR
 | RM.A.01-01부터 RM.A.01-03 | [REQ.A.01](../00-requirements/REQ_A_01_limited_drop_commerce.md) | 공개 탐색, 운영 대시보드, CS 타임라인 조회 요구에서 도출했다. |
 | ACTOR.A.01-06 비회원 | [REQ.A.05](../00-requirements/REQ_A_05_auth_member.md), [UC.A.300](../30-uc/UC_A_300_auth_member.md) | 비회원은 공개 드롭을 탐색하고 이메일 회원가입을 시작한다. |
 | CTX.A.01-10 Context 인증 | [REQ.A.05](../00-requirements/REQ_A_05_auth_member.md), [BC.A.300](BC_A_300_auth_member.md) | 인증 식별자 소유 확인, 세션, 권한을 관리하며 사용자 계정과 프로필은 소유하지 않는다. |
-| CTX.A.01-11 Context 사용자 | [REQ.A.05](../00-requirements/REQ_A_05_auth_member.md), [PAGE.A.10](../10-sitemap/PAGE_A_10_my.md), [UI.A.10](../20-ui/UI_A_10_my.md) | 가입 인증 완료 후 `user_id`와 사용자 계정을 만들고 프로필과 마이 조회 책임 후보를 가진다. |
+| CTX.A.01-11 Context 사용자 | [REQ.A.05](../00-requirements/REQ_A_05_auth_member.md), [PAGE.A.10](../10-sitemap/buyer-mobile-web/PAGE_A_10_my.md), [UI.A.10](../20-ui/buyer-mobile-web/UI_A_10_my.md) | 가입 인증 완료 후 `user_id`와 사용자 계정을 만들고 프로필과 마이 조회 책임 후보를 가진다. |
 | CMD.A.01-17부터 CMD.A.01-19 | [REQ.A.05](../00-requirements/REQ_A_05_auth_member.md), [UC.A.300](../30-uc/UC_A_300_auth_member.md), [BC.A.300](BC_A_300_auth_member.md) | 인증 완료 통지 뒤 Context 사용자가 계정을 만들고 인증 계정 연동을 요청해야 한다. |
-| CMD.A.01-20부터 CMD.A.01-21 | [PAGE.A.10](../10-sitemap/PAGE_A_10_my.md), [UI.A.10](../20-ui/UI_A_10_my.md) | 마이 프로필 카드에서 이름·닉네임·이미지를 확인하고 프로필 편집으로 진입한다. |
+| CMD.A.01-20부터 CMD.A.01-21 | [PAGE.A.10](../10-sitemap/buyer-mobile-web/PAGE_A_10_my.md), [UI.A.10](../20-ui/buyer-mobile-web/UI_A_10_my.md) | 마이 프로필 카드에서 이름·닉네임·이미지를 확인하고 프로필 편집으로 진입한다. |
 | CMD.A.01-22 사용자 계정 상태 변경 | [REQ.A.05](../00-requirements/REQ_A_05_auth_member.md), [BC.A.300](BC_A_300_auth_member.md) | 드롭 참여 전 차단 계정 여부를 확인하고 사용자 제한 상태를 인증에 반영해야 한다. |
-| CMD.A.01-23 마이 대시보드 조회 | [PAGE.A.10](../10-sitemap/PAGE_A_10_my.md), [UI.A.10](../20-ui/UI_A_10_my.md) | 로그인 사용자가 프로필, 주문, 배송, 쿠폰, 포인트, 등급, 알림 요약을 한 화면에서 확인한다. |
+| CMD.A.01-23 마이 대시보드 조회 | [PAGE.A.10](../10-sitemap/buyer-mobile-web/PAGE_A_10_my.md), [UI.A.10](../20-ui/buyer-mobile-web/UI_A_10_my.md) | 로그인 사용자가 프로필, 주문, 배송, 쿠폰, 포인트, 등급, 알림 요약을 한 화면에서 확인한다. |
 | AGG.A.01-08 UserAccount | [REQ.A.05](../00-requirements/REQ_A_05_auth_member.md), [BC.A.300](BC_A_300_auth_member.md) | 사용자 계정과 `user_id`는 주문·쿠폰·알림·감사 이력의 기준이며 Context 인증 밖에서 생성된다. |
-| AGG.A.01-09 UserProfile | [REQ.A.05](../00-requirements/REQ_A_05_auth_member.md), [PAGE.A.10](../10-sitemap/PAGE_A_10_my.md), [UI.A.10](../20-ui/UI_A_10_my.md) | 사용자 표시 정보는 인증 책임과 분리되고 마이 화면에서 별도 필드로 표시된다. |
-| EVT.A.01-21부터 EVT.A.01-27 | [REQ.A.05](../00-requirements/REQ_A_05_auth_member.md), [PAGE.A.10](../10-sitemap/PAGE_A_10_my.md), [BC.A.300](BC_A_300_auth_member.md) | 가입 인증 완료, 계정 생성·연동, 기본 프로필, 프로필 변경, 계정 상태 변경을 서로 다른 결과로 추적해야 한다. |
-| POLICY.A.01-05부터 POLICY.A.01-08 | [REQ.A.01](../00-requirements/REQ_A_01_limited_drop_commerce.md), [REQ.A.05](../00-requirements/REQ_A_05_auth_member.md), [PAGE.A.10](../10-sitemap/PAGE_A_10_my.md) | 인증 완료 전 계정 생성을 막고, 본인 프로필 수정과 마이 개인 정보 접근에 로그인 게이트를 적용한다. |
-| RULE.A.01-09부터 RULE.A.01-12 | [REQ.A.05](../00-requirements/REQ_A_05_auth_member.md), [PAGE.A.10](../10-sitemap/PAGE_A_10_my.md), [UI.A.10](../20-ui/UI_A_10_my.md) | `user_id` 중심 사용자 계정, 계정 병합 금지, 인증·프로필 분리, 외부 데이터 원천 분리가 필요하다. |
-| HOTSPOT.A.01-05부터 HOTSPOT.A.01-10 | [REQ.A.05](../00-requirements/REQ_A_05_auth_member.md), [PAGE.A.10](../10-sitemap/PAGE_A_10_my.md), [UI.A.10](../20-ui/UI_A_10_my.md) | 가입 데이터, 등급, 배송지, 탈퇴, 프로필 정책, 마이 조합 위치와 부분 실패 기준은 현재 문서에서 확정되지 않았다. |
+| AGG.A.01-09 UserProfile | [REQ.A.05](../00-requirements/REQ_A_05_auth_member.md), [PAGE.A.10](../10-sitemap/buyer-mobile-web/PAGE_A_10_my.md), [UI.A.10](../20-ui/buyer-mobile-web/UI_A_10_my.md) | 사용자 표시 정보는 인증 책임과 분리되고 마이 화면에서 별도 필드로 표시된다. |
+| EVT.A.01-21부터 EVT.A.01-27 | [REQ.A.05](../00-requirements/REQ_A_05_auth_member.md), [PAGE.A.10](../10-sitemap/buyer-mobile-web/PAGE_A_10_my.md), [BC.A.300](BC_A_300_auth_member.md) | 가입 인증 완료, 계정 생성·연동, 기본 프로필, 프로필 변경, 계정 상태 변경을 서로 다른 결과로 추적해야 한다. |
+| POLICY.A.01-05부터 POLICY.A.01-08 | [REQ.A.01](../00-requirements/REQ_A_01_limited_drop_commerce.md), [REQ.A.05](../00-requirements/REQ_A_05_auth_member.md), [PAGE.A.10](../10-sitemap/buyer-mobile-web/PAGE_A_10_my.md) | 인증 완료 전 계정 생성을 막고, 본인 프로필 수정과 마이 개인 정보 접근에 로그인 게이트를 적용한다. |
+| RULE.A.01-09부터 RULE.A.01-12 | [REQ.A.05](../00-requirements/REQ_A_05_auth_member.md), [PAGE.A.10](../10-sitemap/buyer-mobile-web/PAGE_A_10_my.md), [UI.A.10](../20-ui/buyer-mobile-web/UI_A_10_my.md) | `user_id` 중심 사용자 계정, 계정 병합 금지, 인증·프로필 분리, 외부 데이터 원천 분리가 필요하다. |
+| HOTSPOT.A.01-05부터 HOTSPOT.A.01-10 | [REQ.A.05](../00-requirements/REQ_A_05_auth_member.md), [PAGE.A.10](../10-sitemap/buyer-mobile-web/PAGE_A_10_my.md), [UI.A.10](../20-ui/buyer-mobile-web/UI_A_10_my.md) | 가입 데이터, 등급, 배송지, 탈퇴, 프로필 정책, 마이 조합 위치와 부분 실패 기준은 현재 문서에서 확정되지 않았다. |
 | EXT.A.01-03 Context 인증 | [REQ.A.05](../00-requirements/REQ_A_05_auth_member.md), [BC.A.300](BC_A_300_auth_member.md) | 가입 인증 완료와 세션 주체, 인증 식별자 연동 결과를 제공한다. |
-| EXT.A.01-04 프로필 미디어 시스템 | [PAGE.A.10](../10-sitemap/PAGE_A_10_my.md), [UI.A.10](../20-ui/UI_A_10_my.md) | 프로필 이미지 변경에는 파일 검사·변환·보관과 안전한 자산 참조가 필요하다. |
-| EXT.A.01-05부터 EXT.A.01-09 | [PAGE.A.10](../10-sitemap/PAGE_A_10_my.md), [UI.A.10](../20-ui/UI_A_10_my.md), [BC.A.07](BC_A_07_interest_ranking.md), [BC.A.19](BC_A_19_coupon.md) | 마이 화면의 주문·배송·쿠폰·포인트·등급·찜·알림 요약은 각 업무 원천에서 제공한다. |
-| RM.A.01-04부터 RM.A.01-06 | [PAGE.A.10](../10-sitemap/PAGE_A_10_my.md), [UI.A.10](../20-ui/UI_A_10_my.md), [REQ.A.05](../00-requirements/REQ_A_05_auth_member.md) | 프로필 카드, 마이 대시보드, 사용자 계정 상태 조회가 사용자 서비스의 조회 후보로 드러난다. |
+| EXT.A.01-04 프로필 미디어 시스템 | [PAGE.A.10](../10-sitemap/buyer-mobile-web/PAGE_A_10_my.md), [UI.A.10](../20-ui/buyer-mobile-web/UI_A_10_my.md) | 프로필 이미지 변경에는 파일 검사·변환·보관과 안전한 자산 참조가 필요하다. |
+| EXT.A.01-05부터 EXT.A.01-09 | [PAGE.A.10](../10-sitemap/buyer-mobile-web/PAGE_A_10_my.md), [UI.A.10](../20-ui/buyer-mobile-web/UI_A_10_my.md), [BC.A.07](BC_A_07_interest_ranking.md), [BC.A.19](BC_A_19_coupon.md) | 마이 화면의 주문·배송·쿠폰·포인트·등급·찜·알림 요약은 각 업무 원천에서 제공한다. |
+| RM.A.01-04부터 RM.A.01-06 | [PAGE.A.10](../10-sitemap/buyer-mobile-web/PAGE_A_10_my.md), [UI.A.10](../20-ui/buyer-mobile-web/UI_A_10_my.md), [REQ.A.05](../00-requirements/REQ_A_05_auth_member.md) | 프로필 카드, 마이 대시보드, 사용자 계정 상태 조회가 사용자 서비스의 조회 후보로 드러난다. |
 
 ## Event Relations
 

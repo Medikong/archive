@@ -15,7 +15,7 @@ updated: 2026-07-10
 
 - UC ID: `UC.A.07`
 - 사용자: 구매자, DropMong 운영자, 브랜드 운영자
-- 기준 페이지: [PAGE.A.01 홈 화면](../10-sitemap/PAGE_A_01_homepage.md), PAGE.A.09 실시간 랭킹(문서 예정), [PAGE.A.02 상품 상세](../10-sitemap/PAGE_A_02_product_detail.md), [PAGE.A.10 마이](../10-sitemap/PAGE_A_10_my.md), PAGE.A.22 찜리스트(문서 예정)
+- 기준 페이지: [PAGE.A.01 홈 화면](../10-sitemap/buyer-mobile-web/PAGE_A_01_homepage.md), PAGE.A.09 실시간 랭킹(문서 예정), [PAGE.A.02 상품 상세](../10-sitemap/buyer-mobile-web/PAGE_A_02_product_detail.md), [PAGE.A.10 마이](../10-sitemap/buyer-mobile-web/PAGE_A_10_my.md), PAGE.A.22 찜리스트(문서 예정)
 - 기준 기능: 찜 추가/해제, 찜 목록 조회, 오픈 후 인기 랭킹 조회, 오픈 예정 랭킹 조회, 드롭 관심도 통계 조회
 - 제외 범위: 알림 신청(구독) 기능, 실제 알림 발송, 비로그인 사용자 조회수 집계, 검색/개인화 추천, 조회수 중복 방지 로직 자체(시스템 내부 처리)
 
@@ -23,8 +23,8 @@ updated: 2026-07-10
 
 - 🏷️ 플로우 참조: FLOW.A.07
 - 🏷️ 요구사항 참조: [REQ.A.07](../00-requirements/REQ_A_07_interest_ranking.md)
-- 🏷️ 페이지 참조: [PAGE.A.01](../10-sitemap/PAGE_A_01_homepage.md), PAGE.A.09(문서 예정), [PAGE.A.02](../10-sitemap/PAGE_A_02_product_detail.md), [PAGE.A.10](../10-sitemap/PAGE_A_10_my.md), PAGE.A.22(문서 예정)
-- 🏷️ UI 참조: [UI.A.01](../20-ui/UI_A_01_homepage.md), UI.A.09(문서 예정), [UI.A.02](../20-ui/UI_A_02_product_detail.md), [UI.A.10](../20-ui/UI_A_10_my.md), UI.A.22(문서 예정)
+- 🏷️ 페이지 참조: [PAGE.A.01](../10-sitemap/buyer-mobile-web/PAGE_A_01_homepage.md), PAGE.A.09(문서 예정), [PAGE.A.02](../10-sitemap/buyer-mobile-web/PAGE_A_02_product_detail.md), [PAGE.A.10](../10-sitemap/buyer-mobile-web/PAGE_A_10_my.md), PAGE.A.22(문서 예정)
+- 🏷️ UI 참조: [UI.A.01](../20-ui/buyer-mobile-web/UI_A_01_homepage.md), UI.A.09(문서 예정), [UI.A.02](../20-ui/buyer-mobile-web/UI_A_02_product_detail.md), [UI.A.10](../20-ui/buyer-mobile-web/UI_A_10_my.md), UI.A.22(문서 예정)
 - 🏷️ 영속성 참조: PST.A.07 예정
 - 🏷️ 서비스 참조: SVC.A.07 예정
 - 🏷️ 시나리오 참조: SCN.A.07 예정

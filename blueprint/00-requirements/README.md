@@ -6,7 +6,7 @@ status: draft
 tags: [requirements, index, dropmong]
 source: local
 created: 2026-07-06
-updated: 2026-07-07
+updated: 2026-07-10
 ---
 
 # 요구사항 인덱스
@@ -27,6 +27,8 @@ DropMong MVP A의 기능 요구사항, 비기능 요구사항, 페인포인트 �
 - [REQ.A.04 플랫폼 운영자 어드민](REQ_A_04_platform_operator_admin.md)
 - [REQ.A.05 인증 및 회원](REQ_A_05_auth_member.md)
 - [REQ.A.06 쿠버네티스 클러스터 아키텍처](REQ_A_06_kubernetes_cluster_architecture.md)
+- [REQ.A.07 관심·랭킹](REQ_A_07_interest_ranking.md)
+- [REQ.A.08 반응형 웹 애플리케이션](REQ_A_08_web_application.md)
 
 ## 예시 문서
 
@@ -34,7 +36,7 @@ DropMong MVP A의 기능 요구사항, 비기능 요구사항, 페인포인트 �
 
 ## 연관 태그
 
-🏷️ 페이지 참조: [PAGE.A.01](../10-sitemap/PAGE_A_01_homepage.md), [PAGE.A.02](../10-sitemap/PAGE_A_02_product_detail.md), [PAGE.A.06](../10-sitemap/PAGE_A_06_shopping_cart.md), [PAGE.A.10](../10-sitemap/PAGE_A_10_my.md), [PAGE.A.11](../10-sitemap/PAGE_A_11_payment.md), [PAGE.A.14](../10-sitemap/PAGE_A_14_order_complete.md), [PAGE.A.15](../10-sitemap/PAGE_A_15_order_history.md), [PAGE.A.16](../10-sitemap/PAGE_A_16_track_order.md), [PAGE.A.17](../10-sitemap/PAGE_A_17_shipping_order_manage.md), [PAGE.A.19](../10-sitemap/PAGE_A_19_coupon_wallet/PAGE_A_19_owned_coupon.md), [PAGE.A.300](../10-sitemap/PAGE_A_300_auth_member/PAGE_A_300_auth_member.md), [PAGE.A.310](../10-sitemap/PAGE_A_310_password_find/PAGE_A_310_password_find.md) | UI 참조: [UI.A.01](../20-ui/UI_A_01_homepage.md), [UI.A.02](../20-ui/UI_A_02_product_detail.md), [UI.A.06](../20-ui/UI_A_06_shopping_cart.md), [UI.A.10](../20-ui/UI_A_10_my.md), [UI.A.11](../20-ui/UI_A_11_payment.md), [UI.A.14](../20-ui/UI_A_14_order_complete.md), [UI.A.15](../20-ui/UI_A_15_order_history.md), [UI.A.16](../20-ui/UI_A_16_track_order.md), [UI.A.17](../20-ui/UI_A_17_shipping_order_manage.md), [UI.A.19](../20-ui/UI_A_19_coupon_wallet/UI_A_19_coupon_wallet.md), [UI.A.300](../20-ui/UI_A_300_auth_member/UI_A_300_auth_member.md), [UI.A.310](../20-ui/UI_A_310_password_find/UI_A_310_password_find.md) | 유스케이스 참조: [UC.A.01](../30-uc/UC_A_01_buyer_purchase_delivery.md), [UC.A.02](../30-uc/UC_A_02_seller_manage_drop.md), [UC.A.03](../30-uc/UC_A_03_platform_operator_admin.md), [UC.A.04](../30-uc/UC_A_04_cs_order_coupon_support.md), [UC.A.19](../30-uc/UC_A_19_coupon_wallet.md), [UC.A.300](../30-uc/UC_A_300_auth_member.md)
+🏷️ 페이지 참조: [PAGE.A.01](../10-sitemap/buyer-mobile-web/PAGE_A_01_homepage.md), [PAGE.A.02](../10-sitemap/buyer-mobile-web/PAGE_A_02_product_detail.md), [PAGE.A.06](../10-sitemap/buyer-mobile-web/PAGE_A_06_shopping_cart.md), [PAGE.A.10](../10-sitemap/buyer-mobile-web/PAGE_A_10_my.md), [PAGE.A.11](../10-sitemap/buyer-mobile-web/PAGE_A_11_payment.md), [PAGE.A.14](../10-sitemap/buyer-mobile-web/PAGE_A_14_order_complete.md), [PAGE.A.15](../10-sitemap/buyer-mobile-web/PAGE_A_15_order_history.md), [PAGE.A.16](../10-sitemap/buyer-mobile-web/PAGE_A_16_track_order.md), [PAGE.A.17](../10-sitemap/buyer-mobile-web/PAGE_A_17_shipping_order_manage.md), [PAGE.A.19](../10-sitemap/buyer-mobile-web/PAGE_A_19_coupon_wallet/PAGE_A_19_owned_coupon.md), [PAGE.A.200](../10-sitemap/PAGE_A_200_seller_portal/README.md), [PAGE.A.300](../10-sitemap/PAGE_A_300_auth_member/PAGE_A_300_auth_member.md), [PAGE.A.310](../10-sitemap/PAGE_A_310_password_find/PAGE_A_310_password_find.md) | UI 참조: [UI.A.01](../20-ui/buyer-mobile-web/UI_A_01_homepage.md), [UI.A.02](../20-ui/buyer-mobile-web/UI_A_02_product_detail.md), [UI.A.06](../20-ui/buyer-mobile-web/UI_A_06_shopping_cart.md), [UI.A.10](../20-ui/buyer-mobile-web/UI_A_10_my.md), [UI.A.11](../20-ui/buyer-mobile-web/UI_A_11_payment.md), [UI.A.14](../20-ui/buyer-mobile-web/UI_A_14_order_complete.md), [UI.A.15](../20-ui/buyer-mobile-web/UI_A_15_order_history.md), [UI.A.16](../20-ui/buyer-mobile-web/UI_A_16_track_order.md), [UI.A.17](../20-ui/buyer-mobile-web/UI_A_17_shipping_order_manage.md), [UI.A.19](../20-ui/buyer-mobile-web/UI_A_19_coupon_wallet/UI_A_19_coupon_wallet.md), [UI.A.200~211](../20-ui/UI_A_200_seller_portal/README.md), [UI.A.300](../20-ui/UI_A_300_auth_member/UI_A_300_auth_member.md), [UI.A.310](../20-ui/UI_A_310_password_find/UI_A_310_password_find.md) | 유스케이스 참조: [UC.A.01](../30-uc/UC_A_01_buyer_purchase_delivery.md), [UC.A.02](../30-uc/UC_A_02_seller_manage_drop.md), [UC.A.03](../30-uc/UC_A_03_platform_operator_admin.md), [UC.A.04](../30-uc/UC_A_04_cs_order_coupon_support.md), [UC.A.19](../30-uc/UC_A_19_coupon_wallet.md), [UC.A.300](../30-uc/UC_A_300_auth_member.md)
 
 ## 확인 필요
 

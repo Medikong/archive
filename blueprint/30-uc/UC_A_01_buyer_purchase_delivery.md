@@ -15,7 +15,7 @@ updated: 2026-07-08
 
 - UC ID: `UC.A.01`
 - 사용자: 비회원, 구매자
-- 기준 페이지: [PAGE.A.01 홈 화면](../10-sitemap/PAGE_A_01_homepage.md), [PAGE.A.02 상품 상세](../10-sitemap/PAGE_A_02_product_detail.md), [PAGE.A.11 주문/결제](../10-sitemap/PAGE_A_11_payment.md), [PAGE.A.16 배송 조회](../10-sitemap/PAGE_A_16_track_order.md)
+- 기준 페이지: [PAGE.A.01 홈 화면](../10-sitemap/buyer-mobile-web/PAGE_A_01_homepage.md), [PAGE.A.02 상품 상세](../10-sitemap/buyer-mobile-web/PAGE_A_02_product_detail.md), [PAGE.A.11 주문/결제](../10-sitemap/buyer-mobile-web/PAGE_A_11_payment.md), [PAGE.A.16 배송 조회](../10-sitemap/buyer-mobile-web/PAGE_A_16_track_order.md)
 - 기준 기능: 상품 탐색, 상품 확인, 드롭 알림, 관심 상품, 장바구니, 주문/결제, 쿠폰/포인트 사용, 배송지 선택, 주문 완료, 주문 내역, 배송 조회, 배송/주문 관리
 - 제외 범위: 판매자 상품 등록, 플랫폼 운영자 검수, CS 내부 처리, 정산, 물류 실행 시스템
 
@@ -23,8 +23,8 @@ updated: 2026-07-08
 
 - 🏷️ 플로우 참조: FLOW.A.01
 - 🏷️ 요구사항 참조: [REQ.A.01](../00-requirements/REQ_A_01_limited_drop_commerce.md), [REQ.A.02](../00-requirements/REQ_A_02_coupon_benefit.md)
-- 🏷️ 페이지 참조: [PAGE.A.01](../10-sitemap/PAGE_A_01_homepage.md), [PAGE.A.02](../10-sitemap/PAGE_A_02_product_detail.md), [PAGE.A.06](../10-sitemap/PAGE_A_06_shopping_cart.md), [PAGE.A.10](../10-sitemap/PAGE_A_10_my.md), [PAGE.A.11](../10-sitemap/PAGE_A_11_payment.md), [PAGE.A.14](../10-sitemap/PAGE_A_14_order_complete.md), [PAGE.A.15](../10-sitemap/PAGE_A_15_order_history.md), [PAGE.A.16](../10-sitemap/PAGE_A_16_track_order.md), [PAGE.A.17](../10-sitemap/PAGE_A_17_shipping_order_manage.md)
-- 🏷️ UI 참조: [UI.A.01](../20-ui/UI_A_01_homepage.md), [UI.A.02](../20-ui/UI_A_02_product_detail.md), [UI.A.06](../20-ui/UI_A_06_shopping_cart.md), [UI.A.10](../20-ui/UI_A_10_my.md), [UI.A.11](../20-ui/UI_A_11_payment.md), [UI.A.14](../20-ui/UI_A_14_order_complete.md), [UI.A.15](../20-ui/UI_A_15_order_history.md), [UI.A.16](../20-ui/UI_A_16_track_order.md), [UI.A.17](../20-ui/UI_A_17_shipping_order_manage.md)
+- 🏷️ 페이지 참조: [PAGE.A.01](../10-sitemap/buyer-mobile-web/PAGE_A_01_homepage.md), [PAGE.A.02](../10-sitemap/buyer-mobile-web/PAGE_A_02_product_detail.md), [PAGE.A.06](../10-sitemap/buyer-mobile-web/PAGE_A_06_shopping_cart.md), [PAGE.A.10](../10-sitemap/buyer-mobile-web/PAGE_A_10_my.md), [PAGE.A.11](../10-sitemap/buyer-mobile-web/PAGE_A_11_payment.md), [PAGE.A.14](../10-sitemap/buyer-mobile-web/PAGE_A_14_order_complete.md), [PAGE.A.15](../10-sitemap/buyer-mobile-web/PAGE_A_15_order_history.md), [PAGE.A.16](../10-sitemap/buyer-mobile-web/PAGE_A_16_track_order.md), [PAGE.A.17](../10-sitemap/buyer-mobile-web/PAGE_A_17_shipping_order_manage.md)
+- 🏷️ UI 참조: [UI.A.01](../20-ui/buyer-mobile-web/UI_A_01_homepage.md), [UI.A.02](../20-ui/buyer-mobile-web/UI_A_02_product_detail.md), [UI.A.06](../20-ui/buyer-mobile-web/UI_A_06_shopping_cart.md), [UI.A.10](../20-ui/buyer-mobile-web/UI_A_10_my.md), [UI.A.11](../20-ui/buyer-mobile-web/UI_A_11_payment.md), [UI.A.14](../20-ui/buyer-mobile-web/UI_A_14_order_complete.md), [UI.A.15](../20-ui/buyer-mobile-web/UI_A_15_order_history.md), [UI.A.16](../20-ui/buyer-mobile-web/UI_A_16_track_order.md), [UI.A.17](../20-ui/buyer-mobile-web/UI_A_17_shipping_order_manage.md)
 - 🏷️ 영속성 참조: PST.A.01
 - 🏷️ 서비스 참조: SVC.A.01
 - 🏷️ 시나리오 참조: SCN.A.01

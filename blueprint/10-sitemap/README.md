@@ -6,7 +6,7 @@ status: draft
 tags: [sitemap, flowchart, index, example]
 source: local
 created: 2026-07-06
-updated: 2026-07-07
+updated: 2026-07-10
 ---
 
 # 사이트맵 인덱스
@@ -19,6 +19,12 @@ updated: 2026-07-07
 
 - [페이지 템플릿](.template/PAGE_A_XX.md)
 
+## 클라이언트별 진입점
+
+- [구매자 모바일 웹앱](buyer-mobile-web/README.md): 공개 탐색부터 주문·배송·쿠폰까지 구매자용 반응형 웹 페이지.
+- [판매자 웹 포털](PAGE_A_200_seller_portal/README.md): 판매자 업무용 데스크톱 우선 웹 페이지.
+- [공용 인증 및 회원](PAGE_A_300_auth_member/PAGE_A_300_auth_member.md): 여러 클라이언트가 함께 사용하는 인증 페이지 그룹.
+
 ## 주요 페이지
 
 ![userflow](assets/dropmong-user-flow.png)
@@ -29,7 +35,7 @@ updated: 2026-07-07
 
 ```mermaid
 mindmap
-  root((DropMong App))
+  root((DropMong Web))
     홈
       추천 드롭
       오픈 예정
@@ -85,7 +91,7 @@ mindmap
       1:1 문의
       이용약관
       개인정보처리방침
-      앱 설정
+      웹 설정
     인증
       로그인 메인
       이메일 로그인
@@ -97,23 +103,42 @@ mindmap
       새 비밀번호 설정
       휴대폰 번호 로그인
       소셜 로그인
+    판매자 웹
+      판매자 대시보드
+      드롭 관리
+      상품 관리
+      검수와 변경 요청
+      주문과 출고
+      쿠폰과 프로모션
+      판매 분석
+      정산 조회
+      판매자와 스토어 정보
+      팀과 권한
+      운영 이슈
 ```
 
 ## 페이지 목록
 
-### 실제 문서
+### 구매자 모바일 웹앱
 
-- [PAGE.A.01 홈 화면](PAGE_A_01_homepage.md)
-- [PAGE.A.02 상품 상세 페이지](PAGE_A_02_product_detail.md)
-- [PAGE.A.06 장바구니 페이지](PAGE_A_06_shopping_cart.md)
-- [PAGE.A.10 마이 페이지](PAGE_A_10_my.md)
-- [PAGE.A.11 주문/결제 페이지](PAGE_A_11_payment.md)
-- [PAGE.A.14 주문 완료 페이지](PAGE_A_14_order_complete.md)
-- [PAGE.A.15 주문 내역 페이지](PAGE_A_15_order_history.md)
-- [PAGE.A.16 배송 조회 페이지](PAGE_A_16_track_order.md)
-- [PAGE.A.17 배송/주문 관리 페이지](PAGE_A_17_shipping_order_manage.md)
-- [PAGE.A.19 보유 쿠폰 페이지 그룹](PAGE_A_19_coupon_wallet/README.md)
-- [PAGE.A.19 보유 쿠폰 페이지](PAGE_A_19_coupon_wallet/PAGE_A_19_owned_coupon.md)
+- [PAGE.A.01 홈 화면](buyer-mobile-web/PAGE_A_01_homepage.md)
+- [PAGE.A.02 상품 상세 페이지](buyer-mobile-web/PAGE_A_02_product_detail.md)
+- [PAGE.A.06 장바구니 페이지](buyer-mobile-web/PAGE_A_06_shopping_cart.md)
+- [PAGE.A.10 마이 페이지](buyer-mobile-web/PAGE_A_10_my.md)
+- [PAGE.A.11 주문/결제 페이지](buyer-mobile-web/PAGE_A_11_payment.md)
+- [PAGE.A.14 주문 완료 페이지](buyer-mobile-web/PAGE_A_14_order_complete.md)
+- [PAGE.A.15 주문 내역 페이지](buyer-mobile-web/PAGE_A_15_order_history.md)
+- [PAGE.A.16 배송 조회 페이지](buyer-mobile-web/PAGE_A_16_track_order.md)
+- [PAGE.A.17 배송/주문 관리 페이지](buyer-mobile-web/PAGE_A_17_shipping_order_manage.md)
+- [PAGE.A.19 보유 쿠폰 페이지 그룹](buyer-mobile-web/PAGE_A_19_coupon_wallet/README.md)
+- [PAGE.A.19 보유 쿠폰 페이지](buyer-mobile-web/PAGE_A_19_coupon_wallet/PAGE_A_19_owned_coupon.md)
+
+### 판매자 웹
+
+- [PAGE.A.200~211 판매자 웹 포털](PAGE_A_200_seller_portal/README.md)
+
+### 공용 인증
+
 - [PAGE.A.300 인증 및 회원 페이지](PAGE_A_300_auth_member/PAGE_A_300_auth_member.md) - `PAGE.A.300~303`
 - [PAGE.A.310 비밀번호 재설정 페이지](PAGE_A_310_password_find/PAGE_A_310_password_find.md)
 
@@ -125,4 +150,4 @@ mindmap
 
 ## 연관 태그
 
-🏷️ 요구사항 참조: [REQ.A.01](../00-requirements/REQ_A_01_limited_drop_commerce.md), [REQ.A.02](../00-requirements/REQ_A_02_coupon_benefit.md), [REQ.A.05](../00-requirements/REQ_A_05_auth_member.md) | 페이지 참조: [PAGE.A.01](PAGE_A_01_homepage.md), [PAGE.A.02](PAGE_A_02_product_detail.md), [PAGE.A.06](PAGE_A_06_shopping_cart.md), [PAGE.A.10](PAGE_A_10_my.md), [PAGE.A.11](PAGE_A_11_payment.md), [PAGE.A.14](PAGE_A_14_order_complete.md), [PAGE.A.15](PAGE_A_15_order_history.md), [PAGE.A.16](PAGE_A_16_track_order.md), [PAGE.A.17](PAGE_A_17_shipping_order_manage.md), [PAGE.A.19](PAGE_A_19_coupon_wallet/PAGE_A_19_owned_coupon.md), [PAGE.A.300](PAGE_A_300_auth_member/PAGE_A_300_auth_member.md), [PAGE.A.310](PAGE_A_310_password_find/PAGE_A_310_password_find.md) | 유스케이스 참조: UC.A.01, UC.A.02, UC.A.04, [UC.A.19](../30-uc/UC_A_19_coupon_wallet.md), [UC.A.300](../30-uc/UC_A_300_auth_member.md)
+🏷️ 요구사항 참조: [REQ.A.01](../00-requirements/REQ_A_01_limited_drop_commerce.md), [REQ.A.02](../00-requirements/REQ_A_02_coupon_benefit.md), [REQ.A.03](../00-requirements/REQ_A_03_seller.md), [REQ.A.05](../00-requirements/REQ_A_05_auth_member.md) | 페이지 참조: [PAGE.A.01](buyer-mobile-web/PAGE_A_01_homepage.md), [PAGE.A.02](buyer-mobile-web/PAGE_A_02_product_detail.md), [PAGE.A.06](buyer-mobile-web/PAGE_A_06_shopping_cart.md), [PAGE.A.10](buyer-mobile-web/PAGE_A_10_my.md), [PAGE.A.11](buyer-mobile-web/PAGE_A_11_payment.md), [PAGE.A.14](buyer-mobile-web/PAGE_A_14_order_complete.md), [PAGE.A.15](buyer-mobile-web/PAGE_A_15_order_history.md), [PAGE.A.16](buyer-mobile-web/PAGE_A_16_track_order.md), [PAGE.A.17](buyer-mobile-web/PAGE_A_17_shipping_order_manage.md), [PAGE.A.19](buyer-mobile-web/PAGE_A_19_coupon_wallet/PAGE_A_19_owned_coupon.md), [PAGE.A.200](PAGE_A_200_seller_portal/README.md), [PAGE.A.300](PAGE_A_300_auth_member/PAGE_A_300_auth_member.md), [PAGE.A.310](PAGE_A_310_password_find/PAGE_A_310_password_find.md) | 유스케이스 참조: UC.A.01, [UC.A.02](../30-uc/UC_A_02_seller_manage_drop.md), UC.A.04, [UC.A.19](../30-uc/UC_A_19_coupon_wallet.md), [UC.A.300](../30-uc/UC_A_300_auth_member.md)

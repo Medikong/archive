@@ -90,11 +90,11 @@ updated: 2026-07-09
 
 | Req ID | 요구사항 | 사용자 | 우선순위 | 연결 Page/UC |
 | --- | --- | --- | --- | --- |
-| `REQ.A.07.FR-001` | 사용자는 로그인 후 드롭을 찜 목록에 추가하거나 해제한다 | 구매자 | Must | [PAGE.A.02](../10-sitemap/PAGE_A_02_product_detail.md), [PAGE.A.10](../10-sitemap/PAGE_A_10_my.md) |
-| `REQ.A.07.FR-002` | 사용자는 자신의 찜 목록을 조회한다 | 구매자 | Must | [PAGE.A.10](../10-sitemap/PAGE_A_10_my.md) |
-| `REQ.A.07.FR-003` | 시스템은 `SCHEDULED` 상태 드롭에 대해 당일(00:00 기준) 누적된 찜/조회수 가중합으로 오픈 전 랭킹을 산출하며, 매일 자정 카운터를 리셋한다 | 구매자, DropMong 운영자 | Must | [PAGE.A.01](../10-sitemap/PAGE_A_01_homepage.md) |
+| `REQ.A.07.FR-001` | 사용자는 로그인 후 드롭을 찜 목록에 추가하거나 해제한다 | 구매자 | Must | [PAGE.A.02](../10-sitemap/buyer-mobile-web/PAGE_A_02_product_detail.md), [PAGE.A.10](../10-sitemap/buyer-mobile-web/PAGE_A_10_my.md) |
+| `REQ.A.07.FR-002` | 사용자는 자신의 찜 목록을 조회한다 | 구매자 | Must | [PAGE.A.10](../10-sitemap/buyer-mobile-web/PAGE_A_10_my.md) |
+| `REQ.A.07.FR-003` | 시스템은 `SCHEDULED` 상태 드롭에 대해 당일(00:00 기준) 누적된 찜/조회수 가중합으로 오픈 전 랭킹을 산출하며, 매일 자정 카운터를 리셋한다 | 구매자, DropMong 운영자 | Must | [PAGE.A.01](../10-sitemap/buyer-mobile-web/PAGE_A_01_homepage.md) |
 | `REQ.A.07.FR-004` | 시스템은 로그인 사용자의 드롭 조회를 5분 단위로 중복 집계하지 않는다 | - | Must | - |
-| `REQ.A.07.FR-005` | 시스템은 `OPEN` 상태 드롭에 대해 `sell_through_rate / elapsed_minutes` 공식으로 오픈 후 랭킹을 산출한다 | 구매자, DropMong 운영자 | Must | [PAGE.A.01](../10-sitemap/PAGE_A_01_homepage.md) |
+| `REQ.A.07.FR-005` | 시스템은 `OPEN` 상태 드롭에 대해 `sell_through_rate / elapsed_minutes` 공식으로 오픈 후 랭킹을 산출한다 | 구매자, DropMong 운영자 | Must | [PAGE.A.01](../10-sitemap/buyer-mobile-web/PAGE_A_01_homepage.md) |
 | `REQ.A.07.FR-006` | 시스템은 `catalog.drop.updated` 이벤트를 구독해 드롭 상태 전환(`SCHEDULED → OPEN`)에 따라 랭킹 리스트를 전환한다 | - | Must | - |
 | `REQ.A.07.FR-007` | 시스템은 비로그인 사용자의 조회는 랭킹 집계에서 제외한다 | - | Must | - |
 | `REQ.A.07.FR-008` | 시스템은 드롭별 찜 카운트를 조회 가능한 형태로 제공한다 | DropMong 운영자, 브랜드 운영자 | Should | TBD |
@@ -135,7 +135,7 @@ updated: 2026-07-09
 
 ## 연관 태그
 
-🏷️ 플로우 참조: FLOW.A.XX | 페이지 참조: [PAGE.A.01](../10-sitemap/PAGE_A_01_homepage.md), [PAGE.A.02](../10-sitemap/PAGE_A_02_product_detail.md), [PAGE.A.10](../10-sitemap/PAGE_A_10_my.md) | UI 참조: [UI.A.02](../20-ui/UI_A_02_product_detail.md), [UI.A.10](../20-ui/UI_A_10_my.md) | UC 참조: [UC.A.07](../30-uc/UC_A_07_interest_ranking.md) | 영속성 참조: TBD | 서비스 참조: TBD | 시나리오 참조: TBD | API 참조: TBD
+🏷️ 플로우 참조: FLOW.A.XX | 페이지 참조: [PAGE.A.01](../10-sitemap/buyer-mobile-web/PAGE_A_01_homepage.md), [PAGE.A.02](../10-sitemap/buyer-mobile-web/PAGE_A_02_product_detail.md), [PAGE.A.10](../10-sitemap/buyer-mobile-web/PAGE_A_10_my.md) | UI 참조: [UI.A.02](../20-ui/buyer-mobile-web/UI_A_02_product_detail.md), [UI.A.10](../20-ui/buyer-mobile-web/UI_A_10_my.md) | UC 참조: [UC.A.07](../30-uc/UC_A_07_interest_ranking.md) | 영속성 참조: TBD | 서비스 참조: TBD | 시나리오 참조: TBD | API 참조: TBD
 
 ## 열린 질문
 
