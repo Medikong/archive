@@ -12,7 +12,7 @@ actors: [비회원, 구매자]
 tags: [page, sitemap, auth, member, signin, signup, phone-signin, dropmong]
 source: local
 created: 2026-07-07
-updated: 2026-07-08
+updated: 2026-07-10
 ---
 
 # 인증 및 회원 페이지
@@ -30,7 +30,7 @@ updated: 2026-07-08
 <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; width: 100%; align-items: start; padding: 8px 0;">
   <figure style="margin: 0; min-width: 0;"><img src="../../20-ui/assets/UI_A_300_multi_signin/UI_A_300_01_multi_signin.png" alt="로그인 메인" style="display: block; width: 100%; height: auto;" /><figcaption>1. PAGE.A.300 로그인 메인</figcaption></figure>
   <figure style="margin: 0; min-width: 0;"><img src="../../20-ui/assets/UI_A_301_email_signup/UI_A_301_01_email_signup.png" alt="이메일 회원가입" style="display: block; width: 100%; height: auto;" /><figcaption>2. PAGE.A.301 이메일 회원가입</figcaption></figure>
-  <figure style="margin: 0; min-width: 0;"><img src="../../20-ui/assets/UI_A_303_phone_signin/PAGE_A_303_phone_signin.png" alt="휴대폰 번호 인증" style="display: block; width: 100%; height: auto;" /><figcaption>3. PAGE.A.303 휴대폰 인증 계정 확인</figcaption></figure>
+  <figure style="margin: 0; min-width: 0;"><img src="../../20-ui/assets/UI_A_303_phone_signin/PAGE_A_303_phone_signin.png" alt="휴대폰 번호 인증" style="display: block; width: 100%; height: auto;" /><figcaption>3. PAGE.A.303 휴대폰 인증 식별자 확인</figcaption></figure>
 </div>
 
 ### 이메일 로그인 경로
@@ -53,9 +53,9 @@ updated: 2026-07-08
 | Page ID | 페이지 | 경로 | 역할 |
 | --- | --- | --- | --- |
 | `PAGE.A.300` | 로그인 메인 | `/auth/signin` | 인증 수단을 선택하고 로그인/회원가입/복구로 분기한다. |
-| `PAGE.A.301` | 이메일 회원가입 | `/auth/signup/email` | 이메일 계정 생성, 필수 동의, 추천인 코드, 휴대폰 인증 계정 연결을 처리한다. |
+| `PAGE.A.301` | 이메일 회원가입 | `/auth/signup/email` | 이메일 회원가입, 필수 동의, 추천인 코드, 휴대폰 인증 식별자 연결을 처리한다. |
 | `PAGE.A.302` | 이메일 로그인 | `/auth/signin/email` | 이메일/비밀번호 로그인, 로그인 상태 유지, 비밀번호 재설정 진입을 처리한다. |
-| `PAGE.A.303` | 휴대폰 번호 로그인 | `/auth/signin/phone` | 연결된 휴대폰 인증 계정을 검증한 뒤 기존 `user_id`로 로그인한다. |
+| `PAGE.A.303` | 휴대폰 번호 로그인 | `/auth/signin/phone` | 연결된 휴대폰 인증 식별자를 검증한 뒤 기존 `user_id`로 로그인한다. |
 
 ## 화면 구성
 
@@ -67,7 +67,7 @@ updated: 2026-07-08
 | `PAGE.A.301` | 약관 체크리스트 | 필수/선택 동의, 약관 상세 링크 | 필수 동의 완료 | 약관/정책 |
 | `PAGE.A.302` | 로그인 폼 | 이메일, 비밀번호, 로그인 상태 유지 | 이메일 로그인 요청 | 인증 API |
 | `PAGE.A.302` | 계정 도움말 | 이메일 찾기, 비밀번호 재설정, 회원가입 | 계정 복구 또는 가입 이동 | `PAGE.A.310`, `PAGE.A.301` |
-| `PAGE.A.303` | 휴대폰 인증 | 휴대폰 번호, 가상 SMS 인증번호, 재전송 | 연결된 휴대폰 인증 계정으로 로그인 | 인증 API |
+| `PAGE.A.303` | 휴대폰 인증 | 휴대폰 번호, 가상 SMS 인증번호, 재전송 | 연결된 휴대폰 인증 식별자로 로그인 | 인증 API |
 
 ## 연관 사이트맵
 
@@ -118,9 +118,9 @@ flowchart TD
 | 휴대폰 번호로 시작하기 | `PAGE.A.303` 휴대폰 번호 로그인 | 휴대폰 로그인 수단이 활성화되어 있음 |
 | 이메일 로그인 선택 | `PAGE.A.302` 이메일 로그인 | 이메일 인증 계정 사용자 |
 | 이메일 회원가입 선택 | `PAGE.A.301` 이메일 회원가입 | 계정이 없는 사용자 |
-| 회원가입 완료 | 이전 의도 화면 또는 홈 | 이메일 인증과 가상 SMS 휴대폰 인증 계정 연결 완료 |
+| 회원가입 완료 | 이전 의도 화면 또는 홈 | 이메일 인증과 가상 SMS 휴대폰 인증 식별자 연결 완료 |
 | 이메일 로그인 성공 | 이전 의도 화면 또는 홈 | 이메일/비밀번호 검증 성공 |
-| 휴대폰 인증 성공 | 이전 의도 화면 또는 홈 | 휴대폰 인증 계정이 기존 `user_id`에 연결되어 있음 |
+| 휴대폰 인증 성공 | 이전 의도 화면 또는 홈 | 휴대폰 인증 식별자가 기존 `user_id`에 연결되어 있음 |
 | 비밀번호 재설정 선택 | `PAGE.A.310` 비밀번호 재설정 | 이메일 로그인 화면에서 계정 복구 진입 |
 | Apple/Google 선택 | 소셜 로그인 | MVP 이후 구현 후보, 노출 여부는 설정으로 제어 |
 
@@ -132,6 +132,8 @@ flowchart TD
 | redirect target | 로그인 성공 후 이동할 검증된 내부 경로 또는 intent id | 인증/프론트 라우팅 |
 | 지원 인증 수단 | 휴대폰, 이메일, Apple, Google 활성 여부 | 인증 서비스/설정 |
 | 회원가입 입력값 | 이름, 이메일, 비밀번호, 휴대폰 번호, 추천인 코드, 약관 동의 | 사용자 입력 |
+| 회원가입 작업 | 가입 단계, 이메일/휴대폰 확인 상태, 만료 시각 | 인증 서비스 `Registration` |
+| 이메일 인증 상태 | 인증 메일 발송, 검증, 재발송 가능 시각 | 인증 서비스 `VerificationChallenge` |
 | 휴대폰 인증 상태 | 휴대폰 번호, 인증번호 검증, 재전송 가능 시각 | 인증 서비스 |
 | 인증 결과 | 성공, 실패 사유, 잠금 여부, 재시도 제한 | 인증 서비스 |
 
@@ -143,8 +145,9 @@ flowchart TD
 | redirect target 있음 | 인증 성공 후 검증된 이전 의도 화면으로 복귀한다. | 외부 URL은 허용하지 않는다. |
 | 소셜 로그인 비활성 | 해당 버튼을 숨기거나 비활성 상태로 표시한다. | MVP 구현 범위 밖 |
 | 이메일 회원가입 검증 실패 | 필드별 오류를 표시하고 입력값을 유지한다. | 형식/중복/약관/추천인 코드 |
+| 이메일 인증 대기/만료 | 메일 재발송 가능 시각과 가입 작업 만료를 표시한다. | 이메일 원문 존재 여부는 노출하지 않는다. |
 | 휴대폰 인증번호 오류 | 오류 문구와 남은 재시도 또는 재전송 제한을 표시한다. | TTL/재시도 정책 필요 |
-| 휴대폰 인증 계정 미연결 | 이메일 회원가입 또는 계정 연동 안내를 제공한다. | 새 `user_id`를 자동 생성하지 않는다. |
+| 휴대폰 인증 식별자 미연결 | 이메일 회원가입 또는 인증 수단 연동 안내를 제공한다. | 새 `user_id`를 자동 생성하지 않는다. |
 | 로그인 실패 5회 | 인증 계정 잠금 안내와 해제 가능 시점을 표시한다. | 전역 잠금 정책 |
 | 인증 성공 | access token, refresh token, 세션 만료 시각을 관리하고 복귀한다. | `REQ.A.05` 세션 정책 |
 
@@ -158,7 +161,15 @@ flowchart TD
 
 ## 연관 태그
 
-🏷️ 요구사항 참조: [REQ.A.05](../../00-requirements/REQ_A_05_auth_member.md), [REQ.A.01](../../00-requirements/REQ_A_01_limited_drop_commerce.md), [REQ.A.02](../../00-requirements/REQ_A_02_coupon_benefit.md) | 플로우 참조: FLOW.A.300, FLOW.A.301, FLOW.A.302, FLOW.A.303 | UI 참조: [UI.A.300](../../20-ui/UI_A_300_auth_member/UI_A_300_auth_member.md) | UC 참조: [UC.A.300](../../30-uc/UC_A_300_auth_member.md) | 영속성 참조: PST.A.300 예정 | 서비스 참조: SVC.A.300 예정 | 시나리오 참조: SCN.A.300 예정 | API 참조: API.A.300 예정
+- 요구사항 참조: [REQ.A.05](../../00-requirements/REQ_A_05_auth_member.md), [REQ.A.01](../../00-requirements/REQ_A_01_limited_drop_commerce.md), [REQ.A.02](../../00-requirements/REQ_A_02_coupon_benefit.md)
+- 플로우 참조: FLOW.A.300, FLOW.A.301, FLOW.A.302, FLOW.A.303
+- UI 참조: [UI.A.300](../../20-ui/UI_A_300_auth_member/UI_A_300_auth_member.md)
+- UC 참조: [UC.A.300](../../30-uc/UC_A_300_auth_member.md)
+- 도메인 참조: [SD.A.30010](../../50-service-design/A_300_auth/A_300_10-domain-model/SD_A_30010_auth_domain_model.md)
+- 영속성 참조: [SD.A.30020](../../50-service-design/A_300_auth/A_300_20-persistence/README.md)
+- 서비스 참조: [SD.A.30030](../../50-service-design/A_300_auth/A_300_30-service/README.md)
+- API 참조: [SD.A.30040](../../50-service-design/A_300_auth/A_300_40-api/README.md)
+- 시나리오 참조: SCN.A.300 예정
 
 ## 확인 필요
 

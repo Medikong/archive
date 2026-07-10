@@ -11,7 +11,7 @@ actors: [비회원, 구매자]
 tags: [page, sitemap, auth, password-reset, recovery, dropmong]
 source: local
 created: 2026-07-07
-updated: 2026-07-07
+updated: 2026-07-10
 ---
 
 # 비밀번호 찾기 페이지
@@ -120,7 +120,15 @@ flowchart LR
 
 ## 연관 태그
 
-🏷️ 요구사항 참조: [REQ.A.05](../../00-requirements/REQ_A_05_auth_member.md) | 플로우 참조: FLOW.A.310 | UI 참조: [UI.A.310](../../20-ui/UI_A_310_password_find/UI_A_310_password_find.md) | UC 참조: [UC.A.300](../../30-uc/UC_A_300_auth_member.md) | 영속성 참조: PST.A.310 예정 | 서비스 참조: SVC.A.310 예정 | 시나리오 참조: SCN.A.310 예정 | API 참조: API.A.310 예정
+- 요구사항 참조: [REQ.A.05](../../00-requirements/REQ_A_05_auth_member.md)
+- 플로우 참조: FLOW.A.310
+- UI 참조: [UI.A.310](../../20-ui/UI_A_310_password_find/UI_A_310_password_find.md)
+- UC 참조: [UC.A.300](../../30-uc/UC_A_300_auth_member.md)
+- 도메인 참조: [SD.A.30010](../../50-service-design/A_300_auth/A_300_10-domain-model/SD_A_30010_auth_domain_model.md)
+- 영속성 참조: [SD.A.30020](../../50-service-design/A_300_auth/A_300_20-persistence/README.md)
+- 서비스 참조: [SD.A.30030](../../50-service-design/A_300_auth/A_300_30-service/README.md)
+- API 참조: [SD.A.30040](../../50-service-design/A_300_auth/A_300_40-api/README.md)
+- 시나리오 참조: SCN.A.310 예정
 
 ## 확인 필요
 

@@ -8,7 +8,7 @@ status: draft
 tags: [ui, screenshot, auth, member, signin, signup, phone-signin, component-sheet, dropmong]
 source: local
 created: 2026-07-07
-updated: 2026-07-08
+updated: 2026-07-10
 ---
 
 # 인증 및 회원 UI
@@ -33,7 +33,14 @@ updated: 2026-07-08
 
 ## 연관 태그
 
-🏷️ 요구사항 참조: [REQ.A.05](../../00-requirements/REQ_A_05_auth_member.md), [REQ.A.01](../../00-requirements/REQ_A_01_limited_drop_commerce.md), [REQ.A.02](../../00-requirements/REQ_A_02_coupon_benefit.md) | 페이지 참조: [PAGE.A.300](../../10-sitemap/PAGE_A_300_auth_member/PAGE_A_300_auth_member.md) | UC 참조: [UC.A.300](../../30-uc/UC_A_300_auth_member.md) | 영속성 참조: PST.A.300 예정 | 서비스 참조: SVC.A.300 예정 | 시나리오 참조: SCN.A.300 예정 | API 참조: API.A.300 예정
+- 요구사항 참조: [REQ.A.05](../../00-requirements/REQ_A_05_auth_member.md), [REQ.A.01](../../00-requirements/REQ_A_01_limited_drop_commerce.md), [REQ.A.02](../../00-requirements/REQ_A_02_coupon_benefit.md)
+- 페이지 참조: [PAGE.A.300](../../10-sitemap/PAGE_A_300_auth_member/PAGE_A_300_auth_member.md)
+- UC 참조: [UC.A.300](../../30-uc/UC_A_300_auth_member.md)
+- 도메인 참조: [SD.A.30010](../../50-service-design/A_300_auth/A_300_10-domain-model/SD_A_30010_auth_domain_model.md)
+- 영속성 참조: [SD.A.30020](../../50-service-design/A_300_auth/A_300_20-persistence/README.md)
+- 서비스 참조: [SD.A.30030](../../50-service-design/A_300_auth/A_300_30-service/README.md)
+- API 참조: [SD.A.30040](../../50-service-design/A_300_auth/A_300_40-api/README.md)
+- 시나리오 참조: SCN.A.300 예정
 
 ## 화면 미리보기
 
@@ -101,7 +108,10 @@ updated: 2026-07-08
 | 입력 | `form.password` | string | 비밀번호 입력 |
 | 입력 | `form.phoneNumber` | string | 휴대폰 번호 입력 |
 | 검증 | `validation.email.valid` | boolean | 이메일 형식 상태 |
+| 검증 | `validation.emailVerification.completed` | boolean | 이메일 인증 메일 검증 완료 여부 |
 | 검증 | `validation.phoneVerification.completed` | boolean | 가상 SMS 휴대폰 인증 완료 여부 |
+| 가입 | `registration.id` | string? | 서버가 발급한 회원가입 작업 식별자 |
+| 가입 | `registration.expiresAt` | datetime? | 회원가입 작업 만료 시각 |
 | 동의 | `agreements[].checked` | boolean | 약관 체크 상태 |
 | 액션 | `actions.canSubmit` | boolean | 회원가입 완료 CTA 활성 |
 

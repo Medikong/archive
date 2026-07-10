@@ -6,7 +6,7 @@ status: draft
 tags: [ddd, event-storming, bounded-context, auth, member, signup, signin, session, dropmong]
 source: local
 created: 2026-07-08
-updated: 2026-07-08
+updated: 2026-07-10
 ---
 
 # Context 인증 이벤트스토밍과 바운디드 컨텍스트
@@ -15,7 +15,7 @@ updated: 2026-07-08
 
 - BC ID: `BC.A.300`
 - ID 결정: 요구사항 원천은 `REQ.A.05`이지만, 페이지/UI/UC 파일명이 `A.300` 그룹으로 정리되어 있으므로 이 문서는 대상 사용자 목적 묶음에 맞춰 `BC.A.300`을 사용한다.
-- 책임: 공개 탐색과 인증 필요 행동의 경계 판단, 이메일 회원가입 과정의 인증 검증, 이메일/휴대폰 로그인, 휴대폰 번호 셀프 변경, 세션 발급과 회전, 인증 식별자와 `user_id` 연결 상태, 감사 이벤트 전송.
+- 책임: 공개 탐색과 인증 필요 행동의 경계 판단, 이메일 회원가입 과정의 인증 검증, 이메일/휴대폰 로그인, 비밀번호 재설정, 휴대폰 번호 셀프 변경, 세션 발급과 회전, 인증 식별자와 `user_id` 연결 상태, role/permission claim, 감사 이벤트 전송.
 - 사용자: 비회원, 구매자, CS 담당자, 플랫폼 운영자.
 - 핵심 용어: 사용자 계정, 인증 식별자, 인증 수단, `user_id`, redirect target, 세션, refresh rotation, 인증 게이트, 감사 이벤트, Context 감사.
 - 제외 책임: 사용자 프로필/표시 정보, 주문/결제/쿠폰 도메인 판단, PG 본인 인증, Apple/Google 실제 연동, 네이버/토스/PASS/카카오톡 실제 연동, passkey MVP 구현, 사용자 계정 병합, 수동 DB 수정.
@@ -26,10 +26,11 @@ updated: 2026-07-08
 - 🏷️ 페이지 참조: [PAGE.A.300](../10-sitemap/PAGE_A_300_auth_member/PAGE_A_300_auth_member.md), [PAGE.A.310](../10-sitemap/PAGE_A_310_password_find/PAGE_A_310_password_find.md)
 - 🏷️ UI 참조: [UI.A.300](../20-ui/UI_A_300_auth_member/UI_A_300_auth_member.md), [UI.A.310](../20-ui/UI_A_310_password_find/UI_A_310_password_find.md)
 - 🏷️ UC 참조: [UC.A.300](../30-uc/UC_A_300_auth_member.md)
-- 🏷️ 영속성 참조: PST.A.300 예정
-- 🏷️ 서비스 참조: SVC.A.300 예정
+- 🏷️ 도메인 참조: [SD.A.30010](../50-service-design/A_300_auth/A_300_10-domain-model/SD_A_30010_auth_domain_model.md)
+- 🏷️ 영속성 참조: [SD.A.30020](../50-service-design/A_300_auth/A_300_20-persistence/README.md)
+- 🏷️ 서비스 참조: [SD.A.30030](../50-service-design/A_300_auth/A_300_30-service/README.md)
 - 🏷️ 시나리오 참조: SCN.A.300 예정
-- 🏷️ API 참조: API.A.300 예정
+- 🏷️ API 참조: [SD.A.30040](../50-service-design/A_300_auth/A_300_40-api/README.md)
 
 ## 컨텍스트 경계
 
@@ -69,7 +70,7 @@ flowchart LR
     cmdLogout[Command<br>로그아웃]
     cmdRequestLink[Command<br>인증 수단 연동 요청]
     cmdSelfPhoneChange[Command<br>휴대폰 번호 셀프 변경]
-    cmdPhoneChangeReauth[Command<br>휴대폰 번호 변경 재인증]
+    cmdPhoneChangeReauth[Command<br>이메일 재인증]
     cmdManualLink[Command<br>인증 수단 수동 처리]
 
     identity[Aggregate<br>Identity]
@@ -329,7 +330,7 @@ flowchart TB
       direction LR
       pcBuyer[Actor<br>구매자]
       pcSelfChange[Command<br>휴대폰 번호 셀프 변경]
-      pcReauth[Command<br>휴대폰 번호 변경 재인증]
+      pcReauth[Command<br>이메일 재인증]
       pcIdentity[Aggregate<br>Identity]
       pcIdentityLink[Aggregate<br>IdentityLink]
       pcRequested[Domain Event<br>휴대폰 번호 변경 요청됨]
@@ -469,7 +470,7 @@ flowchart TB
 | Actor | ACTOR.A.300-04 | 플랫폼 운영자 | Context 외부 | 인증 수단 수동 처리, 정책 확인, 감사 이력 확인을 수행한다. |
 | Command | CMD.A.300-01 | 인증 게이트 확인 | Context 인증 | 사용자의 화면/행동/API 접근이 공개인지 인증 필요인지 판단한다. |
 | Command | CMD.A.300-02 | 로그인 의도 보존 | Context 인증 | 로그인 진입 시 복귀 위치와 intent를 보존한다. |
-| Command | CMD.A.300-03 | 이메일 회원가입 | Context 인증 | 이메일, 비밀번호, 이름, 휴대폰 번호, 약관 동의 기반 가입을 요청한다. |
+| Command | CMD.A.300-03 | 이메일 회원가입 시작 | Context 인증 | BFF가 받은 프로필/동의 opaque reference와 이메일, 비밀번호, 휴대폰 번호로 가입 예약을 시작한다. |
 | Command | CMD.A.300-04 | 이메일 소유 확인 | Context 인증 | 회원가입 또는 복구 과정에서 이메일 소유를 확인한다. |
 | Command | CMD.A.300-05 | 휴대폰 소유 확인 | Context 인증 | 가상 SMS 인증으로 휴대폰 소유를 확인한다. |
 | Command | CMD.A.300-06 | 인증 식별자 연결 | Context 인증 | Context 사용자에서 발급한 `user_id`와 검증된 인증 식별자를 연결한다. |
@@ -481,10 +482,25 @@ flowchart TB
 | Command | CMD.A.300-12 | 인증 수단 연동 요청 | Context 인증 | 현재 `user_id`에 추가 인증 식별자 연결을 요청한다. |
 | Command | CMD.A.300-13 | 인증 수단 수동 처리 | Context 인증 | CS/플랫폼 운영자의 승인과 사유로 인증 수단 해제 또는 재연동을 처리한다. |
 | Command | CMD.A.300-14 | 휴대폰 번호 셀프 변경 | Context 인증 | 안전하게 로그인된 사용자가 대체 인증 수단으로 재인증한 뒤 새 휴대폰 번호로 교체한다. |
-| Command | CMD.A.300-15 | 휴대폰 번호 변경 재인증 | Context 인증 | 이메일 로그인/재인증과 새 휴대폰 SMS 인증으로 셀프 변경 가능 조건을 확인한다. |
+| Command | CMD.A.300-15 | 이메일 재인증 | Context 인증 | 현재 비밀번호를 확인하고 Session을 email Link에 재바인딩해 목적 한정 proof를 발급한다. 새 번호 확인은 CMD.A.300-18이 담당한다. |
+| Command | CMD.A.300-16 | 회원가입 진행 | Context 인증 | 검증 완료 뒤 `user_id` 요청, Link, Session 단계를 현재 상태부터 재개한다. |
+| Command | CMD.A.300-17 | 인증 Challenge 발급 | Context 인증 | API의 명시적 요청으로 목적별 Challenge와 발송 outbox를 만든다. |
+| Command | CMD.A.300-18 | 인증 Challenge 검증 | Context 인증 | Challenge를 검증하고 성공 또는 실패 횟수를 반영한다. |
+| Command | CMD.A.300-19 | 비밀번호 재설정 요청 | Context 인증 | 존재 여부를 숨긴 PasswordReset을 만들고 Challenge 발급은 별도 요청으로 둔다. |
+| Command | CMD.A.300-20 | 비밀번호 변경 | Context 인증 | reset grant를 소비하고 비밀번호와 전체 Session을 교체·폐기한다. |
+| Command | CMD.A.300-21 | 권한 Grant 반영 | Context 인증 | 역할/권한 원천의 version을 AccessGrant에 반영한다. |
+| Command | CMD.A.300-22 | 세션 일괄 폐기 | Context 인증 | 보안 사건과 사용자 상태 변경에 맞는 Session 범위를 폐기한다. |
+| Command | CMD.A.300-23 | 인증 정책 변경 | Context 인증 | TTL, rotation, 잠금, Challenge 정책 version을 변경한다. |
+| Command | CMD.A.300-24 | 인증 후 행동 복구 | Context 인증 | 로그인 전 보존한 action payload를 소비 Session에 한 번 전달한다. |
 | Aggregate | AGG.A.300-01 | Identity | Context 인증 | 이메일, 휴대폰 번호, ProviderSubject 같은 인증 식별자와 검증 상태를 관리한다. |
 | Aggregate | AGG.A.300-02 | IdentityLink | Context 인증 | `identity_id`와 Context 사용자에서 발급한 `user_id`의 연결 상태를 관리한다. |
 | Aggregate | AGG.A.300-03 | Session | Context 인증 | access token, refresh token, remember-me, rotation, 만료 상태를 관리한다. |
+| Aggregate | AGG.A.300-04 | VerificationChallenge | Context 인증 | 목적별 이메일/SMS 소유 확인의 발급, 검증, 만료, 제한을 관리한다. |
+| Aggregate | AGG.A.300-05 | Registration | Context 인증 | 두 소유 확인부터 `user_id` 연결과 자동 로그인까지의 장기 작업을 관리한다. |
+| Aggregate | AGG.A.300-06 | PasswordReset | Context 인증 | 선택한 인증 수단 확인과 비밀번호 교체를 단일 사용 작업으로 관리한다. |
+| Aggregate | AGG.A.300-07 | AuthenticationIntent | Context 인증 | 검증된 복귀 위치, 사전 인증 소유 proof, action payload 참조를 관리한다. |
+| Aggregate | AGG.A.300-08 | AccessGrant | Context 인증 | 사용자별 role/permission snapshot과 claim version을 관리한다. |
+| Aggregate | AGG.A.300-09 | UserAuthState | Context 인증 | Context 사용자의 제한·비활성 version과 새 인증 허용 상태를 관리한다. |
 | Domain Event | EVT.A.300-01 | 인증 게이트 적용됨 | Context 인증 | 개인/결제/드롭 참여 행동에 인증 필요 판정이 적용된 결과다. |
 | Domain Event | EVT.A.300-02 | 로그인 의도 보존됨 | Context 인증 | 로그인 후 복귀할 redirect target 또는 intent가 저장된 결과다. |
 | Domain Event | EVT.A.300-03 | 인증 식별자 연결됨 | Context 인증 | 검증된 인증 식별자가 Context 사용자에서 발급한 `user_id`에 연결된 결과다. |
@@ -496,29 +512,52 @@ flowchart TB
 | Domain Event | EVT.A.300-09 | 사용자 로그아웃됨 | Context 인증 | 세션 또는 refresh token이 폐기된 결과다. |
 | Domain Event | EVT.A.300-10 | 인증 수단 연동 요청됨 | Context 인증 | 추가 인증 식별자 연결 시도가 확인된 결과다. |
 | Domain Event | EVT.A.300-11 | 인증 수단 수동 변경됨 | Context 인증 | CS/플랫폼 운영자 절차로 인증 수단이 해제 또는 재연동된 결과다. |
-| Domain Event | EVT.A.300-12 | 로그인 성공 감사 전송됨 | Context 인증 | 로그인 성공 사실을 Context 감사로 전송한 결과다. |
-| Domain Event | EVT.A.300-13 | 로그인 실패 감사 전송됨 | Context 인증 | 로그인 실패 사실을 Context 감사로 전송한 결과다. |
-| Domain Event | EVT.A.300-14 | 토큰 재발급 감사 전송됨 | Context 인증 | token 재발급 사실을 Context 감사로 전송한 결과다. |
-| Domain Event | EVT.A.300-15 | 로그아웃 감사 전송됨 | Context 인증 | 로그아웃 사실을 Context 감사로 전송한 결과다. |
-| Domain Event | EVT.A.300-16 | 인증 수단 변경 감사 전송됨 | Context 인증 | 인증 수단 연동/해제/재연동 결과를 Context 감사로 전송한 결과다. |
-| Domain Event | EVT.A.300-17 | 계정 잠금 감사 전송됨 | Context 인증 | 로그인 실패 임계치 도달과 잠금 적용 사실을 Context 감사로 전송한 결과다. |
+| Outbox Delivery Result | EVT.A.300-12 | 로그인 성공 감사 전송됨 | Context 인증 | 로그인 성공 event를 Context 감사가 수락한 전달 결과다. Aggregate Domain Event가 아니다. |
+| Outbox Delivery Result | EVT.A.300-13 | 로그인 실패 감사 전송됨 | Context 인증 | 로그인 실패 event를 Context 감사가 수락한 전달 결과다. Aggregate Domain Event가 아니다. |
+| Outbox Delivery Result | EVT.A.300-14 | 토큰 재발급 감사 전송됨 | Context 인증 | token 재발급 event의 전달 결과다. Aggregate Domain Event가 아니다. |
+| Outbox Delivery Result | EVT.A.300-15 | 로그아웃 감사 전송됨 | Context 인증 | 로그아웃 event의 전달 결과다. Aggregate Domain Event가 아니다. |
+| Outbox Delivery Result | EVT.A.300-16 | 인증 수단 변경 감사 전송됨 | Context 인증 | 인증 수단 변경 event의 전달 결과다. Aggregate Domain Event가 아니다. |
+| Outbox Delivery Result | EVT.A.300-17 | 계정 잠금 감사 전송됨 | Context 인증 | 잠금 event의 전달 결과다. Aggregate Domain Event가 아니다. |
 | Domain Event | EVT.A.300-18 | 휴대폰 번호 변경 요청됨 | Context 인증 | 사용자가 기존 `user_id`에 연결된 휴대폰 인증 식별자 교체를 요청한 결과다. |
 | Domain Event | EVT.A.300-19 | 새 휴대폰 인증 식별자 확인됨 | Context 인증 | 새 휴대폰 번호의 SMS 소유 확인이 완료된 결과다. |
 | Domain Event | EVT.A.300-20 | 휴대폰 인증 식별자 교체됨 | Context 인증 | 기존 휴대폰 인증 식별자가 닫히고 새 휴대폰 인증 식별자가 같은 `user_id`에 연결된 결과다. |
-| Domain Event | EVT.A.300-21 | 휴대폰 번호 변경 감사 전송됨 | Context 인증 | 휴대폰 인증 식별자 교체 결과를 Context 감사로 전송한 결과다. |
+| Outbox Delivery Result | EVT.A.300-21 | 휴대폰 번호 변경 감사 전송됨 | Context 인증 | 휴대폰 교체 event의 전달 결과다. Aggregate Domain Event가 아니다. |
+| Domain Event | EVT.A.300-22 | 인증 Challenge 발급됨 | Context 인증 | 목적별 Challenge가 발급된 사실이다. secret은 포함하지 않는다. |
+| Domain Event | EVT.A.300-23 | 인증 Challenge 실패함 | Context 인증 | Challenge 실패·만료·제한 초과 사실이다. |
+| Domain Event | EVT.A.300-24 | 회원가입 완료됨 | Context 인증 | Registration이 사용자 연결과 Session 발급을 완료한 사실이다. |
+| Domain Event | EVT.A.300-25 | 비밀번호 변경됨 | Context 인증 | PasswordReset이 비밀번호 교체를 완료한 사실이다. |
+| Domain Event | EVT.A.300-26 | 세션 폐기됨 | Context 인증 | 정책에 따라 Session이 폐기된 사실이다. |
+| Domain Event | EVT.A.300-27 | Refresh 재사용 탐지됨 | Context 인증 | rotated/revoked refresh credential이 다시 사용된 사실이다. |
+| Domain Event | EVT.A.300-28 | 권한 Grant 변경됨 | Context 인증 | AccessGrant version이 증가하거나 폐기된 사실이다. |
+| Domain Event | EVT.A.300-29 | 인증 의도 소비됨 | Context 인증 | AuthenticationIntent가 Session 발급 또는 reset 완료로 소비된 사실이다. |
+| Domain Event | EVT.A.300-30 | 인증 정책 변경됨 | Context 인증 | 인증 정책 version이 바뀐 사실이다. |
+| Domain Event | EVT.A.300-31 | 로그인 실패함 | Context 인증 | 이메일/휴대폰 로그인 검증이 실패한 사실이다. |
+| Domain Event | EVT.A.300-32 | 인증 식별자 잠김 | Context 인증 | LoginLockPolicy 임계치에 따라 Identity가 잠긴 사실이다. |
+| Domain Event | EVT.A.300-33 | 인증 Challenge 확인됨 | Context 인증 | 목적별 Challenge가 verified된 사실이다. purpose/channel과 비민감 참조만 전달한다. |
+| Domain Event | EVT.A.300-34 | 사용자 인증 제한 상태 변경됨 | Context 인증 | Context 사용자 restriction version이 반영되어 새 인증 허용 상태가 바뀐 사실이다. |
 | Policy | POLICY.A.300-01 | 공개 탐색 허용 | Context 인증 | 홈, 목록, 상세, 검색, 공지는 비회원 접근을 막지 않는다. |
 | Policy | POLICY.A.300-02 | 내부 복귀 위치만 허용 | Context 인증 | redirect target은 검증된 내부 경로 또는 intent id만 허용한다. |
 | Policy | POLICY.A.300-03 | 인증 식별자 단일 연결 | Context 인증 | 하나의 인증 식별자는 하나의 `user_id`에만 연결된다. |
-| Policy | POLICY.A.300-04 | 로그인 실패 5회 잠금 | Context 인증 | 동일 인증 식별자의 실패가 5회에 도달하면 전역 잠금 정책을 적용한다. |
+| Policy | POLICY.A.300-04 | 설정형 로그인 잠금 | Context 인증 | 기본 실패 허용 5회를 사용하되 window와 잠금 시간은 배포 없이 변경한다. |
 | Policy | POLICY.A.300-05 | 고위험 인증 수단 변경 분기 | Context 인증 | 안전하게 로그인되어 있고 대체 인증 수단으로 재인증한 사용자는 휴대폰 번호 셀프 변경을 할 수 있으며, 접근 불가 또는 대체 인증 불가 상태는 CS/플랫폼 운영자 수동 처리로 보낸다. |
 | Policy | POLICY.A.300-06 | 후속 인증 MVP 제외 | Context 인증 | Apple/Google, 네이버/토스/PASS/카카오톡, passkey는 요구사항에는 남기되 MVP 구현에서 제외한다. |
 | Policy | POLICY.A.300-07 | 인증 책임 최소화 | Context 인증 | 인증 서비스는 `user_id`를 소유하지 않고 인증 식별자 연결과 세션만 관리한다. |
+| Policy | POLICY.A.300-08 | 사용자 존재 여부 은닉 | Context 인증 | 로그인·복구·휴대폰 미연결 공개 응답은 계정 존재 여부를 드러내지 않는다. |
+| Policy | POLICY.A.300-09 | 세션 강제 폐기 | Context 인증 | credential·권한·보안 상태 변경 시 정해진 Session을 폐기한다. |
+| Policy | POLICY.A.300-10 | 감사 원자성 | Context 인증 | 상태 변경과 OutboxEvent를 같은 로컬 트랜잭션에 저장한다. |
+| Policy | POLICY.A.300-11 | 미귀속 가입 예약 회수 | Context 인증 | failed/expired Registration의 owner 없는 Identity를 cooldown 뒤 같은 행으로 재예약한다. |
+| Policy | POLICY.A.300-12 | 사용자 제한 우선 | Context 인증 | UserAuthState가 active가 아니면 Session, refresh, 재인증 proof를 발급하지 않는다. |
+| Policy | POLICY.A.300-13 | 재인증 자격 | Context 인증 | verified email Identity와 active credential/UserAuthState에서만 목적 한정 proof를 발급한다. |
 | Business Rule | RULE.A.300-01 | 이메일과 휴대폰 모두 확인 | Context 인증 | 이메일 회원가입은 이메일 인증과 가상 SMS 휴대폰 인증 식별자 연결을 모두 만족해야 완료된다. |
 | Business Rule | RULE.A.300-02 | 연결된 휴대폰만 로그인 | Context 인증 | 휴대폰 번호 로그인은 이미 연결된 휴대폰 인증 식별자가 있을 때만 기존 `user_id`로 로그인한다. |
 | Business Rule | RULE.A.300-03 | 인증 식별자 연결만 수행 | Context 인증 | Context 인증은 사용자 계정을 만들거나 병합하지 않고 인증 식별자와 `user_id` 연결만 관리한다. |
 | Business Rule | RULE.A.300-04 | 세션 TTL과 회전 관리 | Context 인증 | access token 15분, refresh token 14일, remember-me 30일, refresh rotation 사용을 기본값으로 둔다. |
 | Business Rule | RULE.A.300-05 | 감사 이벤트 분리 전송 | Context 인증 | 인증 결과별 감사 이벤트를 구분해 Context 감사로 전송한다. |
 | Business Rule | RULE.A.300-06 | 휴대폰 번호 변경은 계정 병합이 아님 | Context 인증 | 휴대폰 번호 변경은 기존 `user_id`의 휴대폰 인증 식별자를 교체하는 작업이며 다른 `user_id`와의 병합으로 처리하지 않는다. |
+| Business Rule | RULE.A.300-07 | 비밀번호 재설정 단일 사용 | Context 인증 | 선택한 인증 수단 하나를 확인한 reset grant는 한 번만 사용하고 전체 Session을 폐기한다. |
+| Business Rule | RULE.A.300-08 | 인가 claim 최소화 | Context 인증 | email/phone/profile을 제외하고 role/permission version만 전달한다. |
+| Business Rule | RULE.A.300-09 | 가입 예약은 영구 귀속이 아님 | Context 인증 | owner와 Link가 없는 Identity는 완료되지 않은 가입 정리 뒤 새 Registration이 재검증해 사용할 수 있다. |
+| Business Rule | RULE.A.300-10 | 사용자 제한 멱등 반영 | Context 인증 | restriction version을 단조 증가로 저장하고 제한 즉시 Grant와 Session을 폐기한다. |
 | Hotspot | HOTSPOT.A.300-01 | SMS 제한 정책 | Context 인증 | 가상 SMS 인증번호 TTL, 재전송 제한, 실패 횟수, 테스트 번호 정책을 정해야 한다. |
 | Hotspot | HOTSPOT.A.300-02 | 수동 처리 승인 필드 | Context 인증 | CS/플랫폼 운영자의 승인자, 사유, 증빙, 감사 필드 기준을 정해야 한다. |
 | Hotspot | HOTSPOT.A.300-03 | 번호 변경 복구 기준 | Context 인증 | 이메일 재인증이 불가능하거나 계정 접근이 불가능할 때 CS 전환 기준을 정해야 한다. |
@@ -533,6 +572,8 @@ flowchart TB
 | Read Model | RM.A.300-01 | 인증 진입 컨텍스트 | Context 인증 | 로그인 후 복귀할 redirect target, intent, 지원 인증 수단 노출 상태를 제공한다. |
 | Read Model | RM.A.300-02 | 인증 상태 조회 | Context 인증 | 로그인 실패, 잠금, 인증 수단 연결 상태, 감사 상태를 CS/운영자에게 제공한다. |
 | Read Model | RM.A.300-03 | 세션 정책 조회 | Context 인증 | access/refresh/remember-me TTL과 refresh rotation 설정을 제공한다. |
+
+`EVT.A.300-12~17`, `EVT.A.300-21`은 초기 워크숍에서 붙인 legacy 전달 결과 ID다. Aggregate가 만드는 Domain Event 목록에는 포함하지 않으며, 실제 업무 event의 outbox publish 상태로만 관리한다. 상세 Aggregate·Command·Event·Policy 정의는 [SD.A.30010](../50-service-design/A_300_auth/A_300_10-domain-model/SD_A_30010_auth_domain_model.md)을 기준으로 한다.
 
 ## Element Evidence
 
@@ -556,7 +597,7 @@ flowchart TB
 | CMD.A.300-12 인증 수단 연동 요청 | [REQ.A.05](../00-requirements/REQ_A_05_auth_member.md), [UC.A.300](../30-uc/UC_A_300_auth_member.md) | 사용자는 현재 로그인한 `user_id`에 추가 인증 식별자 연동을 요청할 수 있다. |
 | CMD.A.300-13 인증 수단 수동 처리 | [REQ.A.05](../00-requirements/REQ_A_05_auth_member.md), [UC.A.300](../30-uc/UC_A_300_auth_member.md) | 계정 접근이 불가능하거나 대체 인증을 통과할 수 없는 고위험 인증 수단 변경은 CS/플랫폼 운영자 수동 처리로 다룬다. |
 | CMD.A.300-14 휴대폰 번호 셀프 변경 | [REQ.A.05](../00-requirements/REQ_A_05_auth_member.md), [UC.A.300](../30-uc/UC_A_300_auth_member.md), [당근 고객센터 FAQ](https://cs.kr.karrotmarket.com/wv/faqs/32) | 휴대폰 번호가 계정 접근 수단이면 번호 변경/기기 변경 시 복구 문제가 생기므로, 안전한 로그인과 대체 인증을 통과한 사용자는 새 번호 SMS 인증으로 셀프 교체할 수 있어야 한다. |
-| CMD.A.300-15 휴대폰 번호 변경 재인증 | [REQ.A.05](../00-requirements/REQ_A_05_auth_member.md), [UC.A.300](../30-uc/UC_A_300_auth_member.md) | 휴대폰 번호 셀프 변경은 이메일 로그인 또는 이메일 재인증 같은 대체 인증 수단 확인을 선행해야 한다. |
+| CMD.A.300-15 이메일 재인증 | [REQ.A.05](../00-requirements/REQ_A_05_auth_member.md), [UC.A.300](../30-uc/UC_A_300_auth_member.md) | 휴대폰 번호 셀프 변경 등 고위험 작업은 이메일 비밀번호 재인증을 선행해야 한다. |
 | AGG.A.300-01 Identity | [REQ.A.05](../00-requirements/REQ_A_05_auth_member.md), [UC.A.300](../30-uc/UC_A_300_auth_member.md) | 이메일 인증 식별자, 휴대폰 인증 식별자, ProviderSubject의 검증 상태가 필요하다. |
 | AGG.A.300-02 IdentityLink | [REQ.A.05](../00-requirements/REQ_A_05_auth_member.md), [UC.A.300](../30-uc/UC_A_300_auth_member.md) | 하나의 인증 식별자는 하나의 `user_id`에만 연결되고, 이미 다른 `user_id`에 연결된 인증 식별자는 거부된다. |
 | AGG.A.300-03 Session | [REQ.A.05](../00-requirements/REQ_A_05_auth_member.md), [UI.A.300](../20-ui/UI_A_300_auth_member/UI_A_300_auth_member.md) | 로그인 상태 유지, token TTL, refresh rotation, 세션 만료 시각이 요구된다. |
@@ -651,10 +692,10 @@ flowchart TB
 | Identity | 발행한다 | 인증 수단 연동 요청됨 | 연동 요청 결과를 남긴다. |
 | 구매자 | 요청한다 | 휴대폰 번호 셀프 변경 | 로그인된 사용자가 기존 `user_id`의 휴대폰 인증 식별자 교체를 요청한다. |
 | 휴대폰 번호 셀프 변경 | 발행한다 | 휴대폰 번호 변경 요청됨 | 변경 요청 결과를 남긴다. |
-| 휴대폰 번호 셀프 변경 | 요청한다 | 휴대폰 번호 변경 재인증 | 대체 인증 수단 검증을 요구한다. |
-| 휴대폰 번호 변경 재인증 | 요청한다 | 이메일 소유 확인 | 이메일 로그인 또는 이메일 재인증 상태를 확인한다. |
-| 휴대폰 번호 변경 재인증 | 요청한다 | 휴대폰 소유 확인 | 새 휴대폰 번호의 가상 SMS 인증을 확인한다. |
-| 휴대폰 번호 변경 재인증 | 변경한다 | Identity | 새 휴대폰 인증 식별자의 검증 상태를 만든다. |
+| 휴대폰 번호 셀프 변경 | 요청한다 | 이메일 재인증 | 대체 인증 수단으로 현재 비밀번호를 확인한다. |
+| 이메일 재인증 | 확인한다 | PasswordCredential | 목적 한정 ReauthenticationProof를 발급한다. |
+| 휴대폰 번호 셀프 변경 | 요청한다 | 휴대폰 소유 확인 | 새 휴대폰 번호의 가상 SMS 인증을 확인한다. |
+| 휴대폰 소유 확인 | 변경한다 | Identity | 새 휴대폰 인증 식별자의 검증 상태를 만든다. |
 | Identity | 발행한다 | 새 휴대폰 인증 식별자 확인됨 | 새 번호 소유 확인 결과를 남긴다. |
 | 휴대폰 번호 셀프 변경 | 변경한다 | IdentityLink | 기존 휴대폰 인증 식별자를 닫고 새 인증 식별자를 같은 `user_id`에 연결한다. |
 | IdentityLink | 발행한다 | 휴대폰 인증 식별자 교체됨 | 기존 번호는 `replaced`, `revoked`, `superseded` 같은 닫힘 상태로 남긴다. |
@@ -727,12 +768,12 @@ flowchart TB
 
 | 항목 | 메모 | 연결 문서 |
 | --- | --- | --- |
-| 도메인 모델 | `Identity`, `IdentityLink`, `Session`의 Entity, Value Object, 상태 전이를 상세화한다. | AGG.A.300 예정 |
-| 영속성 | `identity_id`와 `user_id` 연결 유일성, refresh token 회전 저장, 감사 이벤트 전송 outbox 여부를 정한다. | PST.A.300 예정 |
-| 서비스 | 인증 게이트, 인증 검증, Context 사용자 `user_id` 발급 요청, 인증 식별자 연결, 로그인, token 갱신, 로그아웃, 휴대폰 번호 셀프 변경, 인증 수단 수동 처리 유스케이스 서비스를 분리한다. | SVC.A.300 예정 |
-| API | 공개/선택적 인증/필수 인증 API 응답, redirect target 검증, 로그인 실패/잠금/미연결 휴대폰/번호 변경 오류 코드를 정한다. | API.A.300 예정 |
-| 발행 Event | `EVT.A.300-01`부터 `EVT.A.300-21`까지 인증/세션/연동/휴대폰 번호 변경/감사 결과 이벤트를 후속 문서에서 발행 범위별로 나눈다. | SCN.A.300 예정 |
-| 구독 Event | Context 사용자의 `user_id` 발급 결과와 주문/쿠폰/드롭 참여 BC의 사용자 인증 보유 여부 참조 방식을 정한다. | SVC.A.300 예정 |
-| 외부 연동 | 이메일 발송, 가상 SMS, Apple/Google, 네이버/토스/PASS/카카오톡, passkey 연동은 MVP와 후속 구현 범위를 나눠 설계한다. Context 감사 전송은 컨텍스트 간 이벤트 연동으로 분리한다. | API.A.300 예정 |
-| 정책/불변조건 | 사용자 계정 생성/병합 비소유, 인증 식별자 단일 연결, 고위험 인증 수단 변경 분기, 민감 원문 감사 이벤트 전송 금지, 인증 책임 최소화를 불변조건으로 옮긴다. | PST.A.300 예정, SVC.A.300 예정 |
-| 열린 질문 | SMS 제한 정책, 번호 변경 복구 기준, 수동 처리 승인 필드, 후속 ProviderSubject 정책, 초기 TTL 운영 적합성을 확정한다. | SCN.A.300 예정 |
+| 도메인 모델 | `Identity`, `IdentityLink`, `VerificationChallenge`, `Registration`, `PasswordReset`, `AuthenticationIntent`, `Session`, `AccessGrant`와 하위 Entity/상태를 상세화한다. | [SD.A.30010](../50-service-design/A_300_auth/A_300_10-domain-model/SD_A_30010_auth_domain_model.md) |
+| 영속성 | 인증 식별자 암호화/조회 키, 영구 단일 귀속, Challenge/Session TTL, refresh rotation, idempotency, transactional outbox를 정한다. | [SD.A.30020](../50-service-design/A_300_auth/A_300_20-persistence/README.md) |
+| 서비스 | 인증 게이트, 회원가입 조정, 인증 검증, Context 사용자 `user_id` 발급 요청, 로그인/복구, token 갱신, 로그아웃, 인증 수단 변경, 권한 Grant 처리를 분리한다. | [SD.A.30030](../50-service-design/A_300_auth/A_300_30-service/README.md) |
+| API | 공개/선택적 인증/필수 인증 API, redirect target, 회원가입/Challenge, 로그인/복구, 세션, 인증 수단 변경, 운영 정책 오류 계약을 정한다. | [SD.A.30040](../50-service-design/A_300_auth/A_300_40-api/README.md) |
+| 발행 Event | 기존 `EVT.A.300-01~21`과 상세 설계에서 추가한 Challenge/회원가입/복구/세션 폐기/권한 변경 사실을 outbox integration event로 전달한다. | [SD.A.30010](../50-service-design/A_300_auth/A_300_10-domain-model/SD_A_30010_auth_domain_model.md), SCN.A.300 예정 |
+| 구독 Event | Context 사용자의 `user_id` 발급 결과와 role/permission 변경 결과를 멱등하게 반영한다. | [SD.A.30030](../50-service-design/A_300_auth/A_300_30-service/README.md) |
+| 외부 연동 | 이메일/SMS 발송과 Context 감사 전송을 adapter로 분리하고, Apple/Google/국내 인증/passkey는 MVP 이후 확장으로 둔다. | [SD.A.30030](../50-service-design/A_300_auth/A_300_30-service/README.md), [SD.A.30040](../50-service-design/A_300_auth/A_300_40-api/README.md) |
+| 정책/불변조건 | 사용자 생성 비소유, 인증 식별자 영구 단일 귀속, 고위험 변경, 민감 원문 금지, 채널별 Session, 세션 강제 폐기를 구현 규칙으로 옮긴다. | [SD.A.30010](../50-service-design/A_300_auth/A_300_10-domain-model/SD_A_30010_auth_domain_model.md), [SD.A.30020](../50-service-design/A_300_auth/A_300_20-persistence/README.md), [SD.A.30030](../50-service-design/A_300_auth/A_300_30-service/README.md) |
+| 열린 질문 | Challenge/잠금/TTL 정책, 번호 변경 복구, 수동 승인, ProviderSubject, role/permission 원천, 세션 폐기 범위를 확정한다. | [SD.A.300](../50-service-design/A_300_auth/README.md), SCN.A.300 예정 |

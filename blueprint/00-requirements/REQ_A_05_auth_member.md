@@ -6,7 +6,7 @@ status: draft
 tags: [requirements, dropmong, auth, member, signup, signin, session, identity]
 source: local
 created: 2026-07-07
-updated: 2026-07-08
+updated: 2026-07-10
 ---
 
 # 인증 및 회원 요구사항 정의
@@ -123,9 +123,9 @@ updated: 2026-07-08
 | `REQ.A.05.FR-008` | 사용자는 이메일과 비밀번호로 로그인하고, 필요하면 로그인 상태 유지를 선택한다. | 비회원, 구매자 | Must | [PAGE.A.302](../10-sitemap/PAGE_A_300_auth_member/PAGE_A_300_auth_member.md) |
 | `REQ.A.05.FR-009` | 시스템은 로그인 성공 후 redirect target이 있으면 해당 위치로 이동하고, 없으면 홈 화면으로 이동한다. | 구매자 | Must | [PAGE.A.300](../10-sitemap/PAGE_A_300_auth_member/PAGE_A_300_auth_member.md), [PAGE.A.302](../10-sitemap/PAGE_A_300_auth_member/PAGE_A_300_auth_member.md) |
 | `REQ.A.05.FR-010` | 시스템은 드롭 참여 전 로그인 상태, 사용자 인증 정보 보유 여부, 구매 제한 조건, 차단된 사용자 계정 여부를 확인하고 진행 가능 여부를 결정한다. | 구매자 | Must | [REQ.A.01](./REQ_A_01_limited_drop_commerce.md) |
-| `REQ.A.05.FR-011` | 시스템은 access token, refresh token, 로그인 상태 유지 세션을 발급하고 만료 시각을 함께 관리한다. | 구매자 | Must | SVC.A.300 예정 |
-| `REQ.A.05.FR-012` | 운영자는 access token TTL, refresh token TTL, 로그인 상태 유지 TTL, refresh rotation 여부를 배포 없이 설정으로 변경할 수 있다. | 플랫폼 운영자 | Must | SVC.A.300 예정 |
-| `REQ.A.05.FR-013` | 시스템은 초기 기본값으로 access token 15분, refresh token 14일, 로그인 상태 유지 refresh token 30일, refresh rotation 사용을 제공한다. | 시스템 | Must | SVC.A.300 예정 |
+| `REQ.A.05.FR-011` | 시스템은 access token, refresh token, 로그인 상태 유지 세션을 발급하고 만료 시각을 함께 관리한다. | 구매자 | Must | [SD.A.30030](../50-service-design/A_300_auth/A_300_30-service/README.md) |
+| `REQ.A.05.FR-012` | 운영자는 access token TTL, refresh token TTL, 로그인 상태 유지 TTL, refresh rotation 여부를 배포 없이 설정으로 변경할 수 있다. | 플랫폼 운영자 | Must | [SD.A.30030](../50-service-design/A_300_auth/A_300_30-service/README.md) |
+| `REQ.A.05.FR-013` | 시스템은 초기 기본값으로 access token 15분, refresh token 14일, 로그인 상태 유지 refresh token 30일, refresh rotation 사용을 제공한다. | 시스템 | Must | [SD.A.30030](../50-service-design/A_300_auth/A_300_30-service/README.md) |
 | `REQ.A.05.FR-014` | 사용자는 로그아웃할 수 있고, 시스템은 해당 세션 또는 refresh token을 더 이상 사용할 수 없게 만든다. | 구매자 | Must | PAGE.A.10 예정 |
 | `REQ.A.05.FR-015` | 시스템은 로그인 실패, 인증 식별자 잠금, 비밀번호 재설정 필요, 인증 수단 비활성 같은 실패 사유를 사용자와 CS가 이해할 수 있는 코드로 남긴다. | 구매자, CS | Must | [PAGE.A.302](../10-sitemap/PAGE_A_300_auth_member/PAGE_A_300_auth_member.md) |
 | `REQ.A.05.FR-016` | 사용자는 현재 로그인한 사용자 계정의 `user_id`에 이메일, 휴대폰 번호, Apple, Google 같은 추가 인증 식별자 연동을 요청할 수 있다. | 구매자 | Should | 사용자 계정 관리 페이지 예정 |
@@ -137,7 +137,7 @@ updated: 2026-07-08
 | `REQ.A.05.FR-022` | 시스템은 로그인 성공/실패, 회원가입, 휴대폰 인증, token 발급/갱신, 로그아웃, 인증 식별자 잠금, 권한 변경, 인증 수단 연동/변경을 의미별 감사 이벤트로 구분해 Audit Context로 전송한다. | 시스템, CS, 운영자 | Must | 운영자 사이트 예정 |
 | `REQ.A.05.FR-023` | 시스템은 화면 영역과 사용자 행동을 공개, 선택적 인증, 필수 인증, 권한 필요로 분류하고 각 분류별 처리 방식을 정의한다. | 시스템 | Must | PAGE.A.01, PAGE.A.300 예정 |
 | `REQ.A.05.FR-024` | 공개 페이지 안의 사용자 개인화 컴포넌트는 Auth Boundary 또는 Permission Boundary 안에서 렌더링하며, 인증/권한 오류가 발생해도 페이지 전체 실패로 전파하지 않고 해당 컴포넌트의 대체 상태로 제한한다. | 비회원, 구매자 | Must | [PAGE.A.01](../10-sitemap/PAGE_A_01_homepage.md) |
-| `REQ.A.05.FR-025` | API는 공개 데이터, 선택적 개인화 데이터, 필수 인증 데이터를 구분해 제공하고, 선택적 개인화 데이터 실패가 공개 페이지 전체 실패로 번지지 않게 한다. | 시스템 | Must | API.A.300 예정 |
+| `REQ.A.05.FR-025` | API는 공개 데이터, 선택적 개인화 데이터, 필수 인증 데이터를 구분해 제공하고, 선택적 개인화 데이터 실패가 공개 페이지 전체 실패로 번지지 않게 한다. | 시스템 | Must | [SD.A.30040](../50-service-design/A_300_auth/A_300_40-api/README.md) |
 | `REQ.A.05.FR-026` | 시스템은 휴대폰 번호 로그인 시 가상 SMS 인증을 통과한 휴대폰 인증 식별자가 기존 `user_id`에 연결되어 있을 때만 해당 사용자 계정으로 로그인시킨다. 연결된 `user_id`가 없으면 로그인 실패와 이메일 회원가입/연동 안내를 반환한다. | 비회원, 구매자 | Must | [PAGE.A.300](../10-sitemap/PAGE_A_300_auth_member/PAGE_A_300_auth_member.md) |
 | `REQ.A.05.FR-027` | 시스템은 이메일 인증 메일 검증을 이메일 회원가입 완료의 필수 조건으로 둔다. 휴대폰 인증 식별자가 연결되어 있어도 이메일 인증을 생략하지 않는다. | 비회원 | Must | [PAGE.A.301](../10-sitemap/PAGE_A_300_auth_member/PAGE_A_300_auth_member.md) |
 | `REQ.A.05.FR-028` | 사용자는 비밀번호 재설정을 이메일 인증과 휴대폰 번호 인증 중 하나로 요청할 수 있다. | 비회원, 구매자 | Must | [PAGE.A.310](../10-sitemap/PAGE_A_310_password_find/PAGE_A_310_password_find.md) |
@@ -145,8 +145,8 @@ updated: 2026-07-08
 | `REQ.A.05.FR-030` | 시스템은 인증 수단 해제와 재연동을 고위험 인증 수단 변경으로 다룬다. 안전하게 로그인되어 있고 대체 인증 수단으로 재인증한 사용자는 허용된 범위에서 셀프 변경할 수 있으며, 계정 접근이 불가능하거나 대체 인증이 불가능하면 CS/플랫폼 운영자 수동 처리로 보낸다. | 구매자, CS, 플랫폼 운영자 | Must | 사용자 계정 관리 페이지 예정, 운영자 사이트 예정 |
 | `REQ.A.05.FR-031` | 판매자/운영자 passkey 도입 후 복구용 인증 식별자 변경과 break-glass 권한 사용은 팀장급 승인자를 거쳐야 한다. | 판매자, 플랫폼 운영자 | Must | 운영자 사이트 예정 |
 | `REQ.A.05.FR-032` | 사용자는 이메일 로그인 또는 이메일 재인증을 통과한 로그인 상태에서 새 휴대폰 번호의 가상 SMS 인증을 완료해 기존 `user_id`에 연결된 휴대폰 인증 식별자를 새 번호로 교체할 수 있다. | 구매자 | Must | 사용자 계정 관리 페이지 예정 |
-| `REQ.A.05.FR-033` | 시스템은 휴대폰 번호 변경 시 기존 휴대폰 인증 식별자를 즉시 삭제하지 않고 `replaced`, `revoked`, `superseded` 같은 닫힘 상태로 전환한 뒤 새 휴대폰 인증 식별자를 같은 `user_id`에 연결한다. | 시스템, CS | Must | PST.A.300 예정 |
-| `REQ.A.05.FR-034` | 시스템은 휴대폰 번호 변경을 사용자 계정 병합으로 처리하지 않고, `identity_id`와 `user_id`의 연결 교체로 처리한다. | 시스템, CS | Must | SVC.A.300 예정 |
+| `REQ.A.05.FR-033` | 시스템은 휴대폰 번호 변경 시 기존 휴대폰 인증 식별자를 즉시 삭제하지 않고 `replaced`, `revoked`, `superseded` 같은 닫힘 상태로 전환한 뒤 새 휴대폰 인증 식별자를 같은 `user_id`에 연결한다. | 시스템, CS | Must | [SD.A.30020](../50-service-design/A_300_auth/A_300_20-persistence/README.md) |
+| `REQ.A.05.FR-034` | 시스템은 휴대폰 번호 변경을 사용자 계정 병합으로 처리하지 않고, `identity_id`와 `user_id`의 연결 교체로 처리한다. | 시스템, CS | Must | [SD.A.30030](../50-service-design/A_300_auth/A_300_30-service/README.md) |
 
 ## 비기능 요구사항
 
@@ -155,25 +155,25 @@ updated: 2026-07-08
 | `REQ.A.05.NFR-001` | 인증 게이트는 화면과 API의 정보 민감도에 맞춰 일관되게 적용해야 한다. | 공개 탐색 화면은 인증 없이 응답하고, 개인/결제/드롭 참여 API는 인증 실패 시 로그인 이동 또는 `401`을 반환한다. | [REQ.A.01](./REQ_A_01_limited_drop_commerce.md) |
 | `REQ.A.05.NFR-002` | redirect target은 변조되거나 외부 악성 URL로 사용되지 않아야 한다. | 로그인 후 복귀 위치는 허용된 내부 경로와 검증된 intent id만 사용한다. | [PAGE.A.300](../10-sitemap/PAGE_A_300_auth_member/PAGE_A_300_auth_member.md) |
 | `REQ.A.05.NFR-003` | 드롭 참여 가능 여부는 로그인 상태만으로 판단하지 않아야 한다. | 로그인 세션, 사용자 인증 정보, 차단 상태, 구매 제한 조건을 함께 확인한다. | [REQ.A.01](./REQ_A_01_limited_drop_commerce.md) |
-| `REQ.A.05.NFR-004` | 휴대폰 번호 인증 정보는 최소 보관과 암호화를 기본값으로 한다. | 원문 노출을 제한하고, 조회/변경/검증 이력은 의미별 감사 이벤트로 전송한다. | PST.A.300 예정 |
-| `REQ.A.05.NFR-005` | token과 세션 만료 정책은 설정으로 변경 가능해야 한다. | TTL, rotation, remember-me 정책 변경에 코드 배포가 필요하지 않다. | SVC.A.300 예정 |
-| `REQ.A.05.NFR-006` | refresh token은 재사용과 탈취를 탐지할 수 있어야 한다. | refresh rotation 사용 시 이전 token 재사용을 이상 징후로 기록하고 세션을 폐기할 수 있다. | SVC.A.300 예정 |
-| `REQ.A.05.NFR-007` | 인증 서버 장애는 드롭 구매 경로 전체로 전파되지 않아야 한다. | 인증 API timeout, circuit breaker, 제한된 degraded mode, 사용자 안내 기준을 둔다. | SVC.A.300 예정 |
+| `REQ.A.05.NFR-004` | 휴대폰 번호 인증 정보는 최소 보관과 암호화를 기본값으로 한다. | 원문 노출을 제한하고, 조회/변경/검증 이력은 의미별 감사 이벤트로 전송한다. | [SD.A.30020](../50-service-design/A_300_auth/A_300_20-persistence/README.md) |
+| `REQ.A.05.NFR-005` | token과 세션 만료 정책은 설정으로 변경 가능해야 한다. | TTL, rotation, remember-me 정책 변경에 코드 배포가 필요하지 않다. | [SD.A.30030](../50-service-design/A_300_auth/A_300_30-service/README.md) |
+| `REQ.A.05.NFR-006` | refresh token은 재사용과 탈취를 탐지할 수 있어야 한다. | refresh rotation 사용 시 이전 token 재사용을 이상 징후로 기록하고 세션을 폐기할 수 있다. | [SD.A.30030](../50-service-design/A_300_auth/A_300_30-service/README.md) |
+| `REQ.A.05.NFR-007` | 인증 서버 장애는 드롭 구매 경로 전체로 전파되지 않아야 한다. | 인증 API timeout, circuit breaker, 제한된 degraded mode, 사용자 안내 기준을 둔다. | [SD.A.30030](../50-service-design/A_300_auth/A_300_30-service/README.md) |
 | `REQ.A.05.NFR-008` | 로그인과 token 갱신은 피크 트래픽에서 관측 가능해야 한다. | signin, signup, token refresh, phone verification의 p50/p95/p99 latency, error rate, lock rate, refresh spike를 확인한다. | 운영 대시보드 예정 |
 | `REQ.A.05.NFR-009` | 사용자 계정은 자동 또는 수동으로 병합되지 않아야 한다. | 이메일, 휴대폰, ProviderSubject가 같거나 달라도 기존 `user_id`끼리 합치지 않고, 인증 수단 연동만 별도 상태 전이로 처리한다. | 사용자 계정 관리 페이지 예정 |
-| `REQ.A.05.NFR-010` | 인증 식별자는 하나의 `user_id`에만 연결될 수 있어야 한다. | 이미 다른 `user_id`에 연결된 이메일 인증 식별자, 휴대폰 인증 식별자, ProviderSubject는 새 `user_id`에 연동할 수 없고 실패 사유와 감사 이벤트를 남긴다. | PST.A.300 예정 |
+| `REQ.A.05.NFR-010` | 인증 식별자는 하나의 `user_id`에만 연결될 수 있어야 한다. | 이미 다른 `user_id`에 연결된 이메일 인증 식별자, 휴대폰 인증 식별자, ProviderSubject는 새 `user_id`에 연동할 수 없고 실패 사유와 감사 이벤트를 남긴다. | [SD.A.30020](../50-service-design/A_300_auth/A_300_20-persistence/README.md) |
 | `REQ.A.05.NFR-011` | 판매자와 운영자 사용자 계정은 일반 구매자 사용자 계정보다 강한 인증을 요구할 수 있어야 한다. | passkey, MFA, 재인증 정책을 역할별로 설정할 수 있다. | [REQ.A.03](./REQ_A_03_seller.md), [REQ.A.04](./REQ_A_04_platform_operator_admin.md) |
-| `REQ.A.05.NFR-012` | passkey는 MVP 구현 범위에서 제외하되 요구사항과 확장 경로는 남긴다. | 판매자/운영자 passkey 등록, 복구, 해제, 분실 대응 정책을 후속 문서에서 다룰 수 있다. | SVC.A.300 예정 |
-| `REQ.A.05.NFR-013` | OAuth/OIDC token은 용도별로 구분해야 한다. | ID token은 identity proof, access token은 권한 위임, 내부 session token은 DropMong API 접근에 사용한다. | API.A.300 예정 |
-| `REQ.A.05.NFR-014` | 인증 서비스는 사용자 프로필 의미를 알지 않아야 한다. | auth-service는 `user_id`, credential, session, role/permission claim만 다루고 표시명, 주소, 마케팅 속성은 회원/사용자 서비스가 다룬다. | SVC.A.300 예정 |
+| `REQ.A.05.NFR-012` | passkey는 MVP 구현 범위에서 제외하되 요구사항과 확장 경로는 남긴다. | 판매자/운영자 passkey 등록, 복구, 해제, 분실 대응 정책을 후속 문서에서 다룰 수 있다. | [SD.A.30030](../50-service-design/A_300_auth/A_300_30-service/README.md) |
+| `REQ.A.05.NFR-013` | OAuth/OIDC token은 용도별로 구분해야 한다. | ID token은 identity proof, access token은 권한 위임, 내부 session token은 DropMong API 접근에 사용한다. | [SD.A.30040](../50-service-design/A_300_auth/A_300_40-api/README.md) |
+| `REQ.A.05.NFR-014` | 인증 서비스는 사용자 프로필 의미를 알지 않아야 한다. | auth-service는 `user_id`, credential, session, role/permission claim만 다루고 표시명, 주소, 마케팅 속성은 회원/사용자 서비스가 다룬다. | [SD.A.30030](../50-service-design/A_300_auth/A_300_30-service/README.md) |
 | `REQ.A.05.NFR-015` | 인증 관련 감사 이벤트는 민감 정보를 포함하지 않아야 한다. | 비밀번호, 인증번호, token 원문, provider secret은 로그/trace/event에 남기지 않는다. | 운영 대시보드 예정 |
-| `REQ.A.05.NFR-016` | 인증 정책은 페이지 단위에만 고정되지 않아야 한다. | page, section, action, API endpoint 단위로 공개, 선택적 인증, 필수 인증, 권한 필요 정책을 선언할 수 있다. | PAGE.A.01, API.A.300 예정 |
+| `REQ.A.05.NFR-016` | 인증 정책은 페이지 단위에만 고정되지 않아야 한다. | page, section, action, API endpoint 단위로 공개, 선택적 인증, 필수 인증, 권한 필요 정책을 선언할 수 있다. | PAGE.A.01, [SD.A.30040](../50-service-design/A_300_auth/A_300_40-api/README.md) |
 | `REQ.A.05.NFR-017` | 선택적 개인화 API의 인증 실패는 공개 페이지 전체를 실패시키지 않아야 한다. | 홈 화면 공개 데이터는 유지하고, Auth Boundary 또는 Permission Boundary 안의 개인화 컴포넌트만 비회원 상태, 로그인 유도, 권한 없음, 또는 일시 실패 상태로 처리한다. | [PAGE.A.01](../10-sitemap/PAGE_A_01_homepage.md) |
 | `REQ.A.05.NFR-018` | 이메일 인증은 휴대폰 인증보다 낮은 우선순위의 선택 절차가 아니어야 한다. | 이메일 회원가입은 이메일 인증 메일 검증과 가상 SMS 휴대폰 인증 식별자 연동을 모두 만족해야 완료된다. | [PAGE.A.301](../10-sitemap/PAGE_A_300_auth_member/PAGE_A_300_auth_member.md) |
-| `REQ.A.05.NFR-019` | 로그인 실패 횟수와 인증 식별자 잠금 시간은 전역 정책으로 관리해야 한다. | 기본 실패 허용 횟수는 5회로 두고, 실패 횟수 기준과 잠금 시간은 배포 없이 설정으로 조정할 수 있다. | SVC.A.300 예정 |
+| `REQ.A.05.NFR-019` | 로그인 실패 횟수와 인증 식별자 잠금 시간은 전역 정책으로 관리해야 한다. | 기본 실패 허용 횟수는 5회로 두고, 실패 횟수 기준과 잠금 시간은 배포 없이 설정으로 조정할 수 있다. | [SD.A.30030](../50-service-design/A_300_auth/A_300_30-service/README.md) |
 | `REQ.A.05.NFR-020` | 인증 수단 해제와 재연동은 기본 셀프서비스로 열지 않아야 한다. | 안전한 로그인, 대체 인증, 새 번호 SMS 인증을 만족한 휴대폰 번호 교체만 셀프 변경으로 허용하고, 그 외 고위험 변경은 CS/운영자 수동 처리로 제한한다. | 운영자 사이트 예정 |
 | `REQ.A.05.NFR-021` | passkey 복구와 break-glass 권한은 고위험 운영 절차로 취급해야 한다. | 팀장급 승인자 기록, 사유, 만료 시각, 사용 결과, 사후 검토 상태를 감사 이벤트로 남긴다. | 운영자 사이트 예정 |
-| `REQ.A.05.NFR-022` | 휴대폰 번호 변경은 감사와 복구가 가능해야 한다. | 기존 휴대폰 인증 식별자의 닫힘 상태, 새 휴대폰 인증 식별자, 대상 `user_id`, 변경 경로, 재인증 결과, 감사 이벤트 전송 결과를 추적할 수 있어야 한다. | PST.A.300 예정, Audit Context 예정 |
+| `REQ.A.05.NFR-022` | 휴대폰 번호 변경은 감사와 복구가 가능해야 한다. | 기존 휴대폰 인증 식별자의 닫힘 상태, 새 휴대폰 인증 식별자, 대상 `user_id`, 변경 경로, 재인증 결과, 감사 이벤트 전송 결과를 추적할 수 있어야 한다. | [SD.A.30020](../50-service-design/A_300_auth/A_300_20-persistence/README.md), Audit Context 예정 |
 
 ## 제약 조건
 
@@ -216,7 +216,15 @@ updated: 2026-07-08
 
 ## 연관 태그
 
-🏷️ 플로우 참조: FLOW.A.300, FLOW.A.301, FLOW.A.302, FLOW.A.303, FLOW.A.310 | 페이지 참조: [PAGE.A.300](../10-sitemap/PAGE_A_300_auth_member/PAGE_A_300_auth_member.md), [PAGE.A.310](../10-sitemap/PAGE_A_310_password_find/PAGE_A_310_password_find.md) | UI 참조: [UI.A.300](../20-ui/UI_A_300_auth_member/UI_A_300_auth_member.md), [UI.A.310](../20-ui/UI_A_310_password_find/UI_A_310_password_find.md) | UC 참조: [UC.A.300](../30-uc/UC_A_300_auth_member.md) | 영속성 참조: PST.A.300 예정, PST.A.310 예정 | 서비스 참조: SVC.A.300 예정, SVC.A.310 예정 | 시나리오 참조: SCN.A.300 예정, SCN.A.310 예정 | API 참조: API.A.300 예정, API.A.310 예정
+- 플로우 참조: FLOW.A.300, FLOW.A.301, FLOW.A.302, FLOW.A.303, FLOW.A.310
+- 페이지 참조: [PAGE.A.300](../10-sitemap/PAGE_A_300_auth_member/PAGE_A_300_auth_member.md), [PAGE.A.310](../10-sitemap/PAGE_A_310_password_find/PAGE_A_310_password_find.md)
+- UI 참조: [UI.A.300](../20-ui/UI_A_300_auth_member/UI_A_300_auth_member.md), [UI.A.310](../20-ui/UI_A_310_password_find/UI_A_310_password_find.md)
+- UC 참조: [UC.A.300](../30-uc/UC_A_300_auth_member.md)
+- 도메인 참조: [SD.A.30010](../50-service-design/A_300_auth/A_300_10-domain-model/SD_A_30010_auth_domain_model.md)
+- 영속성 참조: [SD.A.30020](../50-service-design/A_300_auth/A_300_20-persistence/README.md)
+- 서비스 참조: [SD.A.30030](../50-service-design/A_300_auth/A_300_30-service/README.md)
+- API 참조: [SD.A.30040](../50-service-design/A_300_auth/A_300_40-api/README.md)
+- 시나리오 참조: SCN.A.300 예정, SCN.A.310 예정
 
 ## 열린 질문
 

@@ -6,7 +6,7 @@ status: draft
 tags: [use-case, index, dropmong]
 source: local
 created: 2026-07-08
-updated: 2026-07-08
+updated: 2026-07-10
 ---
 
 # 유스케이스 인덱스
@@ -28,5 +28,5 @@ updated: 2026-07-08
 - [UC.A.02 판매자 드롭 운영 사용자 목표](UC_A_02_seller_manage_drop.md)
 - [UC.A.03 플랫폼 운영 사용자 목표](UC_A_03_platform_operator_admin.md)
 - [UC.A.04 CS 주문 및 쿠폰 지원 사용자 목표](UC_A_04_cs_order_coupon_support.md)
-- [UC.A.19 구매자 쿠폰 사용자 목표](UC_A_19_coupon_wallet.md)
-- [UC.A.05 인증 및 회원 사용자 목표](UC_A_300_auth_member.md)
+- [UC.A.19 쿠폰 사용자 목표](UC_A_19_coupon_wallet.md)
+- [UC.A.300 인증 및 회원 사용자 목표](UC_A_300_auth_member.md)
