@@ -1,0 +1,38 @@
+post:
+  tags: [CouponRedemption]
+  summary: 쿠폰 사용 예약
+  description: 검증된 CouponRedemption을 같은 주문의 활성 예약으로 전이한다.
+  operationId: reserveCouponRedemption
+  x-api-id: API.A.19-06
+  x-use-case: UC.A.19-06
+  x-command: CMD.A.19-10
+  x-service-design: SD.A.1940
+  x-design-doc: ../../API_A_19_06_reserve_coupon_redemption.md
+  security:
+    - WorkloadBearerAuth: []
+  parameters:
+    - $ref: ../components/parameters.yaml#/RedemptionId
+    - $ref: ../components/parameters.yaml#/XRequestId
+    - $ref: ../components/parameters.yaml#/Traceparent
+    - $ref: ../components/parameters.yaml#/IdempotencyKey
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema: {$ref: ../components/schemas.yaml#/ExpectedVersionRequest}
+  responses:
+    '200':
+      description: 쿠폰 사용을 예약했다.
+      headers:
+        X-Request-Id: {$ref: ../components/headers.yaml#/XRequestId}
+        Cache-Control: {$ref: ../components/headers.yaml#/CacheControlNoStore}
+      content:
+        application/json:
+          schema: {$ref: ../components/schemas.yaml#/RedemptionResponse}
+    '400': {$ref: ../components/responses.yaml#/BadRequest}
+    '401': {$ref: ../components/responses.yaml#/AuthenticationRequired}
+    '403': {$ref: ../components/responses.yaml#/Forbidden}
+    '404': {$ref: ../components/responses.yaml#/NotFound}
+    '409': {$ref: ../components/responses.yaml#/Conflict}
+    '422': {$ref: ../components/responses.yaml#/BusinessRejected}
+    '503': {$ref: ../components/responses.yaml#/Unavailable}

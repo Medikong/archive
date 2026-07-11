@@ -1,0 +1,44 @@
+post:
+  tags: [CouponRedemption]
+  summary: 주문 쿠폰 검증
+  description: 주문 Snapshot으로 쿠폰 하나를 평가하고 할인·비용 Snapshot과 redemption ID를 반환한다.
+  operationId: validateCoupon
+  x-api-id: API.A.19-05
+  x-use-case: UC.A.19-23
+  x-command: CMD.A.19-09
+  x-service-design: SD.A.1940
+  x-design-doc: ../../API_A_19_05_validate_coupon.md
+  x-error-codes:
+    COUPON_INPUT_INVALID: 400
+    COUPON_AUTHENTICATION_REQUIRED: 401
+    COUPON_FORBIDDEN: 403
+    COUPON_IDEMPOTENCY_CONFLICT: 409
+    COUPON_STATE_CONFLICT: 409
+    COUPON_BUSINESS_RULE_REJECTED: 422
+    COUPON_DEPENDENCY_UNAVAILABLE: 503
+  security:
+    - WorkloadBearerAuth: []
+  parameters:
+    - $ref: ../components/parameters.yaml#/XRequestId
+    - $ref: ../components/parameters.yaml#/Traceparent
+    - $ref: ../components/parameters.yaml#/IdempotencyKey
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema: {$ref: ../components/schemas.yaml#/ValidateCouponRequest}
+  responses:
+    '200':
+      description: 평가 결과와 서버 계산 Snapshot을 반환한다.
+      headers:
+        X-Request-Id: {$ref: ../components/headers.yaml#/XRequestId}
+        Cache-Control: {$ref: ../components/headers.yaml#/CacheControlNoStore}
+      content:
+        application/json:
+          schema: {$ref: ../components/schemas.yaml#/CouponValidationResponse}
+    '400': {$ref: ../components/responses.yaml#/BadRequest}
+    '401': {$ref: ../components/responses.yaml#/AuthenticationRequired}
+    '403': {$ref: ../components/responses.yaml#/Forbidden}
+    '409': {$ref: ../components/responses.yaml#/Conflict}
+    '422': {$ref: ../components/responses.yaml#/BusinessRejected}
+    '503': {$ref: ../components/responses.yaml#/Unavailable}

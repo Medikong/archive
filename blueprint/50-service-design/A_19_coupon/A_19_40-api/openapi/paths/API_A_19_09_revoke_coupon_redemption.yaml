@@ -1,0 +1,38 @@
+post:
+  tags: [CouponRedemption]
+  summary: 쿠폰 사용 회수
+  description: 확정된 사용을 취소·환불 결과 참조로 회수하고 비용 귀속 보정을 기록한다.
+  operationId: revokeCouponRedemption
+  x-api-id: API.A.19-09
+  x-use-case: UC.A.19-25
+  x-command: CMD.A.19-15
+  x-service-design: SD.A.1940
+  x-design-doc: ../../API_A_19_09_revoke_coupon_redemption.md
+  security:
+    - WorkloadBearerAuth: []
+  parameters:
+    - $ref: ../components/parameters.yaml#/RedemptionId
+    - $ref: ../components/parameters.yaml#/XRequestId
+    - $ref: ../components/parameters.yaml#/Traceparent
+    - $ref: ../components/parameters.yaml#/IdempotencyKey
+    - $ref: ../components/parameters.yaml#/XApprovalRefOptional
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema: {$ref: ../components/schemas.yaml#/RedemptionTransitionRequest}
+  responses:
+    '200':
+      description: 확정된 쿠폰 사용을 회수했다.
+      headers:
+        X-Request-Id: {$ref: ../components/headers.yaml#/XRequestId}
+        Cache-Control: {$ref: ../components/headers.yaml#/CacheControlNoStore}
+      content:
+        application/json:
+          schema: {$ref: ../components/schemas.yaml#/RedemptionResponse}
+    '400': {$ref: ../components/responses.yaml#/BadRequest}
+    '401': {$ref: ../components/responses.yaml#/AuthenticationRequired}
+    '403': {$ref: ../components/responses.yaml#/Forbidden}
+    '404': {$ref: ../components/responses.yaml#/NotFound}
+    '409': {$ref: ../components/responses.yaml#/Conflict}
+    '503': {$ref: ../components/responses.yaml#/Unavailable}

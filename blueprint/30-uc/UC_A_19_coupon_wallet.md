@@ -6,7 +6,7 @@ status: draft
 tags: [use-case, coupon, coupon-wallet, buyer, seller, operator, marketing, cs, oncall, settlement, dropmong]
 source: local
 created: 2026-07-08
-updated: 2026-07-10
+updated: 2026-07-11
 ---
 
 # 쿠폰 사용자 목표
@@ -32,7 +32,7 @@ updated: 2026-07-10
 - 🏷️ 영속성 참조: PST.A.19 예정
 - 🏷️ 서비스 참조: SVC.A.19 예정
 - 🏷️ 시나리오 참조: SCN.A.19 예정
-- 🏷️ API 참조: API.A.19 예정
+- 🏷️ API 참조: [SD.A.1940 Context 쿠폰 API](../50-service-design/A_19_coupon/A_19_40-api/README.md)
 
 ## 액터와 시스템 경계
 

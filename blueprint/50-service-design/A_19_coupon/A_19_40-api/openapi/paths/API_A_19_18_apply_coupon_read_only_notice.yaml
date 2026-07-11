@@ -1,0 +1,39 @@
+put:
+  tags: [CouponOperations]
+  summary: 쿠폰 읽기 전용 안내 적용
+  description: 운영 control과 같은 scope의 안내 문구·적용 시각·활성 상태를 저장한다.
+  operationId: applyCouponReadOnlyNotice
+  x-api-id: API.A.19-18
+  x-use-case: UC.A.19-15
+  x-command: CMD.A.19-31
+  x-service-design: SD.A.1940
+  x-design-doc: ../../API_A_19_18_apply_coupon_read_only_notice.md
+  security:
+    - WorkloadBearerAuth: []
+  parameters:
+    - $ref: ../components/parameters.yaml#/ControlId
+    - $ref: ../components/parameters.yaml#/XRequestId
+    - $ref: ../components/parameters.yaml#/Traceparent
+    - $ref: ../components/parameters.yaml#/IdempotencyKey
+    - $ref: ../components/parameters.yaml#/XApprovalRef
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema: {$ref: ../components/schemas.yaml#/ApplyReadOnlyNoticeRequest}
+  responses:
+    '200':
+      description: 읽기 전용 안내를 저장했다.
+      headers:
+        X-Request-Id: {$ref: ../components/headers.yaml#/XRequestId}
+        Cache-Control: {$ref: ../components/headers.yaml#/CacheControlNoStore}
+      content:
+        application/json:
+          schema: {$ref: ../components/schemas.yaml#/ReadOnlyNoticeResponse}
+    '400': {$ref: ../components/responses.yaml#/BadRequest}
+    '401': {$ref: ../components/responses.yaml#/AuthenticationRequired}
+    '403': {$ref: ../components/responses.yaml#/Forbidden}
+    '404': {$ref: ../components/responses.yaml#/NotFound}
+    '409': {$ref: ../components/responses.yaml#/Conflict}
+    '422': {$ref: ../components/responses.yaml#/BusinessRejected}
+    '503': {$ref: ../components/responses.yaml#/Unavailable}

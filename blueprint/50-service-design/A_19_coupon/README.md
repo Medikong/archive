@@ -6,7 +6,7 @@ status: draft
 tags: [service-design, coupon]
 source: local
 created: 2026-07-09
-updated: 2026-07-10
+updated: 2026-07-11
 ---
 
 # Context 쿠폰 서비스 상세 설계
@@ -16,7 +16,7 @@ updated: 2026-07-10
 - Service Design ID: `SD.A.19`
 - Context: Context 쿠폰
 - 상태: draft
-- 책임: 쿠폰 수령, 쿠폰 지갑, 쿠폰 사용 가능성, 쿠폰 적용 정책을 구현 관점에서 상세화한다.
+- 책임: 쿠폰 캠페인·정책, 발급·쿠폰함, 주문 사용, 운영 중지·복구와 외부 API 계약을 구현 관점에서 상세화한다.
 
 ## 연관 태그
 
@@ -88,7 +88,7 @@ flowchart TB
 | 도메인 모델 | `SD.A.1910` | [A_19_10-domain-model](A_19_10-domain-model/README.md) | draft |
 | 영속성 | `SD.A.1920` | [A_19_20-persistence](A_19_20-persistence/README.md) | draft |
 | 서비스 | `SD.A.1930` | [A_19_30-service](A_19_30-service/README.md) | draft |
-| API | `SD.A.1940` | [A_19_40-api](A_19_40-api/README.md) | scaffold |
+| API | `SD.A.1940` | [A_19_40-api](A_19_40-api/README.md) | draft |
 
 ## 설계 문서 지도
 
@@ -97,9 +97,10 @@ flowchart TB
 | 도메인 모델 | [캠페인과 정책](A_19_10-domain-model/campaign-policy.md), [발급](A_19_10-domain-model/issuance.md), [사용](A_19_10-domain-model/redemption.md), [운영과 복구](A_19_10-domain-model/operations-recovery.md), [공통 계약](A_19_10-domain-model/shared-contracts.md) |
 | 영속성 | [쓰기 모델](A_19_20-persistence/write-models.md), [원장과 신뢰성](A_19_20-persistence/ledgers-and-reliability.md), [조회 모델과 인덱스](A_19_20-persistence/read-models-and-indexes.md) |
 | 서비스 | [발급 Handler](A_19_30-service/issuance-handlers.md), [사용 Handler](A_19_30-service/redemption-handlers.md), [운영 Worker](A_19_30-service/operations-workers.md), [이벤트 처리](A_19_30-service/event-processing.md) |
+| API | [API 인덱스](A_19_40-api/README.md), [OpenAPI](A_19_40-api/openapi/openapi.yaml), [Event 계약](A_19_40-api/event-contracts.md) |
 
 ## 원천과 경계
 
 - 원천: [BC.A.19](../../40-event-storming-bounded-context/BC_A_19_coupon.md), [REQ.A.02](../../00-requirements/REQ_A_02_coupon_benefit.md)
-- 도메인·영속성·서비스 설계는 `draft`다. API 영역은 기존 scaffold를 보존하며 이번 설계 범위에 포함하지 않는다.
+- 도메인·영속성·서비스·API 설계는 모두 `draft`다. HTTP wire 계약은 OpenAPI, Event 경계는 API 영역의 Event 계약에서 관리한다.
 - 사용자·상품·드롭·주문·결제·CS·정산 원본은 Context 쿠폰 밖에 두고 외부 참조와 스냅샷만 사용한다.

@@ -1,0 +1,38 @@
+put:
+  tags: [CouponCampaign]
+  summary: 쿠폰 발급 조건 설정
+  description: 캠페인의 총수량, 사용자별 제한과 발급 시간 구간을 설정한다.
+  operationId: configureCouponCampaignIssuance
+  x-api-id: API.A.19-11
+  x-use-case: UC.A.19-10
+  x-command: CMD.A.19-02
+  x-service-design: SD.A.1940
+  x-design-doc: ../../API_A_19_11_configure_campaign_issuance.md
+  security:
+    - WorkloadBearerAuth: []
+  parameters:
+    - $ref: ../components/parameters.yaml#/CampaignId
+    - $ref: ../components/parameters.yaml#/XRequestId
+    - $ref: ../components/parameters.yaml#/Traceparent
+    - $ref: ../components/parameters.yaml#/IdempotencyKey
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema: {$ref: ../components/schemas.yaml#/ConfigureIssuanceRequest}
+  responses:
+    '200':
+      description: 발급 조건을 새 캠페인 version으로 저장했다.
+      headers:
+        X-Request-Id: {$ref: ../components/headers.yaml#/XRequestId}
+        Cache-Control: {$ref: ../components/headers.yaml#/CacheControlNoStore}
+      content:
+        application/json:
+          schema: {$ref: ../components/schemas.yaml#/CampaignResponse}
+    '400': {$ref: ../components/responses.yaml#/BadRequest}
+    '401': {$ref: ../components/responses.yaml#/AuthenticationRequired}
+    '403': {$ref: ../components/responses.yaml#/Forbidden}
+    '404': {$ref: ../components/responses.yaml#/NotFound}
+    '409': {$ref: ../components/responses.yaml#/Conflict}
+    '422': {$ref: ../components/responses.yaml#/BusinessRejected}
+    '503': {$ref: ../components/responses.yaml#/Unavailable}

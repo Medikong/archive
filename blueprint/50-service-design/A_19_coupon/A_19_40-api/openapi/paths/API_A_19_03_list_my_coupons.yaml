@@ -1,0 +1,34 @@
+get:
+  tags: [CouponWallet]
+  summary: 내 쿠폰 목록 조회
+  description: 현재 사용자의 쿠폰함과 적용 범위에 해당하는 활성 안내를 cursor 방식으로 조회한다.
+  operationId: listMyCoupons
+  x-api-id: API.A.19-03
+  x-use-case: UC.A.19-01
+  x-read-models: [RM.A.19-01, RM.A.19-09]
+  x-service-design: SD.A.1940
+  x-design-doc: ../../API_A_19_03_list_my_coupons.md
+  security:
+    - WebSessionCookie: []
+    - MobileBearerAuth: []
+  parameters:
+    - $ref: ../components/parameters.yaml#/XRequestId
+    - $ref: ../components/parameters.yaml#/Traceparent
+    - name: status
+      in: query
+      required: false
+      schema: {$ref: ../components/schemas.yaml#/WalletStatus}
+    - $ref: ../components/parameters.yaml#/Cursor
+    - $ref: ../components/parameters.yaml#/Limit
+  responses:
+    '200':
+      description: 현재 사용자 범위의 쿠폰 목록을 반환한다.
+      headers:
+        X-Request-Id: {$ref: ../components/headers.yaml#/XRequestId}
+        Cache-Control: {$ref: ../components/headers.yaml#/CacheControlNoStore}
+      content:
+        application/json:
+          schema: {$ref: ../components/schemas.yaml#/WalletCouponListResponse}
+    '400': {$ref: ../components/responses.yaml#/BadRequest}
+    '401': {$ref: ../components/responses.yaml#/AuthenticationRequired}
+    '503': {$ref: ../components/responses.yaml#/Unavailable}

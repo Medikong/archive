@@ -1,0 +1,39 @@
+post:
+  tags: [CouponOperations]
+  summary: 쿠폰 이벤트 복구 최종 실패
+  description: 승인된 운영 작업으로 사용 이벤트 복구를 failed_final 상태로 종료한다.
+  operationId: finalizeCouponEventRecovery
+  x-api-id: API.A.19-21
+  x-use-case: UC.A.19-17
+  x-command: CMD.A.19-25
+  x-service-design: SD.A.1940
+  x-design-doc: ../../API_A_19_21_finalize_coupon_event_recovery.md
+  security:
+    - WorkloadBearerAuth: []
+  parameters:
+    - $ref: ../components/parameters.yaml#/RecoveryId
+    - $ref: ../components/parameters.yaml#/XRequestId
+    - $ref: ../components/parameters.yaml#/Traceparent
+    - $ref: ../components/parameters.yaml#/IdempotencyKey
+    - $ref: ../components/parameters.yaml#/XApprovalRef
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema: {$ref: ../components/schemas.yaml#/FinalizeRecoveryRequest}
+  responses:
+    '200':
+      description: 복구를 최종 실패로 종료했다.
+      headers:
+        X-Request-Id: {$ref: ../components/headers.yaml#/XRequestId}
+        Cache-Control: {$ref: ../components/headers.yaml#/CacheControlNoStore}
+      content:
+        application/json:
+          schema: {$ref: ../components/schemas.yaml#/RecoveryResponse}
+    '400': {$ref: ../components/responses.yaml#/BadRequest}
+    '401': {$ref: ../components/responses.yaml#/AuthenticationRequired}
+    '403': {$ref: ../components/responses.yaml#/Forbidden}
+    '404': {$ref: ../components/responses.yaml#/NotFound}
+    '409': {$ref: ../components/responses.yaml#/Conflict}
+    '422': {$ref: ../components/responses.yaml#/BusinessRejected}
+    '503': {$ref: ../components/responses.yaml#/Unavailable}

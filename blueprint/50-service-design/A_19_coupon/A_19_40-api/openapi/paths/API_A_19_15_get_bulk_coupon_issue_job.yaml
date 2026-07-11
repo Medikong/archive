@@ -1,0 +1,30 @@
+get:
+  tags: [CouponOperations]
+  summary: 대량 쿠폰 발급 작업 조회
+  description: 대량 작업 상태, 평가 기준 시각과 발급·실패 집계를 반환한다.
+  operationId: getBulkCouponIssueJob
+  x-api-id: API.A.19-15
+  x-use-case: UC.A.19-11
+  x-read-models: [RM.A.19-04, RM.A.19-05]
+  x-service-design: SD.A.1940
+  x-design-doc: ../../API_A_19_15_get_bulk_coupon_issue_job.md
+  security:
+    - WorkloadBearerAuth: []
+  parameters:
+    - $ref: ../components/parameters.yaml#/BulkJobId
+    - $ref: ../components/parameters.yaml#/XRequestId
+    - $ref: ../components/parameters.yaml#/Traceparent
+  responses:
+    '200':
+      description: 대량 발급 작업 상태와 집계를 반환한다.
+      headers:
+        X-Request-Id: {$ref: ../components/headers.yaml#/XRequestId}
+        Cache-Control: {$ref: ../components/headers.yaml#/CacheControlNoStore}
+      content:
+        application/json:
+          schema: {$ref: ../components/schemas.yaml#/BulkJobResponse}
+    '400': {$ref: ../components/responses.yaml#/BadRequest}
+    '401': {$ref: ../components/responses.yaml#/AuthenticationRequired}
+    '403': {$ref: ../components/responses.yaml#/Forbidden}
+    '404': {$ref: ../components/responses.yaml#/NotFound}
+    '503': {$ref: ../components/responses.yaml#/Unavailable}

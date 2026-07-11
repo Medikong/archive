@@ -1,0 +1,33 @@
+get:
+  tags: [CouponOperations]
+  summary: 사용자 쿠폰 타임라인 조회
+  description: 승인된 CS 업무 범위에서 사용자의 발급·사용·회수·만료 사건을 조회한다.
+  operationId: getUserCouponTimeline
+  x-api-id: API.A.19-22
+  x-use-case: UC.A.19-18
+  x-read-models: [RM.A.19-06]
+  x-service-design: SD.A.1940
+  x-design-doc: ../../API_A_19_22_get_user_coupon_timeline.md
+  security:
+    - WorkloadBearerAuth: []
+  parameters:
+    - $ref: ../components/parameters.yaml#/UserId
+    - $ref: ../components/parameters.yaml#/XRequestId
+    - $ref: ../components/parameters.yaml#/Traceparent
+    - $ref: ../components/parameters.yaml#/XCaseRef
+    - $ref: ../components/parameters.yaml#/Cursor
+    - $ref: ../components/parameters.yaml#/Limit
+  responses:
+    '200':
+      description: 승인된 범위의 쿠폰 타임라인을 반환한다.
+      headers:
+        X-Request-Id: {$ref: ../components/headers.yaml#/XRequestId}
+        Cache-Control: {$ref: ../components/headers.yaml#/CacheControlNoStore}
+      content:
+        application/json:
+          schema: {$ref: ../components/schemas.yaml#/TimelineResponse}
+    '400': {$ref: ../components/responses.yaml#/BadRequest}
+    '401': {$ref: ../components/responses.yaml#/AuthenticationRequired}
+    '403': {$ref: ../components/responses.yaml#/Forbidden}
+    '404': {$ref: ../components/responses.yaml#/NotFound}
+    '503': {$ref: ../components/responses.yaml#/Unavailable}

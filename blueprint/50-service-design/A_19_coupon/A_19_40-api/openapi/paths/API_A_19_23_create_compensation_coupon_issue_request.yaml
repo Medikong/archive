@@ -1,0 +1,40 @@
+post:
+  tags: [CouponOperations]
+  summary: 보상 쿠폰 발급 요청
+  description: 승인된 CS·운영 보상 작업을 공통 CouponIssueRequest로 변환한다.
+  operationId: createCompensationCouponIssueRequest
+  x-api-id: API.A.19-23
+  x-use-case: UC.A.19-20
+  x-command: CMD.A.19-13
+  x-service-design: SD.A.1940
+  x-design-doc: ../../API_A_19_23_create_compensation_coupon_issue_request.md
+  security:
+    - WorkloadBearerAuth: []
+  parameters:
+    - $ref: ../components/parameters.yaml#/XRequestId
+    - $ref: ../components/parameters.yaml#/Traceparent
+    - $ref: ../components/parameters.yaml#/IdempotencyKey
+    - $ref: ../components/parameters.yaml#/XApprovalRef
+    - $ref: ../components/parameters.yaml#/XCaseRef
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema: {$ref: ../components/schemas.yaml#/CreateCompensationIssueRequest}
+  responses:
+    '202':
+      description: 보상 발급 요청을 접수했다.
+      headers:
+        X-Request-Id: {$ref: ../components/headers.yaml#/XRequestId}
+        Cache-Control: {$ref: ../components/headers.yaml#/CacheControlNoStore}
+        Location: {$ref: ../components/headers.yaml#/Location}
+        Retry-After: {$ref: ../components/headers.yaml#/RetryAfter}
+      content:
+        application/json:
+          schema: {$ref: ../components/schemas.yaml#/IssueAcceptedResponse}
+    '400': {$ref: ../components/responses.yaml#/BadRequest}
+    '401': {$ref: ../components/responses.yaml#/AuthenticationRequired}
+    '403': {$ref: ../components/responses.yaml#/Forbidden}
+    '409': {$ref: ../components/responses.yaml#/Conflict}
+    '422': {$ref: ../components/responses.yaml#/BusinessRejected}
+    '503': {$ref: ../components/responses.yaml#/Unavailable}

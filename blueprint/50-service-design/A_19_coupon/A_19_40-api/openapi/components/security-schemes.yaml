@@ -1,0 +1,29 @@
+WebSessionCookie:
+  type: apiKey
+  in: cookie
+  name: __Host-dm_session
+  description: Gateway가 검증하는 로그인 웹 Session cookie다.
+
+WebCsrfToken:
+  type: apiKey
+  in: header
+  name: X-CSRF-Token
+  description: 현재 웹 Session과 묶인 CSRF token이다.
+
+WebOrigin:
+  type: apiKey
+  in: header
+  name: Origin
+  description: Gateway가 허용 목록과 정확히 비교하는 웹 Origin이다.
+
+MobileBearerAuth:
+  type: http
+  scheme: bearer
+  bearerFormat: JWT
+  description: 로그인 사용자의 짧은 수명 모바일 access JWT다.
+
+WorkloadBearerAuth:
+  type: http
+  scheme: bearer
+  bearerFormat: JWT
+  description: 내부 Gateway·mesh가 issuer, audience, workload와 권한을 검증한 단기 workload JWT다.

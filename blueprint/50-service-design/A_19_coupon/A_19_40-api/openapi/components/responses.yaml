@@ -1,0 +1,235 @@
+BadRequest:
+  description: 요청 형식, header, cursor 또는 schema가 유효하지 않다.
+  headers:
+    X-Request-Id:
+      $ref: ./headers.yaml#/XRequestId
+    Cache-Control:
+      $ref: ./headers.yaml#/CacheControlNoStore
+  content:
+    application/problem+json:
+      schema:
+        allOf:
+          - $ref: ./schemas.yaml#/ProblemDetails
+          - type: object
+            properties:
+              status:
+                type: integer
+                enum: [400]
+              code:
+                type: string
+                enum: [COUPON_INPUT_INVALID]
+      example:
+        type: https://api.dropmong.example/problems/coupon-input-invalid
+        title: 요청 형식이 올바르지 않습니다.
+        status: 400
+        code: COUPON_INPUT_INVALID
+        detail: 입력값을 확인해주세요.
+        retryable: false
+        requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
+
+AuthenticationRequired:
+  description: 검증된 사용자 또는 workload credential이 없다.
+  headers:
+    X-Request-Id:
+      $ref: ./headers.yaml#/XRequestId
+    Cache-Control:
+      $ref: ./headers.yaml#/CacheControlNoStore
+  content:
+    application/problem+json:
+      schema:
+        allOf:
+          - $ref: ./schemas.yaml#/ProblemDetails
+          - type: object
+            properties:
+              status:
+                type: integer
+                enum: [401]
+              code:
+                type: string
+                enum: [COUPON_AUTHENTICATION_REQUIRED]
+      example:
+        type: https://api.dropmong.example/problems/coupon-authentication-required
+        title: 인증이 필요합니다.
+        status: 401
+        code: COUPON_AUTHENTICATION_REQUIRED
+        detail: 다시 로그인하거나 workload credential을 확인해주세요.
+        retryable: false
+        requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
+
+Forbidden:
+  description: 소유권, 역할, workload 범위 또는 승인 조건을 충족하지 않는다.
+  headers:
+    X-Request-Id:
+      $ref: ./headers.yaml#/XRequestId
+    Cache-Control:
+      $ref: ./headers.yaml#/CacheControlNoStore
+  content:
+    application/problem+json:
+      schema:
+        allOf:
+          - $ref: ./schemas.yaml#/ProblemDetails
+          - type: object
+            properties:
+              status:
+                type: integer
+                enum: [403]
+              code:
+                type: string
+                enum: [COUPON_FORBIDDEN]
+      example:
+        type: https://api.dropmong.example/problems/coupon-forbidden
+        title: 요청을 수행할 수 없습니다.
+        status: 403
+        code: COUPON_FORBIDDEN
+        detail: 권한과 승인 상태를 확인해주세요.
+        retryable: false
+        requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
+
+NotFound:
+  description: 현재 Principal·workload에 공개 가능한 대상을 찾을 수 없다.
+  headers:
+    X-Request-Id:
+      $ref: ./headers.yaml#/XRequestId
+    Cache-Control:
+      $ref: ./headers.yaml#/CacheControlNoStore
+  content:
+    application/problem+json:
+      schema:
+        allOf:
+          - $ref: ./schemas.yaml#/ProblemDetails
+          - type: object
+            properties:
+              status:
+                type: integer
+                enum: [404]
+              code:
+                type: string
+                enum: [COUPON_NOT_FOUND]
+      example:
+        type: https://api.dropmong.example/problems/coupon-not-found
+        title: 쿠폰 정보를 찾을 수 없습니다.
+        status: 404
+        code: COUPON_NOT_FOUND
+        detail: 식별자와 접근 범위를 확인해주세요.
+        retryable: false
+        requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
+
+Conflict:
+  description: 멱등 key, version, 현재 상태 또는 운영 중지와 충돌한다.
+  headers:
+    X-Request-Id:
+      $ref: ./headers.yaml#/XRequestId
+    Cache-Control:
+      $ref: ./headers.yaml#/CacheControlNoStore
+  content:
+    application/problem+json:
+      schema:
+        allOf:
+          - $ref: ./schemas.yaml#/ProblemDetails
+          - type: object
+            properties:
+              status:
+                type: integer
+                enum: [409]
+              code:
+                type: string
+                enum: [COUPON_IDEMPOTENCY_CONFLICT, COUPON_VERSION_CONFLICT, COUPON_STATE_CONFLICT, COUPON_OPERATION_STOPPED]
+      example:
+        type: https://api.dropmong.example/problems/coupon-state-conflict
+        title: 현재 상태에서 요청을 수행할 수 없습니다.
+        status: 409
+        code: COUPON_STATE_CONFLICT
+        detail: 최신 상태와 최초 Idempotency-Key를 확인해주세요.
+        retryable: false
+        requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
+
+BusinessRejected:
+  description: 자격, 기간, 적용 대상, 할인, 수량 또는 정책 업무 규칙을 충족하지 않는다.
+  headers:
+    X-Request-Id:
+      $ref: ./headers.yaml#/XRequestId
+    Cache-Control:
+      $ref: ./headers.yaml#/CacheControlNoStore
+  content:
+    application/problem+json:
+      schema:
+        allOf:
+          - $ref: ./schemas.yaml#/ProblemDetails
+          - type: object
+            properties:
+              status:
+                type: integer
+                enum: [422]
+              code:
+                type: string
+                enum: [COUPON_BUSINESS_RULE_REJECTED]
+      example:
+        type: https://api.dropmong.example/problems/coupon-business-rule-rejected
+        title: 쿠폰을 적용할 수 없습니다.
+        status: 422
+        code: COUPON_BUSINESS_RULE_REJECTED
+        detail: 쿠폰 조건과 현재 주문을 확인해주세요.
+        retryable: false
+        requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
+
+RateLimited:
+  description: 공개 수령·코드 등록 또는 운영 보호 한도를 초과했다.
+  headers:
+    X-Request-Id:
+      $ref: ./headers.yaml#/XRequestId
+    Cache-Control:
+      $ref: ./headers.yaml#/CacheControlNoStore
+    Retry-After:
+      $ref: ./headers.yaml#/RetryAfter
+  content:
+    application/problem+json:
+      schema:
+        allOf:
+          - $ref: ./schemas.yaml#/ProblemDetails
+          - type: object
+            properties:
+              status:
+                type: integer
+                enum: [429]
+              code:
+                type: string
+                enum: [COUPON_RATE_LIMITED]
+      example:
+        type: https://api.dropmong.example/problems/coupon-rate-limited
+        title: 요청이 너무 많습니다.
+        status: 429
+        code: COUPON_RATE_LIMITED
+        detail: 잠시 뒤 다시 시도해주세요.
+        retryable: true
+        requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
+
+Unavailable:
+  description: 필수 Snapshot 원천, 승인 원천, 저장소 또는 Read Model을 사용할 수 없다.
+  headers:
+    X-Request-Id:
+      $ref: ./headers.yaml#/XRequestId
+    Cache-Control:
+      $ref: ./headers.yaml#/CacheControlNoStore
+    Retry-After:
+      $ref: ./headers.yaml#/RetryAfter
+  content:
+    application/problem+json:
+      schema:
+        allOf:
+          - $ref: ./schemas.yaml#/ProblemDetails
+          - type: object
+            properties:
+              status:
+                type: integer
+                enum: [503]
+              code:
+                type: string
+                enum: [COUPON_DEPENDENCY_UNAVAILABLE]
+      example:
+        type: https://api.dropmong.example/problems/coupon-dependency-unavailable
+        title: 쿠폰 서비스를 일시적으로 사용할 수 없습니다.
+        status: 503
+        code: COUPON_DEPENDENCY_UNAVAILABLE
+        detail: 잠시 뒤 다시 시도해주세요.
+        retryable: true
+        requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
