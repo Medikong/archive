@@ -1,6 +1,7 @@
 # 정상 구매 테스트 실행 기록
 
 작성일: 2026-07-07
+최종 Kafka trace E2E 재검증: 2026-07-12
 
 이 문서는 정상 구매 시나리오를 구현하면서 실제로 확인한 테스트와 앞으로 추가해야 할 테스트를 기록한다. 테스트 설계 자체는 `05-test-scenarios.md`를 기준으로 하고, 이 문서는 실행 결과와 현재 구현 상태를 추적한다.
 
@@ -23,8 +24,9 @@
 | unit | `order-service` pytest | 통과, 21개 테스트 | 주문 생성, idempotency replay/conflict, 품절, 결제 승인/실패 이벤트 처리, 결제 실패 후 재고 release, 업무 metric, request id 응답 echo |
 | unit | `payment-service` pytest | 통과, 22개 테스트 | 결제 승인/실패 처리, idempotency, 업무 metric, request id 응답 echo |
 | unit | `notification-service` pytest | 통과, 14개 테스트 | 알림 조회, Kafka 이벤트 처리, request id 응답 echo |
-| e2e | `04-customer-drop-purchase-happy-path` Newman | 통과, 6 requests / 12 assertions | 드롭 조회, 주문 생성, 결제 승인, 주문 확정, 알림 조회 |
+| e2e | `04-customer-drop-purchase-happy-path` Newman CLI | 통과, 6 requests / 12 assertions | 드롭 조회, 주문 생성, 결제 승인, 주문 확정, 알림 조회 |
 | observability | `08-purchase-flow-trace-smoke` Newman | 통과, 4 requests / 4 assertions | 정상 구매 후 catalog/order/payment/notification 주요 API span을 Tempo에서 검색 |
+| observability | `09-purchase-kafka-trace-smoke` Newman CLI | 최종 재실행 통과, 5 requests / 14 assertions / failures 0 | 서로 다른 order root와 payment root에서 6개 필수 Kafka producer/consumer service/span pair를 Tempo에서 검색 |
 
 ## 3. Docker E2E 실행 기록
 
@@ -35,7 +37,7 @@
 | 실행 stack | `tests/e2e/docker-compose.yml` |
 | 실행 project | `dropmong-purchase-check` |
 | 포함 서비스 | postgres, kafka, kafka-init, catalog-service, order-service, payment-service, notification-service |
-| Newman 결과 | 6 requests / 12 assertions / failures 0 |
+| Newman CLI 결과 | 6 requests / 12 assertions / failures 0 |
 | 평균 응답 시간 | 69ms |
 | 확인된 최종 상태 | 결제 승인 후 주문 `CONFIRMED`, 알림 조회 성공 |
 | 정리 상태 | 실행 후 compose stack 제거 완료 |
@@ -58,6 +60,20 @@ Trace smoke는 별도 clean Docker Compose 환경에서 `04` 실행 직후 `08-p
 | Newman 결과 | 4 requests / 4 assertions / failures 0 |
 | 검색 기준 | `service.name` + `request_id` |
 | 확인된 서비스 | catalog-service, order-service, payment-service, notification-service |
+
+Kafka trace E2E는 `task tests:purchase-e2e-with-kafka-traces`로 추가 확인했다.
+
+| 항목 | 결과 |
+| --- | --- |
+| `04-customer-drop-purchase-happy-path` | Newman CLI 결과: 6 requests / 12 assertions / failures 0 |
+| `09-purchase-kafka-trace-smoke` | 최종 post-security/post-distinct Newman CLI 결과: 5 requests / 14 assertions / failures 0; bounded polling에 따라 requests/assertions 합계 변동 가능 |
+| 실행 격리 | 고유 request ID로 현재 실행의 trace 검색 |
+| trace identity | Order root와 payment root trace ID가 서로 다름 |
+| order root | `order-service` `kafka.produce order.created`, `payment-service` `kafka.consume order.created` |
+| payment root | `payment-service` `kafka.produce payment.approved`, `order-service` `kafka.consume payment.approved`, `order-service` `kafka.produce notification.requested`, `notification-service` `kafka.consume notification.requested` |
+| 정리 상태 | Cleanup exit 0, 잔존 container 0 / volume 0 |
+
+`09`는 Tempo indexing을 기다리는 bounded polling에서 검색 request와 그 request의 assertion을 반복할 수 있으므로 정확한 합계가 실행마다 달라질 수 있다. 불변 통과 기준은 failures 0, distinct-root assertion 통과, 두 root에 걸친 6개 필수 pair assertion 통과다. 전체 구매 여정은 단일 trace로 판정하지 않는다. Log correlation과 Kafka lag 검증은 향후 범위다.
 
 ## 4. 시나리오 기준 검증 흐름
 
@@ -86,6 +102,7 @@ task test-service SERVICE=notification-service
 ```bash
 task tests:purchase-e2e SCENARIO=04-customer-drop-purchase-happy-path
 task tests:purchase-e2e-with-traces
+task tests:purchase-e2e-with-kafka-traces
 ```
 
 ## 6. 아직 분리해서 추가하면 좋은 테스트
@@ -97,9 +114,9 @@ task tests:purchase-e2e-with-traces
 | integration | `notification.requested`가 실제 Kafka consumer로 알림 저장까지 이어지는지 | 비동기 알림 경로가 E2E timeout 원인이 될 수 있다. |
 | gateway e2e | JWT 없는 주문 요청 차단 | 로컬 구매 E2E는 Gateway를 우회한다. |
 | gateway e2e | 위조 `X-User-*` 헤더 제거 또는 덮어쓰기 | Istio Ingress JWT 구조와 연결되는 보안 테스트다. |
-| observability | Kafka event trace context 전파 확인 | 현재 HTTP API span 검색은 확인했지만 Kafka producer/consumer 경계까지 하나의 흐름으로 고정해야 한다. |
 | observability | 주요 metric 증가 확인 | `orders_created_total`, `payments_approved_total`은 확인했다. `notifications_requested_total`은 추가 구현이 필요하다. |
 | observability | ERROR log 없음 확인 | synthetic run 동안 관련 서비스에 예상 밖 ERROR 로그가 없어야 한다. |
+| observability | Log correlation과 Kafka lag 확인 | Kafka span graph는 확인했으며 log correlation과 Kafka lag 자동 판정은 향후 범위다. |
 
 ## 7. 완료 판단
 
@@ -111,3 +128,4 @@ task tests:purchase-e2e-with-traces
 - 알림 생성 지연이 있어도 구매 완료 자체를 막지 않는다.
 - `05-payment-failure-flow`, `06-sold-out-concurrency-flow`를 이어서 실행해도 테스트 데이터 충돌이 없다.
 - 정상 구매 주요 API span이 Tempo에서 `service.name` + `request_id`로 검색된다.
+- 고유 request ID로 분리된 order root와 payment root에서 정상 구매 Kafka producer/consumer span graph가 검색된다.
