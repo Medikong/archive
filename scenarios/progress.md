@@ -40,6 +40,7 @@ Task를 완료할 때마다 다음 형식으로 항목을 추가한다.
 - 결과: PostgreSQL 통합 테스트 1개 통과, 병렬 HTTP `201` 4건/`409` 1건, DB `active_orders=4`/`reserved_quantity=40`, `04/05/06/07` Newman failures 0
 - 증거: ULW `G002-C001-postgres-integration.txt`, `G002-C002-parallel-http-db.txt`, `G002-C003-purchase-regression.txt`
 - cleanup: 전용 Compose project의 container와 volume이 남지 않았음을 각각 확인했다.
+- 독립 검토: 코드 리뷰와 수동 QA 모두 `APPROVE`, 차단 이슈 없음
 - 커밋: services `ee68f5f`, `3147dae`, `b07e20b`
 - 남은 위험: advisory lock은 PostgreSQL 전용이며, 다중 상품 주문과 장시간 spike의 p95/p99 및 `oversell_count` 운영 지표는 별도 부하 테스트가 필요하다.
 
