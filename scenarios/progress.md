@@ -17,7 +17,7 @@
 
 | 순서 | Task | 상태 | 완료 기준 | 상세 기록 |
 | ---: | --- | --- | --- | --- |
-| 1 | 실제 병렬 주문과 DB oversell 방지 | 진행 중 | 병렬 주문 결과와 PostgreSQL 예약 합계가 재고를 초과하지 않는다. | `sold-out-concurrency/test-execution-record.md` |
+| 1 | 실제 병렬 주문과 DB oversell 방지 | 완료 | 병렬 주문 결과와 PostgreSQL 예약 합계가 재고를 초과하지 않는다. | `sold-out-concurrency/test-execution-record.md` |
 | 2 | 결제 실패 중복 이벤트 멱등성 | 대기 | 동일 실패 요청·이벤트가 결제와 주문 상태를 한 번만 변경한다. | `payment-failure/test-execution-record.md` |
 | 3 | 구조화 로그 correlation | 대기 | HTTP와 Kafka 경계에서 request/correlation/trace ID를 연결해 검색한다. | `_shared/01-observability-driven-test-contract.md` |
 | 4 | Kafka lag 및 notification metric | 대기 | 알림 지표가 증가하고 consumer lag가 기준 이하로 회복된다. | `_shared/01-observability-driven-test-contract.md` |
@@ -31,17 +31,17 @@ Task를 완료할 때마다 다음 형식으로 항목을 추가한다.
 
 ### Task 1. 실제 병렬 주문과 DB oversell 방지
 
-- 상태: 진행 중
+- 상태: 완료
 - 기준 구현: `order-service`의 PostgreSQL product advisory transaction lock
 - 검증 목표: 재고 42인 상품에 수량 10 주문 5건을 동시에 보내 `201` 4건, `409` 1건을 확인한다.
 - DB 판정: 활성 주문 4건, 예약 수량 40, 예약 수량이 42 이하이다.
-- 구현 내용: 진행 후 기록
-- 실행 명령: 진행 후 기록
-- 결과: 진행 후 기록
-- 증거: 진행 후 기록
-- cleanup: 진행 후 기록
-- 커밋: 진행 후 기록
-- 남은 위험: 실제 검증 전
+- 구현 내용: 실제 PostgreSQL 독립 세션 통합 테스트와 barrier 기반 병렬 HTTP smoke를 추가하고, Task가 HTTP 응답 분포와 SQL 예약 합계를 함께 판정하도록 구성했다.
+- 실행 명령: `pytest services/order-service/tests/integration/postgres_order_concurrency.py`, `task purchase-e2e-concurrency`, `task purchase-e2e-with-metrics`
+- 결과: PostgreSQL 통합 테스트 1개 통과, 병렬 HTTP `201` 4건/`409` 1건, DB `active_orders=4`/`reserved_quantity=40`, `04/05/06/07` Newman failures 0
+- 증거: ULW `G002-C001-postgres-integration.txt`, `G002-C002-parallel-http-db.txt`, `G002-C003-purchase-regression.txt`
+- cleanup: 전용 Compose project의 container와 volume이 남지 않았음을 각각 확인했다.
+- 커밋: services `ee68f5f`, `3147dae`, `b07e20b`
+- 남은 위험: advisory lock은 PostgreSQL 전용이며, 다중 상품 주문과 장시간 spike의 p95/p99 및 `oversell_count` 운영 지표는 별도 부하 테스트가 필요하다.
 
 ## 차단 사항과 후속 작업
 

@@ -2,6 +2,7 @@
 
 작성일: 2026-07-07
 최종 Kafka trace E2E 재검증: 2026-07-12
+최종 병렬 주문/DB 재검증: 2026-07-13
 
 이 문서는 DropMong 구매 시나리오를 로컬 Docker Compose 환경에서 반복 검증하는 기준을 정의한다. 대상은 정상 구매, 결제 실패, 품절/동시성 시나리오다.
 
@@ -29,6 +30,14 @@ task tests:purchase-e2e-with-metrics
 ```
 
 이 명령은 clean Docker Compose stack에서 `04`, `05`, `06`을 순서대로 실행한 뒤 `07-purchase-flow-metrics` collection으로 `/metrics` 값을 자동 판정한다.
+
+실제 병렬 주문과 PostgreSQL oversell 방지를 확인할 때는 다음 명령을 사용한다.
+
+```bash
+task purchase-e2e-concurrency
+```
+
+이 명령은 전용 clean stack에서 재고 42인 상품에 수량 10 주문 5건을 barrier로 동시에 보내고, HTTP `201` 4건/`409` 1건과 DB 활성 주문 4건/예약 수량 40을 함께 판정한 뒤 container와 volume을 정리한다.
 
 정상 구매 trace까지 확인할 때는 다음 명령을 사용한다.
 
@@ -94,6 +103,7 @@ tests/e2e/docker-compose.yml
 | `07-purchase-flow-metrics` | 2 requests / 8 assertions / failures 0 | `04/05/06` 이후 order/payment 업무 metric 기대값 확인 |
 | `08-purchase-flow-trace-smoke` | 4 requests / 4 assertions / failures 0 | `04` 이후 catalog/order/payment/notification API span 검색 |
 | `09-purchase-kafka-trace-smoke` | 최종 재실행 5 requests / 14 assertions / failures 0; polling에 따라 합계 변동 가능 | `04` 이후 서로 다른 order root와 payment root에서 6개 필수 Kafka producer/consumer service/span pair 검색 |
+| `purchase-e2e-concurrency` | 병렬 요청 5건, `201` 4건 / `409` 1건 | DB 활성 주문 4건, 예약 수량 40, 재고 42 미초과, cleanup 완료 |
 
 ## 5. Metric 확인 기준
 
@@ -173,6 +183,7 @@ docker compose -p dropmong-purchase-trace-check -f tests/e2e/docker-compose.yml 
 | 결제 승인/실패 반영 실패 | Kafka topic, `payment-service` event 발행, `order-service` consumer |
 | 알림 조회 실패 | `notification-service` consumer, `notification.requested` event |
 | metric 값 불일치 | clean stack 여부, 시나리오 실행 순서, 이전 volume 잔존 여부 |
+| 병렬 주문 빌드 실패 | workspace의 접근 불가 `.pytest_cache`, `.dockerignore`, Docker build context 권한 |
 | trace 검색 실패 | `OTEL_TRACES_EXPORTER`, Collector endpoint, Tempo `/api/search`, 요청의 `X-Request-Id` |
 
 ## 9. 다음 자동화 대상
