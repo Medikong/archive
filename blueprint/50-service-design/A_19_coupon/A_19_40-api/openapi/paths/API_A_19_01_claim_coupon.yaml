@@ -1,0 +1,47 @@
+post:
+  tags: [CouponWallet]
+  summary: 쿠폰 수령 접수
+  description: 구매자의 직접 수령 요청을 접수하고 발급 대기 상태와 조회 위치를 반환한다. 실제 발급 완료는 UserCoupon 생성과 수량 확정 뒤 별도 조회에서 확인한다.
+  operationId: claimCoupon
+  x-api-id: API.A.19-01
+  x-use-case: UC.A.19-04
+  x-command: CMD.A.19-05
+  x-service-design: SD.A.1940
+  x-design-doc: ../../API_A_19_01_claim_coupon.md
+  x-error-codes:
+    COUPON_INPUT_INVALID: 400
+    COUPON_AUTHENTICATION_REQUIRED: 401
+    COUPON_FORBIDDEN: 403
+    COUPON_IDEMPOTENCY_CONFLICT: 409
+    COUPON_OPERATION_STOPPED: 409
+    COUPON_BUSINESS_RULE_REJECTED: 422
+    COUPON_RATE_LIMITED: 429
+    COUPON_DEPENDENCY_UNAVAILABLE: 503
+  security:
+    - WebSessionCookie: []
+      WebCsrfToken: []
+      WebOrigin: []
+    - MobileBearerAuth: []
+  parameters:
+    - $ref: ../components/parameters.yaml#/CampaignId
+    - $ref: ../components/parameters.yaml#/XRequestId
+    - $ref: ../components/parameters.yaml#/Traceparent
+    - $ref: ../components/parameters.yaml#/IdempotencyKey
+  responses:
+    '202':
+      description: 발급 요청을 접수해 발급 대기 상태로 전환했다.
+      headers:
+        X-Request-Id: {$ref: ../components/headers.yaml#/XRequestId}
+        Cache-Control: {$ref: ../components/headers.yaml#/CacheControlNoStore}
+        Location: {$ref: ../components/headers.yaml#/Location}
+        Retry-After: {$ref: ../components/headers.yaml#/RetryAfter}
+      content:
+        application/json:
+          schema: {$ref: ../components/schemas.yaml#/IssueAcceptedResponse}
+    '400': {$ref: ../components/responses.yaml#/BadRequest}
+    '401': {$ref: ../components/responses.yaml#/AuthenticationRequired}
+    '403': {$ref: ../components/responses.yaml#/Forbidden}
+    '409': {$ref: ../components/responses.yaml#/Conflict}
+    '422': {$ref: ../components/responses.yaml#/BusinessRejected}
+    '429': {$ref: ../components/responses.yaml#/RateLimited}
+    '503': {$ref: ../components/responses.yaml#/Unavailable}

@@ -1,0 +1,127 @@
+XRequestId:
+  name: X-Request-Id
+  in: header
+  required: false
+  description: 클라이언트가 제안하며 Gateway가 검증·교체할 수 있는 요청 UUID다.
+  schema:
+    type: string
+    format: uuid
+
+Traceparent:
+  name: traceparent
+  in: header
+  required: false
+  description: W3C Trace Context traceparent다.
+  schema:
+    type: string
+    maxLength: 128
+
+IdempotencyKey:
+  name: Idempotency-Key
+  in: header
+  required: true
+  description: actor·workload와 업무 소유 범위에 묶는 고엔트로피 멱등 키다.
+  schema:
+    type: string
+    minLength: 16
+    maxLength: 128
+    pattern: '^[A-Za-z0-9._:-]+$'
+
+XApprovalRef:
+  name: X-Approval-Ref
+  in: header
+  required: true
+  description: 운영 작업 관리가 발급한 승인 원본의 opaque 참조다.
+  schema:
+    type: string
+    minLength: 1
+    maxLength: 160
+
+XCaseRef:
+  name: X-Case-Ref
+  in: header
+  required: true
+  description: 승인된 CS 문의·업무의 opaque 참조다.
+  schema:
+    type: string
+    minLength: 1
+    maxLength: 160
+
+XApprovalRefOptional:
+  name: X-Approval-Ref
+  in: header
+  required: false
+  description: 위험 기반 운영 정책이 요구할 때 제공하는 승인 원본의 opaque 참조다.
+  schema:
+    type: string
+    minLength: 1
+    maxLength: 160
+
+CampaignId:
+  name: campaignId
+  in: path
+  required: true
+  schema:
+    $ref: ./schemas.yaml#/CampaignId
+
+UserCouponId:
+  name: userCouponId
+  in: path
+  required: true
+  schema:
+    $ref: ./schemas.yaml#/UserCouponId
+
+RedemptionId:
+  name: redemptionId
+  in: path
+  required: true
+  schema:
+    $ref: ./schemas.yaml#/RedemptionId
+
+BulkJobId:
+  name: bulkJobId
+  in: path
+  required: true
+  schema:
+    $ref: ./schemas.yaml#/BulkJobId
+
+ControlId:
+  name: controlId
+  in: path
+  required: true
+  schema:
+    $ref: ./schemas.yaml#/ControlId
+
+RecoveryId:
+  name: recoveryId
+  in: path
+  required: true
+  schema:
+    $ref: ./schemas.yaml#/RecoveryId
+
+UserId:
+  name: userId
+  in: path
+  required: true
+  schema:
+    $ref: ./schemas.yaml#/UserId
+
+Cursor:
+  name: cursor
+  in: query
+  required: false
+  description: 서버가 발급한 불투명한 다음 페이지 cursor다.
+  schema:
+    type: string
+    minLength: 1
+    maxLength: 512
+
+Limit:
+  name: limit
+  in: query
+  required: false
+  schema:
+    type: integer
+    minimum: 1
+    maximum: 100
+    default: 20

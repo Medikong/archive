@@ -1,0 +1,301 @@
+post:
+  tags:
+    - Registration
+  summary: 회원가입 완료
+  description: |
+    검증된 Registration을 Context 사용자 계정과 연결하고 자동 로그인을 완료한다.
+    최초 요청은 계정 연동 이벤트를 저장하고 `202 Accepted`를 반환한다. 클라이언트는
+    상태 조회에서 `linked`를 확인한 뒤 최초 요청과 같은 `Idempotency-Key`로 다시 호출한다.
+    최종 호출에서만 웹 Session cookie 또는 모바일 token을 발급한다.
+  operationId: completeRegistration
+  x-api-id: API.A.300-06
+  x-use-case: UC.A.300
+  x-service-design: SD.A.30040
+  x-sequences:
+    - SCN.A.300-01
+  x-design-doc: ../../API_A_300_06_complete_registration.md
+  x-credential-delivery-recovery:
+    state: consumed_intent_pending_delivery
+    requiredBindings:
+      - authenticationIntent
+      - session
+      - operation
+      - idempotencyKey
+      - requestFingerprint
+    ownerProofHash: recovery_only
+    result: rotate_existing_session_credential
+    encryptedReplayPayload: forbidden
+    generalAuthentication: forbidden
+  x-error-codes:
+    AUTH_INPUT_INVALID: 400
+    AUTH_CSRF_INVALID: 403
+    AUTH_USER_RESTRICTED: 403
+    AUTH_REGISTRATION_NOT_FOUND: 404
+    AUTH_VERIFICATION_REQUIRED: 409
+    AUTH_IDEMPOTENCY_CONFLICT: 409
+    AUTH_USER_LINK_REJECTED: 409
+    AUTH_USER_LINK_TIMEOUT: 410
+    AUTH_SESSION_DELIVERY_EXPIRED: 410
+    AUTH_SERVICE_UNAVAILABLE: 503
+  security:
+    - WebAuthFlowCookie: []
+      WebCsrfToken: []
+      WebOrigin: []
+    - MobileAuthFlowToken: []
+  parameters:
+    - $ref: ../components/parameters.yaml#/RegistrationId
+    - $ref: ../components/parameters.yaml#/XRequestId
+    - $ref: ../components/parameters.yaml#/Traceparent
+    - $ref: ../components/parameters.yaml#/XDeviceInstallationId
+    - $ref: ../components/parameters.yaml#/IdempotencyKey
+  requestBody:
+    required: true
+    description: 별도 업무 입력값이 없으므로 빈 JSON 객체를 보낸다.
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas.yaml#/EmptyRequest
+        example: {}
+  responses:
+    '200':
+      description: Context 사용자 계정 연동과 채널별 Session credential 발급을 완료했다.
+      headers:
+        X-Request-Id:
+          $ref: ../components/headers.yaml#/XRequestId
+        Cache-Control:
+          $ref: ../components/headers.yaml#/CacheControlNoStore
+        Set-Cookie:
+          $ref: ../components/headers.yaml#/SetSessionAndClearAuthCookies
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+              - meta
+            additionalProperties: false
+            properties:
+              data:
+                oneOf:
+                  - type: object
+                    required:
+                      - registrationId
+                      - status
+                      - credentialDelivery
+                      - userId
+                      - sessionId
+                      - csrfToken
+                      - next
+                    additionalProperties: false
+                    properties:
+                      registrationId:
+                        $ref: ../components/schemas.yaml#/RegistrationId
+                      status:
+                        type: string
+                        enum:
+                          - completed
+                      credentialDelivery:
+                        type: string
+                        enum:
+                          - web_session
+                      userId:
+                        type: string
+                        minLength: 1
+                      sessionId:
+                        type: string
+                        minLength: 1
+                      csrfToken:
+                        type: string
+                        minLength: 1
+                        x-sensitive: true
+                      next:
+                        type: object
+                        required:
+                          - path
+                        additionalProperties: false
+                        properties:
+                          path:
+                            type: string
+                            pattern: ^/.*$
+                          intentId:
+                            $ref: ../components/schemas.yaml#/AuthenticationIntentId
+                  - type: object
+                    required:
+                      - registrationId
+                      - status
+                      - credentialDelivery
+                      - userId
+                      - session
+                      - tokens
+                      - next
+                    additionalProperties: false
+                    properties:
+                      registrationId:
+                        $ref: ../components/schemas.yaml#/RegistrationId
+                      status:
+                        type: string
+                        enum:
+                          - completed
+                      credentialDelivery:
+                        type: string
+                        enum:
+                          - mobile_tokens
+                      userId:
+                        type: string
+                        minLength: 1
+                      session:
+                        type: object
+                        required:
+                          - sessionId
+                          - expiresAt
+                        additionalProperties: false
+                        properties:
+                          sessionId:
+                            type: string
+                            minLength: 1
+                          expiresAt:
+                            type: string
+                            format: date-time
+                      tokens:
+                        type: object
+                        required:
+                          - accessToken
+                          - accessTokenExpiresAt
+                          - refreshToken
+                          - refreshTokenExpiresAt
+                        additionalProperties: false
+                        properties:
+                          accessToken:
+                            type: string
+                            minLength: 1
+                            x-sensitive: true
+                          accessTokenExpiresAt:
+                            type: string
+                            format: date-time
+                          refreshToken:
+                            type: string
+                            minLength: 1
+                            x-sensitive: true
+                          refreshTokenExpiresAt:
+                            type: string
+                            format: date-time
+                      next:
+                        type: object
+                        required:
+                          - path
+                        additionalProperties: false
+                        properties:
+                          path:
+                            type: string
+                            pattern: ^/.*$
+                          intentId:
+                            $ref: ../components/schemas.yaml#/AuthenticationIntentId
+                discriminator:
+                  propertyName: credentialDelivery
+              meta:
+                $ref: ../components/schemas.yaml#/ResponseMeta
+          examples:
+            web:
+              value:
+                data:
+                  registrationId: reg_01JXYZ1234567890ABCDEFGHJK
+                  status: completed
+                  credentialDelivery: web_session
+                  userId: usr_01JXYZ1234567890ABCDEFGHJK
+                  sessionId: ses_01JXYZ1234567890ABCDEFGHJK
+                  csrfToken: <session-bound-csrf-token>
+                  next:
+                    path: /drops/drop_01JXYZ1234567890ABCDEFGHJK
+                    intentId: aint_01JXYZ1234567890ABCDEFGHJK
+                meta:
+                  requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
+            mobile:
+              value:
+                data:
+                  registrationId: reg_01JXYZ1234567890ABCDEFGHJK
+                  status: completed
+                  credentialDelivery: mobile_tokens
+                  userId: usr_01JXYZ1234567890ABCDEFGHJK
+                  session:
+                    sessionId: ses_01JXYZ1234567890ABCDEFGHJK
+                    expiresAt: '2026-08-09T08:00:00Z'
+                  tokens:
+                    accessToken: <signed-jwt>
+                    accessTokenExpiresAt: '2026-07-10T08:15:00Z'
+                    refreshToken: <opaque-refresh-token>
+                    refreshTokenExpiresAt: '2026-08-09T08:00:00Z'
+                  next:
+                    path: /drops/drop_01JXYZ1234567890ABCDEFGHJK
+                    intentId: aint_01JXYZ1234567890ABCDEFGHJK
+                meta:
+                  requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
+    '202':
+      description: 가입 인증 완료를 수락했으며 Context 사용자의 계정 연동을 기다린다.
+      headers:
+        X-Request-Id:
+          $ref: ../components/headers.yaml#/XRequestId
+        Cache-Control:
+          $ref: ../components/headers.yaml#/CacheControlNoStore
+        Location:
+          description: 회원가입 상태 조회 API의 상대 경로다.
+          schema:
+            type: string
+            format: uri-reference
+            pattern: ^/api/v1/auth/registrations/[^/?#]+$
+          example: /api/v1/auth/registrations/reg_01JXYZ1234567890ABCDEFGHJK
+        Retry-After:
+          $ref: ../components/headers.yaml#/RetryAfter
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+              - meta
+            additionalProperties: false
+            properties:
+              data:
+                type: object
+                required:
+                  - registrationId
+                  - status
+                  - retryable
+                  - statusPath
+                additionalProperties: false
+                properties:
+                  registrationId:
+                    $ref: ../components/schemas.yaml#/RegistrationId
+                  status:
+                    type: string
+                    enum:
+                      - awaiting_user_link
+                  retryable:
+                    type: boolean
+                    enum:
+                      - true
+                  statusPath:
+                    type: string
+                    format: uri-reference
+                    pattern: ^/api/v1/auth/registrations/[^/?#]+$
+              meta:
+                $ref: ../components/schemas.yaml#/ResponseMeta
+          example:
+            data:
+              registrationId: reg_01JXYZ1234567890ABCDEFGHJK
+              status: awaiting_user_link
+              retryable: true
+              statusPath: /api/v1/auth/registrations/reg_01JXYZ1234567890ABCDEFGHJK
+            meta:
+              requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
+    '400':
+      $ref: ../components/responses.yaml#/InputInvalid
+    '403':
+      $ref: ../components/responses.yaml#/AuthProblem403CsrfInvalidOrUserRestricted
+    '404':
+      $ref: ../components/responses.yaml#/NotFound
+    '409':
+      $ref: ../components/responses.yaml#/AuthProblem409IdempotencyConflictOrUserLinkRejectedOrVerificationRequired
+    '410':
+      $ref: ../components/responses.yaml#/AuthProblem410SessionDeliveryExpiredOrUserLinkTimeout
+    '503':
+      $ref: ../components/responses.yaml#/AuthServiceUnavailable

@@ -1,0 +1,87 @@
+get:
+  tags:
+    - Bootstrap
+  summary: 인증 수단 조회
+  description: 현재 Intent, client channel과 활성 정책에서 노출할 인증 수단만 반환한다.
+  operationId: getAuthenticationMethods
+  x-api-id: API.A.300-02
+  x-use-case: UC.A.300
+  x-service-design: SD.A.30040
+  x-design-doc: ../../API_A_300_02_get_authentication_methods.md
+  x-error-codes:
+    AUTH_INTENT_NOT_FOUND: 404
+    AUTH_METHOD_UNAVAILABLE: 409
+    AUTH_INTENT_EXPIRED: 410
+    AUTH_SERVICE_UNAVAILABLE: 503
+  security:
+    - WebAuthFlowCookie: []
+    - MobileAuthFlowToken: []
+  parameters:
+    - $ref: ../components/parameters.yaml#/AuthenticationIntentIdQuery
+    - $ref: ../components/parameters.yaml#/XRequestId
+    - $ref: ../components/parameters.yaml#/Traceparent
+    - $ref: ../components/parameters.yaml#/XDeviceInstallationId
+  responses:
+    '200':
+      description: 현재 채널과 정책에서 선택 가능한 인증 수단을 반환한다.
+      headers:
+        X-Request-Id:
+          $ref: ../components/headers.yaml#/XRequestId
+        Cache-Control:
+          $ref: ../components/headers.yaml#/CacheControlNoStore
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+              - meta
+            additionalProperties: false
+            properties:
+              data:
+                type: object
+                required:
+                  - intentId
+                  - methods
+                additionalProperties: false
+                properties:
+                  intentId:
+                    $ref: ../components/schemas.yaml#/AuthenticationIntentId
+                  methods:
+                    type: array
+                    minItems: 1
+                    uniqueItems: true
+                    items:
+                      type: object
+                      required:
+                        - type
+                        - enabled
+                      additionalProperties: false
+                      properties:
+                        type:
+                          type: string
+                          enum:
+                            - email_password
+                            - phone_otp
+                        enabled:
+                          type: boolean
+              meta:
+                $ref: ../components/schemas.yaml#/ResponseMeta
+          example:
+            data:
+              intentId: aint_01JXYZ1234567890ABCDEFGHJK
+              methods:
+                - type: email_password
+                  enabled: true
+                - type: phone_otp
+                  enabled: true
+            meta:
+              requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
+    '404':
+      $ref: ../components/responses.yaml#/AuthProblem404IntentNotFound
+    '409':
+      $ref: ../components/responses.yaml#/AuthProblem409MethodUnavailable
+    '410':
+      $ref: ../components/responses.yaml#/Gone
+    '503':
+      $ref: ../components/responses.yaml#/AuthServiceUnavailable

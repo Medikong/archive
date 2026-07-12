@@ -1,0 +1,125 @@
+post:
+  tags:
+    - AuthenticationIntent
+  summary: 인증 후 행동 복구
+  description: |
+    로그인 전에 보존한 allowlist action과 최소 payload를 Intent를 소비한 같은
+    Session에 한 번 전달한다. 이 Endpoint는 업무 명령을 대신 실행하지 않는다.
+  operationId: resumeAuthenticatedAction
+  x-api-id: API.A.300-29
+  x-use-case: UC.A.300
+  x-service-design: SD.A.30040
+  x-command-ids:
+    - CMD.A.300-24
+  x-design-doc: ../../API_A_300_29_resume_authenticated_action.md
+  x-error-codes:
+    AUTH_INPUT_INVALID: 400
+    AUTH_SESSION_REQUIRED: 401
+    AUTH_CSRF_INVALID: 403
+    AUTH_FORBIDDEN: 403
+    AUTH_IDEMPOTENCY_CONFLICT: 409
+    AUTH_INTENT_EXPIRED: 410
+    AUTH_SERVICE_UNAVAILABLE: 503
+  security:
+    - WebSessionCookie: []
+      WebCsrfToken: []
+      WebOrigin: []
+    - MobileBearerAuth: []
+  parameters:
+    - $ref: ../components/parameters.yaml#/AuthenticationIntentIdPath
+    - $ref: ../components/parameters.yaml#/XRequestId
+    - $ref: ../components/parameters.yaml#/Traceparent
+    - $ref: ../components/parameters.yaml#/IdempotencyKey
+  requestBody:
+    required: true
+    description: 별도 업무 입력값이 없으므로 빈 JSON 객체를 보낸다.
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas.yaml#/EmptyRequest
+        example: {}
+  responses:
+    '200':
+      description: 허용된 action과 최소 context를 현재 Session에 전달했다.
+      headers:
+        X-Request-Id:
+          $ref: ../components/headers.yaml#/XRequestId
+        Cache-Control:
+          $ref: ../components/headers.yaml#/CacheControlNoStore
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required:
+              - data
+              - meta
+            properties:
+              data:
+                type: object
+                additionalProperties: false
+                required:
+                  - intentId
+                  - action
+                  - actionContext
+                  - returnPath
+                properties:
+                  intentId:
+                    type: string
+                    minLength: 1
+                    maxLength: 128
+                  action:
+                    type: string
+                    enum:
+                      - purchase
+                  actionContext:
+                    oneOf:
+                      - title: PurchaseActionContext
+                        type: object
+                        additionalProperties: false
+                        required:
+                          - dropId
+                          - optionId
+                          - quantity
+                        properties:
+                          dropId:
+                            type: string
+                            minLength: 1
+                            maxLength: 128
+                          optionId:
+                            type: string
+                            minLength: 1
+                            maxLength: 128
+                          quantity:
+                            type: integer
+                            minimum: 1
+                  returnPath:
+                    type: string
+                    minLength: 1
+                    maxLength: 1024
+                    pattern: ^/[A-Za-z0-9/_-]*$
+              meta:
+                $ref: ../components/schemas.yaml#/ResponseMeta
+          example:
+            data:
+              intentId: aint_01JXYZ1234567890ABCDEFGHJK
+              action: purchase
+              actionContext:
+                dropId: drop_01JXYZ1234567890ABCDEFGHJK
+                optionId: opt_01JXYZ1234567890ABCDEFGHJK
+                quantity: 1
+              returnPath: /drops/drop_01JXYZ1234567890ABCDEFGHJK
+            meta:
+              requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
+    '400':
+      $ref: ../components/responses.yaml#/InputInvalid
+    '401':
+      $ref: ../components/responses.yaml#/AuthenticationRequired
+    '403':
+      $ref: ../components/responses.yaml#/AuthProblem403CsrfInvalidOrForbidden
+    '409':
+      $ref: ../components/responses.yaml#/Conflict
+    '410':
+      $ref: ../components/responses.yaml#/Gone
+    '503':
+      $ref: ../components/responses.yaml#/AuthServiceUnavailable

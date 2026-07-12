@@ -1,0 +1,236 @@
+get:
+  tags:
+    - Session
+  summary: 현재 인증 컨텍스트 조회
+  description: |
+    선택적으로 제출한 웹 Session 또는 모바일 access JWT를 확인해 현재 인증 컨텍스트를 반환한다.
+    credential이 없거나 만료·변조·폐기되었으면 오류 대신 `authenticated=false`인 익명 응답을 반환한다.
+    cookie와 Bearer token을 함께 제출하면 credential 우선순위를 추측하지 않고 요청을 거부한다.
+  operationId: getAuthContext
+  x-api-id: API.A.300-16
+  x-use-case: UC.A.300
+  x-service-design: SD.A.30040
+  x-design-doc: ../../API_A_300_16_get_auth_context.md
+  x-credential-precedence: reject_multiple
+  x-error-codes:
+    AUTH_MULTIPLE_CREDENTIALS: 400
+    AUTH_RATE_LIMITED: 429
+    AUTH_SERVICE_UNAVAILABLE: 503
+  security:
+    - WebSessionCookie: []
+    - MobileBearerAuth: []
+    - {}
+  parameters:
+    - $ref: ../components/parameters.yaml#/XRequestId
+    - $ref: ../components/parameters.yaml#/Traceparent
+    - $ref: ../components/parameters.yaml#/XDeviceInstallationId
+  responses:
+    '200':
+      description: 익명, 웹 또는 모바일 인증 컨텍스트를 반환한다.
+      headers:
+        X-Request-Id:
+          $ref: ../components/headers.yaml#/XRequestId
+        Cache-Control:
+          $ref: ../components/headers.yaml#/CacheControlNoStore
+        Vary:
+          description: 공유 캐시가 cookie와 Authorization credential별 응답을 섞지 않게 한다.
+          schema:
+            type: string
+            enum:
+              - Cookie, Authorization
+          example: Cookie, Authorization
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required:
+              - data
+              - meta
+            properties:
+              data:
+                oneOf:
+                  - type: object
+                    additionalProperties: false
+                    required:
+                      - authenticated
+                    properties:
+                      authenticated:
+                        type: boolean
+                        enum:
+                          - false
+                  - type: object
+                    additionalProperties: false
+                    required:
+                      - authenticated
+                      - userId
+                      - roles
+                      - session
+                      - linkedMethodTypes
+                      - csrfToken
+                    properties:
+                      authenticated:
+                        type: boolean
+                        enum:
+                          - true
+                      userId:
+                        type: string
+                        minLength: 1
+                      roles:
+                        type: array
+                        uniqueItems: true
+                        items:
+                          type: string
+                          minLength: 1
+                      session:
+                        type: object
+                        additionalProperties: false
+                        required:
+                          - sessionId
+                          - channel
+                          - authenticationMethod
+                          - authenticatedAt
+                          - expiresAt
+                        properties:
+                          sessionId:
+                            type: string
+                            minLength: 1
+                          channel:
+                            type: string
+                            enum:
+                              - web
+                          authenticationMethod:
+                            type: string
+                            minLength: 1
+                          authenticatedAt:
+                            type: string
+                            format: date-time
+                          expiresAt:
+                            type: string
+                            format: date-time
+                      linkedMethodTypes:
+                        type: array
+                        uniqueItems: true
+                        items:
+                          type: string
+                          enum:
+                            - email
+                            - phone
+                            - apple
+                            - google
+                            - passkey
+                      csrfToken:
+                        type: string
+                        minLength: 1
+                        x-sensitive: true
+                  - type: object
+                    additionalProperties: false
+                    required:
+                      - authenticated
+                      - userId
+                      - roles
+                      - session
+                      - linkedMethodTypes
+                    properties:
+                      authenticated:
+                        type: boolean
+                        enum:
+                          - true
+                      userId:
+                        type: string
+                        minLength: 1
+                      roles:
+                        type: array
+                        uniqueItems: true
+                        items:
+                          type: string
+                          minLength: 1
+                      session:
+                        type: object
+                        additionalProperties: false
+                        required:
+                          - sessionId
+                          - channel
+                          - authenticationMethod
+                          - authenticatedAt
+                          - expiresAt
+                        properties:
+                          sessionId:
+                            type: string
+                            minLength: 1
+                          channel:
+                            type: string
+                            enum:
+                              - mobile
+                          authenticationMethod:
+                            type: string
+                            minLength: 1
+                          authenticatedAt:
+                            type: string
+                            format: date-time
+                          expiresAt:
+                            type: string
+                            format: date-time
+                      linkedMethodTypes:
+                        type: array
+                        uniqueItems: true
+                        items:
+                          type: string
+                          enum:
+                            - email
+                            - phone
+                            - apple
+                            - google
+                            - passkey
+              meta:
+                $ref: ../components/schemas.yaml#/ResponseMeta
+          examples:
+            anonymous:
+              value:
+                data:
+                  authenticated: false
+                meta:
+                  requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
+            web:
+              value:
+                data:
+                  authenticated: true
+                  userId: usr_01JXYZ1234567890ABCDEFGHJK
+                  roles:
+                    - CUSTOMER
+                  session:
+                    sessionId: ses_01JXYZ1234567890ABCDEFGHJK
+                    channel: web
+                    authenticationMethod: email_password
+                    authenticatedAt: '2026-07-10T08:00:00Z'
+                    expiresAt: '2026-07-24T08:00:00Z'
+                  linkedMethodTypes:
+                    - email
+                    - phone
+                  csrfToken: <web-session-bound-token>
+                meta:
+                  requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
+            mobile:
+              value:
+                data:
+                  authenticated: true
+                  userId: usr_01JXYZ1234567890ABCDEFGHJK
+                  roles:
+                    - CUSTOMER
+                  session:
+                    sessionId: ses_01JXYZ1234567890ABCDEFGHJK
+                    channel: mobile
+                    authenticationMethod: phone_otp
+                    authenticatedAt: '2026-07-10T08:00:00Z'
+                    expiresAt: '2026-07-24T08:00:00Z'
+                  linkedMethodTypes:
+                    - email
+                    - phone
+                meta:
+                  requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
+    '400':
+      $ref: ../components/responses.yaml#/AuthProblem400MultipleCredentials
+    '429':
+      $ref: ../components/responses.yaml#/RateLimited
+    '503':
+      $ref: ../components/responses.yaml#/AuthServiceUnavailable

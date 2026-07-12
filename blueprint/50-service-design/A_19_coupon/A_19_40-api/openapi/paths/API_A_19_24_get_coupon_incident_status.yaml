@@ -1,0 +1,28 @@
+get:
+  tags: [CouponOperations]
+  summary: 쿠폰 장애 현황 조회
+  description: Postgres 업무 상태와 Redis·MQ·Worker 보조 signal의 기준 시각을 함께 반환한다.
+  operationId: getCouponIncidentStatus
+  x-api-id: API.A.19-24
+  x-use-case: UC.A.19-21
+  x-read-models: [RM.A.19-07]
+  x-service-design: SD.A.1940
+  x-design-doc: ../../API_A_19_24_get_coupon_incident_status.md
+  security:
+    - WorkloadBearerAuth: []
+  parameters:
+    - $ref: ../components/parameters.yaml#/XRequestId
+    - $ref: ../components/parameters.yaml#/Traceparent
+  responses:
+    '200':
+      description: 쿠폰 업무·기술 signal 상태를 반환한다.
+      headers:
+        X-Request-Id: {$ref: ../components/headers.yaml#/XRequestId}
+        Cache-Control: {$ref: ../components/headers.yaml#/CacheControlNoStore}
+      content:
+        application/json:
+          schema: {$ref: ../components/schemas.yaml#/IncidentStatusResponse}
+    '400': {$ref: ../components/responses.yaml#/BadRequest}
+    '401': {$ref: ../components/responses.yaml#/AuthenticationRequired}
+    '403': {$ref: ../components/responses.yaml#/Forbidden}
+    '503': {$ref: ../components/responses.yaml#/Unavailable}

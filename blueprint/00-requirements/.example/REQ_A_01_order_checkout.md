@@ -40,7 +40,7 @@ updated: 2026-07-06
 
 ## 연관 태그
 
-🏷️ 플로우 참조: FLOW.A.01 | 페이지 참조: [PAGE.A.01](../10-sitemap/PAGE_A_01_order_checkout.md) | UI 참조: [UI.A.01](../20-ui/UI_A_01_order_checkout_wireframe.md) | UC 참조: [UC.A.01](../30-uc/UC_A_01_place_order.md) | 영속성 참조: [PST.A.01](../55-persistence/PST_A_01_order_persistence.md) | 서비스 참조: [SVC.A.01](../60-service/SVC_A_01_order_service.md) | 시나리오 참조: [SCN.A.01](../80-scenario/SCN_A_01_place_order.md) | API 참조: [API.A.01](../70-api/API_A_01_place_order.md)
+🏷️ 플로우 참조: FLOW.A.01 | 페이지 참조: [PAGE.A.01](../../10-sitemap/.examples/PAGE_A_01_order_checkout.md) | UI 참조: [UI.A.01](../../20-ui/.examples/UI_A_01_order_checkout_wireframe.md) | UC 참조: [UC.A.01](../../30-uc/.examples/UC_A_01_place_order.md) | 영속성 참조: [PST.A.01](../../50-service-design/.examples/order/A_01_20-persistence/PST_A_01_order_persistence.md) | 서비스 참조: [SVC.A.01](../../50-service-design/.examples/order/A_01_30-service/SVC_A_01_order_service.md) | 시퀀스 참조: [SCN.A.01](../../80-sequence/.examples/SCN_A_01_place_order.md) | API 참조: [API.A.01](../../50-service-design/.examples/order/A_01_40-api/API_A_01_place_order.md)
 
 ## 열린 질문
 

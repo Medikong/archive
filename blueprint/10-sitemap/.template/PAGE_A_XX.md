@@ -46,4 +46,4 @@ flowchart LR
 
 ## 연관 태그
 
-🏷️ 요구사항 참조: [REQ.A.XX](../00-requirements/REQ_A_XX_name.md) | 플로우 참조: FLOW.A.XX | UI 참조: [UI.A.XX](../20-ui/UI_A_XX_name.md) | UC 참조: [UC.A.XX](../30-uc/UC_A_XX_name.md) | 영속성 참조: [PST.A.XX](../55-persistence/PST_A_XX_name.md) | 서비스 참조: [SVC.A.XX](../60-service/SVC_A_XX_name.md) | 시나리오 참조: [SCN.A.XX](../80-scenario/SCN_A_XX_name.md) | API 참조: [API.A.XX](../70-api/API_A_XX_name.md)
+🏷️ 요구사항 참조: [REQ.A.XX](../00-requirements/REQ_A_XX_name.md) | 플로우 참조: FLOW.A.XX | UI 참조: [UI.A.XX](../20-ui/UI_A_XX_name.md) | UC 참조: [UC.A.XX](../30-uc/UC_A_XX_name.md) | 영속성 참조: [PST.A.XX](../55-persistence/PST_A_XX_name.md) | 서비스 참조: [SVC.A.XX](../60-service/SVC_A_XX_name.md) | 시나리오 참조: [SCN.A.XX](../80-sequence/SCN_A_XX_name.md) | API 참조: [API.A.XX](../70-api/API_A_XX_name.md)

@@ -1,0 +1,82 @@
+openapi: 3.0.4
+info:
+  title: Context 쿠폰 API
+  version: 0.1.0
+  description: Context 쿠폰의 공개 구매자 API와 내부 주문·운영·CS·정산 API 계약이다.
+  license:
+    name: Proprietary
+servers:
+  - url: https://api.dropmong.example
+    description: 공개 Gateway 예시 주소
+tags:
+  - name: CouponWallet
+    description: 구매자 쿠폰 수령·코드 등록·쿠폰함 API
+  - name: CouponRedemption
+    description: 주문·결제 workload의 쿠폰 검증·예약·확정·해제·회수 API
+  - name: CouponCampaign
+    description: 캠페인 정책·승인·성과 API
+  - name: CouponOperations
+    description: 대량 발급·운영 중지·복구·CS·정산 API
+paths:
+  /api/v1/coupon-campaigns/{campaignId}/claims:
+    $ref: ./paths/API_A_19_01_claim_coupon.yaml
+  /api/v1/coupon-code-redemptions:
+    $ref: ./paths/API_A_19_02_redeem_coupon_code.yaml
+  /api/v1/users/me/coupons:
+    $ref: ./paths/API_A_19_03_list_my_coupons.yaml
+  /api/v1/users/me/coupons/{userCouponId}:
+    $ref: ./paths/API_A_19_04_get_my_coupon.yaml
+  /api/v1/internal/coupon-validations:
+    $ref: ./paths/API_A_19_05_validate_coupon.yaml
+  /api/v1/internal/coupon-redemptions/{redemptionId}/reserve:
+    $ref: ./paths/API_A_19_06_reserve_coupon_redemption.yaml
+  /api/v1/internal/coupon-redemptions/{redemptionId}/commit:
+    $ref: ./paths/API_A_19_07_commit_coupon_redemption.yaml
+  /api/v1/internal/coupon-redemptions/{redemptionId}/release:
+    $ref: ./paths/API_A_19_08_release_coupon_redemption.yaml
+  /api/v1/internal/coupon-redemptions/{redemptionId}/revoke:
+    $ref: ./paths/API_A_19_09_revoke_coupon_redemption.yaml
+  /api/v1/internal/coupon-campaigns:
+    $ref: ./paths/API_A_19_10_create_coupon_campaign.yaml
+  /api/v1/internal/coupon-campaigns/{campaignId}/issuance-policy:
+    $ref: ./paths/API_A_19_11_configure_campaign_issuance.yaml
+  /api/v1/internal/coupon-campaigns/{campaignId}/reviews:
+    $ref: ./paths/API_A_19_12_review_coupon_campaign.yaml
+  /api/v1/internal/coupon-campaigns/{campaignId}/policy-versions:
+    $ref: ./paths/API_A_19_13_change_coupon_campaign_policy.yaml
+  /api/v1/internal/bulk-coupon-issue-jobs:
+    $ref: ./paths/API_A_19_14_create_bulk_coupon_issue_job.yaml
+  /api/v1/internal/bulk-coupon-issue-jobs/{bulkJobId}:
+    $ref: ./paths/API_A_19_15_get_bulk_coupon_issue_job.yaml
+  /api/v1/internal/coupon-campaigns/{campaignId}/performance:
+    $ref: ./paths/API_A_19_16_get_coupon_campaign_performance.yaml
+  /api/v1/internal/coupon-operational-controls:
+    $ref: ./paths/API_A_19_17_apply_coupon_operational_control.yaml
+  /api/v1/internal/coupon-operational-controls/{controlId}/read-only-notice:
+    $ref: ./paths/API_A_19_18_apply_coupon_read_only_notice.yaml
+  /api/v1/internal/coupon-event-recoveries:
+    $ref: ./paths/API_A_19_19_list_coupon_event_recoveries.yaml
+  /api/v1/internal/coupon-event-recoveries/{recoveryId}/retry-attempts:
+    $ref: ./paths/API_A_19_20_retry_coupon_event_recovery.yaml
+  /api/v1/internal/coupon-event-recoveries/{recoveryId}/finalization:
+    $ref: ./paths/API_A_19_21_finalize_coupon_event_recovery.yaml
+  /api/v1/internal/users/{userId}/coupon-timeline:
+    $ref: ./paths/API_A_19_22_get_user_coupon_timeline.yaml
+  /api/v1/internal/compensation-coupon-issue-requests:
+    $ref: ./paths/API_A_19_23_create_compensation_coupon_issue_request.yaml
+  /api/v1/internal/coupon-incidents/status:
+    $ref: ./paths/API_A_19_24_get_coupon_incident_status.yaml
+  /api/v1/internal/coupon-cost-attributions:
+    $ref: ./paths/API_A_19_25_list_coupon_cost_attributions.yaml
+components:
+  securitySchemes:
+    WebSessionCookie:
+      $ref: ./components/security-schemes.yaml#/WebSessionCookie
+    WebCsrfToken:
+      $ref: ./components/security-schemes.yaml#/WebCsrfToken
+    WebOrigin:
+      $ref: ./components/security-schemes.yaml#/WebOrigin
+    MobileBearerAuth:
+      $ref: ./components/security-schemes.yaml#/MobileBearerAuth
+    WorkloadBearerAuth:
+      $ref: ./components/security-schemes.yaml#/WorkloadBearerAuth

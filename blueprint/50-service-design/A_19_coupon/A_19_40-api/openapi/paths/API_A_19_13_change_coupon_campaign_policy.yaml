@@ -1,0 +1,39 @@
+post:
+  tags: [CouponCampaign]
+  summary: 쿠폰 정책 version 등록
+  description: 미래 적용 시각을 가진 새 정책 version을 추가하고 과거 version은 보존한다.
+  operationId: createCouponCampaignPolicyVersion
+  x-api-id: API.A.19-13
+  x-use-case: UC.A.19-13
+  x-command: CMD.A.19-04
+  x-service-design: SD.A.1940
+  x-design-doc: ../../API_A_19_13_change_coupon_campaign_policy.md
+  security:
+    - WorkloadBearerAuth: []
+  parameters:
+    - $ref: ../components/parameters.yaml#/CampaignId
+    - $ref: ../components/parameters.yaml#/XRequestId
+    - $ref: ../components/parameters.yaml#/Traceparent
+    - $ref: ../components/parameters.yaml#/IdempotencyKey
+    - $ref: ../components/parameters.yaml#/XApprovalRef
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema: {$ref: ../components/schemas.yaml#/CreatePolicyVersionRequest}
+  responses:
+    '201':
+      description: 새 정책 version을 등록했다.
+      headers:
+        X-Request-Id: {$ref: ../components/headers.yaml#/XRequestId}
+        Cache-Control: {$ref: ../components/headers.yaml#/CacheControlNoStore}
+      content:
+        application/json:
+          schema: {$ref: ../components/schemas.yaml#/CampaignResponse}
+    '400': {$ref: ../components/responses.yaml#/BadRequest}
+    '401': {$ref: ../components/responses.yaml#/AuthenticationRequired}
+    '403': {$ref: ../components/responses.yaml#/Forbidden}
+    '404': {$ref: ../components/responses.yaml#/NotFound}
+    '409': {$ref: ../components/responses.yaml#/Conflict}
+    '422': {$ref: ../components/responses.yaml#/BusinessRejected}
+    '503': {$ref: ../components/responses.yaml#/Unavailable}

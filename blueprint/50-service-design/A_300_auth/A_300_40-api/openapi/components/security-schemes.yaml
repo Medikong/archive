@@ -1,0 +1,57 @@
+DevAccessToken:
+  type: apiKey
+  in: header
+  name: X-Dev-Access-Token
+  description: 개발 및 테스트 Gateway가 발급·회전하며 개발 전용 API 접근을 허용하는 단기 opaque token이다. 운영 환경에는 발급자와 Route가 없다.
+  x-sensitive: true
+
+WebAuthFlowCookie:
+  type: apiKey
+  in: cookie
+  name: __Host-dm_auth
+  description: 웹의 사전 인증 컨텍스트와 Registration 소유권을 증명하는 단기 HttpOnly cookie다.
+
+WebCsrfToken:
+  type: apiKey
+  in: header
+  name: X-CSRF-Token
+  description: WebAuthFlowCookie 또는 WebSessionCookie와 함께 제출하는 CSRF token이다. operation의 security requirement가 지정한 cookie와의 binding을 검증한다.
+
+WebOrigin:
+  type: apiKey
+  in: header
+  name: Origin
+  description: 웹 요청에서 필수인 Origin 헤더다. 인증 credential이 아니며 Gateway가 allowlist와 정확히 비교한다. OpenAPI의 조건부 header 한계를 보완하기 위해 security scheme으로 표현한다.
+  x-purpose: origin-allowlist
+
+WebSessionCookie:
+  type: apiKey
+  in: cookie
+  name: __Host-dm_session
+  description: 로그인된 웹 사용자의 서버 Session을 가리키는 HttpOnly cookie다.
+
+MobileAuthFlowToken:
+  type: apiKey
+  in: header
+  name: X-Auth-Flow-Token
+  description: 모바일 사전 인증 단계에서 Registration 또는 Challenge 소유권을 증명하는 단기 opaque token이다.
+
+RegistrationStatusToken:
+  type: apiKey
+  in: header
+  name: X-Registration-Status-Token
+  description: 회원가입 시작 때 발급하고 Registration에만 묶는 읽기 전용 단기 opaque token이다. 완료·실패·만료 뒤 짧은 상태 조회 보존 기간까지 사용할 수 있으며 가입 완료나 Session 발급 권한은 주지 않는다.
+  x-sensitive: true
+
+MobileRefreshToken:
+  type: apiKey
+  in: header
+  name: X-Refresh-Token
+  description: 모바일 로그아웃에 제출하는 회전형 opaque credential이다. refresh API는 명시된 request body를 사용한다. URL, query 또는 로그에 넣지 않는다.
+  x-sensitive: true
+
+MobileBearerAuth:
+  type: http
+  scheme: bearer
+  bearerFormat: JWT
+  description: 로그인된 모바일 사용자의 짧은 수명 access JWT다.

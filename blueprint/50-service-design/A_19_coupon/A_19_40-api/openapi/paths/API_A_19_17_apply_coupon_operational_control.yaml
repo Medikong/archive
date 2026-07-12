@@ -1,0 +1,38 @@
+post:
+  tags: [CouponOperations]
+  summary: 쿠폰 운영 중지 적용
+  description: 승인된 scope와 시각에 신규 발급 수량 예약과 신규 사용 예약을 중지한다.
+  operationId: applyCouponOperationalControl
+  x-api-id: API.A.19-17
+  x-use-case: UC.A.19-15
+  x-command: CMD.A.19-20
+  x-service-design: SD.A.1940
+  x-design-doc: ../../API_A_19_17_apply_coupon_operational_control.md
+  security:
+    - WorkloadBearerAuth: []
+  parameters:
+    - $ref: ../components/parameters.yaml#/XRequestId
+    - $ref: ../components/parameters.yaml#/Traceparent
+    - $ref: ../components/parameters.yaml#/IdempotencyKey
+    - $ref: ../components/parameters.yaml#/XApprovalRef
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema: {$ref: ../components/schemas.yaml#/ApplyOperationalControlRequest}
+  responses:
+    '201':
+      description: 운영 control을 적용했다.
+      headers:
+        X-Request-Id: {$ref: ../components/headers.yaml#/XRequestId}
+        Cache-Control: {$ref: ../components/headers.yaml#/CacheControlNoStore}
+        Location: {$ref: ../components/headers.yaml#/Location}
+      content:
+        application/json:
+          schema: {$ref: ../components/schemas.yaml#/OperationalControlResponse}
+    '400': {$ref: ../components/responses.yaml#/BadRequest}
+    '401': {$ref: ../components/responses.yaml#/AuthenticationRequired}
+    '403': {$ref: ../components/responses.yaml#/Forbidden}
+    '409': {$ref: ../components/responses.yaml#/Conflict}
+    '422': {$ref: ../components/responses.yaml#/BusinessRejected}
+    '503': {$ref: ../components/responses.yaml#/Unavailable}

@@ -1,0 +1,258 @@
+get:
+  tags:
+    - AuthPolicy
+  summary: 인증 정책 조회
+  description: |
+    현재 active 인증 정책을 하나의 global 불변 version snapshot으로 반환한다.
+    parent 정책과 Verification·Session revocation 하위 rule은 모두 같은 version이다.
+  operationId: getAuthPolicies
+  x-api-id: API.A.300-25
+  x-use-case: UC.A.300
+  x-use-case-goals:
+    - UC.A.300-17
+  x-service-design: SD.A.30040
+  x-query-ids:
+    - QRY.A.300-05
+  x-design-doc: ../../API_A_300_25_get_auth_policies.md
+  x-required-permissions:
+    - auth.policy.read
+  x-required-assurance: strong
+  x-require-current-access-grant: true
+  x-error-codes:
+    AUTH_SESSION_REQUIRED: 401
+    AUTH_FORBIDDEN: 403
+    AUTH_SERVICE_UNAVAILABLE: 503
+  security:
+    - WebSessionCookie: []
+  parameters:
+    - $ref: ../components/parameters.yaml#/XRequestId
+    - $ref: ../components/parameters.yaml#/Traceparent
+  responses:
+    '200':
+      description: 현재 active global 정책 snapshot을 반환한다.
+      headers:
+        X-Request-Id:
+          $ref: ../components/headers.yaml#/XRequestId
+        Cache-Control:
+          $ref: ../components/headers.yaml#/CacheControlNoStore
+        ETag:
+          $ref: ../components/headers.yaml#/ETag
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required:
+              - data
+              - meta
+            properties:
+              data:
+                type: object
+                additionalProperties: false
+                required:
+                  - version
+                  - status
+                  - effectiveAt
+                  - loginLock
+                  - sessionTtl
+                  - refreshRotation
+                  - verificationRules
+                  - sessionRevocationRules
+                properties:
+                  version:
+                    type: integer
+                    format: int64
+                    minimum: 1
+                  status:
+                    type: string
+                    enum:
+                      - active
+                  effectiveAt:
+                    type: string
+                    format: date-time
+                  loginLock:
+                    type: object
+                    additionalProperties: false
+                    required:
+                      - failureThreshold
+                      - windowSeconds
+                      - lockSeconds
+                      - resetFailureOnSuccess
+                    properties:
+                      failureThreshold:
+                        type: integer
+                        minimum: 1
+                        maximum: 20
+                      windowSeconds:
+                        type: integer
+                        minimum: 1
+                        maximum: 86400
+                      lockSeconds:
+                        type: integer
+                        minimum: 1
+                        maximum: 604800
+                      resetFailureOnSuccess:
+                        type: boolean
+                  sessionTtl:
+                    type: object
+                    additionalProperties: false
+                    required:
+                      - webIdleSeconds
+                      - webAbsoluteSeconds
+                      - mobileAccessSeconds
+                      - mobileRefreshSeconds
+                      - webRememberMeSeconds
+                      - internalContextSeconds
+                    properties:
+                      webIdleSeconds:
+                        type: integer
+                        minimum: 1
+                        maximum: 604800
+                      webAbsoluteSeconds:
+                        type: integer
+                        minimum: 1
+                        maximum: 31536000
+                      mobileAccessSeconds:
+                        type: integer
+                        minimum: 1
+                        maximum: 86400
+                      mobileRefreshSeconds:
+                        type: integer
+                        minimum: 1
+                        maximum: 31536000
+                      webRememberMeSeconds:
+                        type: integer
+                        minimum: 1
+                        maximum: 31536000
+                      internalContextSeconds:
+                        type: integer
+                        minimum: 1
+                        maximum: 86400
+                  refreshRotation:
+                    type: object
+                    additionalProperties: false
+                    required:
+                      - enabled
+                      - reuseAction
+                    properties:
+                      enabled:
+                        type: boolean
+                      reuseAction:
+                        type: string
+                        enum:
+                          - revoke_family_and_session
+                  verificationRules:
+                    type: array
+                    minItems: 1
+                    maxItems: 50
+                    items:
+                      type: object
+                      additionalProperties: false
+                      required:
+                        - purpose
+                        - channel
+                        - ttlSeconds
+                        - maxAttempts
+                        - maxSends
+                        - resendIntervalSeconds
+                      properties:
+                        purpose:
+                          type: string
+                          enum:
+                            - signup_email
+                            - signup_phone
+                            - phone_signin
+                            - password_reset
+                            - identity_link
+                            - phone_change
+                        channel:
+                          type: string
+                          enum:
+                            - email_code
+                            - sms_code
+                        ttlSeconds:
+                          type: integer
+                          minimum: 1
+                          maximum: 86400
+                        maxAttempts:
+                          type: integer
+                          minimum: 1
+                          maximum: 20
+                        maxSends:
+                          type: integer
+                          minimum: 1
+                          maximum: 20
+                        resendIntervalSeconds:
+                          type: integer
+                          minimum: 1
+                          maximum: 86400
+                  sessionRevocationRules:
+                    type: array
+                    minItems: 1
+                    maxItems: 50
+                    items:
+                      type: object
+                      additionalProperties: false
+                      required:
+                        - trigger
+                        - scopes
+                      properties:
+                        trigger:
+                          type: string
+                          minLength: 1
+                          maxLength: 32
+                          pattern: ^[a-z][a-z0-9_]*$
+                        scopes:
+                          type: array
+                          minItems: 1
+                          maxItems: 4
+                          uniqueItems: true
+                          items:
+                            type: string
+                            enum:
+                              - current_session
+                              - identity_sessions
+                              - user_sessions
+                              - refresh_family
+              meta:
+                $ref: ../components/schemas.yaml#/ResponseMeta
+          example:
+            data:
+              version: 7
+              status: active
+              effectiveAt: '2026-07-10T08:00:00Z'
+              loginLock:
+                failureThreshold: 5
+                windowSeconds: 900
+                lockSeconds: 1800
+                resetFailureOnSuccess: true
+              sessionTtl:
+                webIdleSeconds: 1800
+                webAbsoluteSeconds: 43200
+                mobileAccessSeconds: 900
+                mobileRefreshSeconds: 1209600
+                webRememberMeSeconds: 2592000
+                internalContextSeconds: 300
+              refreshRotation:
+                enabled: true
+                reuseAction: revoke_family_and_session
+              verificationRules:
+                - purpose: phone_change
+                  channel: sms_code
+                  ttlSeconds: 300
+                  maxAttempts: 5
+                  maxSends: 3
+                  resendIntervalSeconds: 60
+              sessionRevocationRules:
+                - trigger: password_reset
+                  scopes:
+                    - user_sessions
+                    - refresh_family
+            meta:
+              requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
+    '401':
+      $ref: ../components/responses.yaml#/AuthenticationRequired
+    '403':
+      $ref: ../components/responses.yaml#/Forbidden
+    '503':
+      $ref: ../components/responses.yaml#/AuthServiceUnavailable

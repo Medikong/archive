@@ -1,0 +1,133 @@
+get:
+  tags:
+    - Registration
+  summary: 회원가입 상태 조회
+  description: |
+    사전 인증 소유 proof가 일치하는 Registration의 현재 상태를 조회한다.
+    failed와 expired를 포함한 terminal 상태도 성공 envelope로 반환하며 이 Query는
+    Session cookie나 token을 발급하지 않는다. API.A.300-03이 발급한 상태 조회 전용
+    token은 사전 인증 credential이 정리된 뒤에도 짧은 terminal 보존 기간 동안 사용할 수 있다.
+  operationId: getRegistrationStatus
+  x-api-id: API.A.300-28
+  x-use-case: UC.A.300
+  x-use-case-goals:
+    - UC.A.300-02
+  x-service-design: SD.A.30040
+  x-query-ids:
+    - QRY.A.300-06
+  x-sequences:
+    - SCN.A.300-01
+  x-design-doc: ../../API_A_300_28_get_registration_status.md
+  x-registration-status-token:
+    issuedBy: API.A.300-03
+    scope: registration_status_read
+    storage: hash_only
+    terminalRetention: short_lived
+    usableForCompletion: false
+  x-error-codes:
+    AUTH_REGISTRATION_NOT_FOUND: 404
+    AUTH_SERVICE_UNAVAILABLE: 503
+  security:
+    - WebAuthFlowCookie: []
+    - MobileAuthFlowToken: []
+    - RegistrationStatusToken: []
+  parameters:
+    - name: registrationId
+      in: path
+      required: true
+      description: 회원가입 처리의 opaque 식별자다.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 128
+      example: reg_01JXYZ1234567890ABCDEFGHJK
+    - $ref: ../components/parameters.yaml#/XRequestId
+    - $ref: ../components/parameters.yaml#/Traceparent
+  responses:
+    '200':
+      description: 진행 중이거나 terminal인 현재 Registration 상태를 반환한다.
+      headers:
+        X-Request-Id:
+          $ref: ../components/headers.yaml#/XRequestId
+        Cache-Control:
+          $ref: ../components/headers.yaml#/CacheControlNoStore
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required:
+              - data
+              - meta
+            properties:
+              data:
+                type: object
+                additionalProperties: false
+                required:
+                  - registrationId
+                  - status
+                  - verifiedMethods
+                  - retryable
+                  - expiresAt
+                properties:
+                  registrationId:
+                    type: string
+                    minLength: 1
+                    maxLength: 128
+                  status:
+                    type: string
+                    enum:
+                      - pending_verification
+                      - awaiting_user_link
+                      - linked
+                      - issuing_session
+                      - completed
+                      - failed
+                      - expired
+                  verifiedMethods:
+                    type: array
+                    maxItems: 2
+                    uniqueItems: true
+                    items:
+                      type: string
+                      enum:
+                        - email
+                        - phone
+                  retryable:
+                    type: boolean
+                  expiresAt:
+                    type: string
+                    format: date-time
+              meta:
+                $ref: ../components/schemas.yaml#/ResponseMeta
+          examples:
+            linked:
+              summary: 사용자 계정 연결 완료, Session 발급 재개 가능
+              value:
+                data:
+                  registrationId: reg_01JXYZ1234567890ABCDEFGHJK
+                  status: linked
+                  verifiedMethods:
+                    - email
+                    - phone
+                  retryable: true
+                  expiresAt: '2026-07-10T08:30:00Z'
+                meta:
+                  requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
+            failed:
+              summary: 재시도할 수 없는 terminal 상태
+              value:
+                data:
+                  registrationId: reg_01JXYZ1234567890ABCDEFGHJK
+                  status: failed
+                  verifiedMethods:
+                    - email
+                    - phone
+                  retryable: false
+                  expiresAt: '2026-07-10T08:30:00Z'
+                meta:
+                  requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
+    '404':
+      $ref: ../components/responses.yaml#/NotFound
+    '503':
+      $ref: ../components/responses.yaml#/AuthServiceUnavailable

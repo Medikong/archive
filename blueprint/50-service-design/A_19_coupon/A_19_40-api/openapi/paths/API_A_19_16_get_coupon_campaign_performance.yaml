@@ -1,0 +1,51 @@
+get:
+  tags: [CouponCampaign]
+  summary: 쿠폰 캠페인 성과 조회
+  description: 판매자·마케팅·운영 workload의 권한 범위에서 캠페인의 발급·사용·회수 집계를 반환한다. 판매자는 자신이 소유하거나 비용을 부담한 캠페인의 집계와 자기 부담 비용만 조회할 수 있다.
+  operationId: getCouponCampaignPerformance
+  x-api-id: API.A.19-16
+  x-use-case: [UC.A.19-08, UC.A.19-12]
+  x-read-models: [RM.A.19-03, RM.A.19-04]
+  x-service-design: SD.A.1940
+  x-design-doc: ../../API_A_19_16_get_coupon_campaign_performance.md
+  security:
+    - WorkloadBearerAuth: []
+  parameters:
+    - $ref: ../components/parameters.yaml#/CampaignId
+    - $ref: ../components/parameters.yaml#/XRequestId
+    - $ref: ../components/parameters.yaml#/Traceparent
+    - name: from
+      in: query
+      required: false
+      schema: {type: string, format: date-time}
+    - name: to
+      in: query
+      required: false
+      schema: {type: string, format: date-time}
+    - name: groupBy
+      in: query
+      required: false
+      description: 응답 breakdown의 집계 차원이다. 생략하면 캠페인 합계만 반환한다.
+      style: form
+      explode: false
+      schema:
+        type: array
+        uniqueItems: true
+        maxItems: 4
+        items:
+          type: string
+          enum: [campaign, drop, product, day]
+  responses:
+    '200':
+      description: 캠페인 성과 집계를 반환한다.
+      headers:
+        X-Request-Id: {$ref: ../components/headers.yaml#/XRequestId}
+        Cache-Control: {$ref: ../components/headers.yaml#/CacheControlNoStore}
+      content:
+        application/json:
+          schema: {$ref: ../components/schemas.yaml#/CampaignPerformanceResponse}
+    '400': {$ref: ../components/responses.yaml#/BadRequest}
+    '401': {$ref: ../components/responses.yaml#/AuthenticationRequired}
+    '403': {$ref: ../components/responses.yaml#/Forbidden}
+    '404': {$ref: ../components/responses.yaml#/NotFound}
+    '503': {$ref: ../components/responses.yaml#/Unavailable}

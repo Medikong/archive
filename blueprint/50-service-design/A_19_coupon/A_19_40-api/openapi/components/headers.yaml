@@ -1,0 +1,28 @@
+XRequestId:
+  description: 응답 본문 meta.requestId와 같은 요청 식별자다.
+  schema:
+    type: string
+    format: uuid
+  example: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
+
+CacheControlNoStore:
+  description: 응답을 브라우저와 중간 캐시에 저장하지 못하게 한다.
+  schema:
+    type: string
+    enum:
+      - 'private, no-store'
+  example: private, no-store
+
+Location:
+  description: 비동기 작업 또는 생성한 리소스의 상태 조회 상대 경로다.
+  schema:
+    type: string
+    format: uri-reference
+  example: /api/v1/users/me/coupons?status=pending
+
+RetryAfter:
+  description: 다음 상태 조회 또는 재시도 전 기다릴 최소 초다.
+  schema:
+    type: integer
+    minimum: 1
+  example: 1

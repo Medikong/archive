@@ -1,0 +1,142 @@
+post:
+  tags:
+    - SignIn
+  summary: 이메일 로그인
+  description: 이메일·비밀번호를 검증하고 AuthenticationIntent에 저장된 auth flow channel에 맞춰 Session credential을 발급한다.
+  operationId: signInWithEmail
+  x-api-id: API.A.300-07
+  x-use-case: UC.A.300
+  x-service-design: SD.A.30040
+  x-design-doc: ../../API_A_300_07_sign_in_with_email.md
+  x-credential-delivery-recovery:
+    state: consumed_intent_pending_delivery
+    requiredBindings:
+      - authenticationIntent
+      - session
+      - operation
+      - idempotencyKey
+      - requestFingerprint
+    ownerProofHash: recovery_only
+    result: reverify password and rotate existing session credential
+    encryptedReplayPayload: forbidden
+    generalAuthentication: forbidden
+  x-error-codes:
+    AUTH_INPUT_INVALID: 400
+    AUTH_SIGNIN_FAILED: 401
+    AUTH_CSRF_INVALID: 403
+    AUTH_PASSWORD_RESET_REQUIRED: 403
+    AUTH_USER_RESTRICTED: 403
+    AUTH_INTENT_NOT_FOUND: 404
+    AUTH_IDEMPOTENCY_CONFLICT: 409
+    AUTH_INTENT_EXPIRED: 410
+    AUTH_SESSION_DELIVERY_EXPIRED: 410
+    AUTH_ACCOUNT_LOCKED: 423
+    AUTH_RATE_LIMITED: 429
+    AUTH_SERVICE_UNAVAILABLE: 503
+  security:
+    - WebAuthFlowCookie: []
+      WebCsrfToken: []
+      WebOrigin: []
+    - MobileAuthFlowToken: []
+  parameters:
+    - $ref: ../components/parameters.yaml#/XRequestId
+    - $ref: ../components/parameters.yaml#/Traceparent
+    - $ref: ../components/parameters.yaml#/XDeviceInstallationId
+    - $ref: ../components/parameters.yaml#/IdempotencyKey
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - authIntentId
+            - email
+            - password
+            - rememberMe
+          additionalProperties: false
+          properties:
+            authIntentId:
+              $ref: ../components/schemas.yaml#/AuthenticationIntentId
+            email:
+              type: string
+              format: email
+              minLength: 3
+              maxLength: 254
+            password:
+              type: string
+              format: password
+              minLength: 1
+              maxLength: 1024
+              writeOnly: true
+              x-sensitive: true
+            rememberMe:
+              type: boolean
+        example:
+          authIntentId: aint_01JXYZ1234567890ABCDEFGHJK
+          email: buyer@example.com
+          password: <user-entered-password>
+          rememberMe: true
+  responses:
+    '200':
+      description: 채널별 Session credential을 발급하고 AuthenticationIntent를 소비했다.
+      headers:
+        X-Request-Id:
+          $ref: ../components/headers.yaml#/XRequestId
+        Cache-Control:
+          $ref: ../components/headers.yaml#/CacheControlNoStore
+        Set-Cookie:
+          $ref: ../components/headers.yaml#/SetSessionAndClearAuthCookies
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas.yaml#/AuthenticationCompletedResponse
+          examples:
+            web:
+              value:
+                data:
+                  credentialDelivery: web_session
+                  userId: usr_01JXYZ1234567890ABCDEFGHJK
+                  sessionId: ses_01JXYZ1234567890ABCDEFGHJK
+                  csrfToken: <session-bound-csrf-token>
+                  next:
+                    path: /drops/drop_01JXYZ1234567890ABCDEFGHJK
+                    intentId: aint_01JXYZ1234567890ABCDEFGHJK
+                meta:
+                  requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
+            mobile:
+              value:
+                data:
+                  credentialDelivery: mobile_tokens
+                  userId: usr_01JXYZ1234567890ABCDEFGHJK
+                  session:
+                    sessionId: ses_01JXYZ1234567890ABCDEFGHJK
+                    expiresAt: '2026-08-09T08:00:00Z'
+                  tokens:
+                    accessToken: <signed-jwt>
+                    accessTokenExpiresAt: '2026-07-10T08:15:00Z'
+                    refreshToken: <opaque-refresh-token>
+                    refreshTokenExpiresAt: '2026-08-09T08:00:00Z'
+                  next:
+                    path: /drops/drop_01JXYZ1234567890ABCDEFGHJK
+                    intentId: aint_01JXYZ1234567890ABCDEFGHJK
+                meta:
+                  requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
+    '400':
+      $ref: ../components/responses.yaml#/InputInvalid
+    '401':
+      $ref: ../components/responses.yaml#/AuthProblem401SigninFailed
+    '403':
+      $ref: ../components/responses.yaml#/AuthProblem403CsrfInvalidOrPasswordResetRequiredOrUserRestricted
+    '404':
+      $ref: ../components/responses.yaml#/AuthProblem404IntentNotFound
+    '409':
+      $ref: ../components/responses.yaml#/Conflict
+    '410':
+      $ref: ../components/responses.yaml#/AuthProblem410IntentExpiredOrSessionDeliveryExpired
+    '423':
+      $ref: ../components/responses.yaml#/Locked
+    '429':
+      $ref: ../components/responses.yaml#/RateLimited
+    '503':
+      $ref: ../components/responses.yaml#/AuthServiceUnavailable

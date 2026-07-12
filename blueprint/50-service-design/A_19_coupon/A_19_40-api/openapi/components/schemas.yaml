@@ -1,0 +1,1202 @@
+CampaignId:
+  type: string
+  pattern: '^camp_[A-Za-z0-9_-]{8,120}$'
+  example: camp_01JXYZ1234567890ABCDEFGHJK
+
+IssueRequestId:
+  type: string
+  pattern: '^ireq_[A-Za-z0-9_-]{8,120}$'
+  example: ireq_01JXYZ1234567890ABCDEFGHJK
+
+UserCouponId:
+  type: string
+  pattern: '^ucpn_[A-Za-z0-9_-]{8,120}$'
+  example: ucpn_01JXYZ1234567890ABCDEFGHJK
+
+RedemptionId:
+  type: string
+  pattern: '^redm_[A-Za-z0-9_-]{8,120}$'
+  example: redm_01JXYZ1234567890ABCDEFGHJK
+
+BulkJobId:
+  type: string
+  pattern: '^bjob_[A-Za-z0-9_-]{8,120}$'
+  example: bjob_01JXYZ1234567890ABCDEFGHJK
+
+ControlId:
+  type: string
+  pattern: '^ctrl_[A-Za-z0-9_-]{8,120}$'
+  example: ctrl_01JXYZ1234567890ABCDEFGHJK
+
+RecoveryId:
+  type: string
+  pattern: '^rcvy_[A-Za-z0-9_-]{8,120}$'
+  example: rcvy_01JXYZ1234567890ABCDEFGHJK
+
+AttemptId:
+  type: string
+  pattern: '^att_[A-Za-z0-9_-]{8,120}$'
+  example: att_01JXYZ1234567890ABCDEFGHJK
+
+UserId:
+  type: string
+  minLength: 1
+  maxLength: 128
+  example: usr_01JXYZ1234567890ABCDEFGHJK
+
+OpaqueRef:
+  type: string
+  minLength: 1
+  maxLength: 200
+  pattern: '^[A-Za-z0-9._:/-]+$'
+  example: order:order_01JXYZ1234567890ABCDEFGHJK
+
+AggregateVersion:
+  type: integer
+  format: int64
+  minimum: 0
+  example: 3
+
+ResponseMeta:
+  type: object
+  required: [requestId]
+  additionalProperties: false
+  properties:
+    requestId:
+      type: string
+      format: uuid
+    asOf:
+      type: string
+      format: date-time
+
+ExternalRef:
+  type: object
+  required: [context, type, id]
+  additionalProperties: false
+  properties:
+    context:
+      type: string
+      minLength: 1
+      maxLength: 64
+    type:
+      type: string
+      minLength: 1
+      maxLength: 64
+    id:
+      $ref: '#/OpaqueRef'
+
+SnapshotRef:
+  type: object
+  required: [sourceRef, sourceVersion, capturedAt, payloadHash]
+  additionalProperties: false
+  properties:
+    sourceRef:
+      $ref: '#/ExternalRef'
+    sourceVersion:
+      type: string
+      minLength: 1
+      maxLength: 128
+    capturedAt:
+      type: string
+      format: date-time
+    payloadHash:
+      type: string
+      pattern: '^sha256:[A-Za-z0-9_-]{43}$'
+
+Money:
+  type: object
+  required: [amount, currency]
+  additionalProperties: false
+  properties:
+    amount:
+      type: string
+      pattern: '^(0|[1-9][0-9]{0,17})(\.[0-9]{1,4})?$'
+      example: '5000'
+    currency:
+      type: string
+      pattern: '^[A-Z]{3}$'
+      example: KRW
+
+Benefit:
+  type: object
+  required: [type]
+  additionalProperties: false
+  properties:
+    type:
+      type: string
+      enum: [fixed_amount, percentage, shipping_fee]
+    amount:
+      $ref: '#/Money'
+    percentage:
+      type: string
+      pattern: '^(100|[0-9]{1,2})(\.[0-9]{1,2})?$'
+      example: '10'
+    maxDiscountAmount:
+      $ref: '#/Money'
+  description: type에 맞는 필드만 사용하며 서버가 조합 유효성을 검증한다.
+
+ApplicabilityPolicy:
+  type: object
+  required: [policySchemaVersion, includeTargets, excludeTargets]
+  additionalProperties: false
+  properties:
+    policySchemaVersion:
+      type: integer
+      enum: [1]
+    includeTargets:
+      type: array
+      maxItems: 100
+      items:
+        $ref: '#/ExternalRef'
+    excludeTargets:
+      type: array
+      maxItems: 100
+      items:
+        $ref: '#/ExternalRef'
+    minimumOrderAmount:
+      $ref: '#/Money'
+    stackingPolicyRef:
+      $ref: '#/OpaqueRef'
+
+IssuerAndFunding:
+  type: object
+  required: [issuerType, issuerRef, funderType]
+  additionalProperties: false
+  properties:
+    issuerType:
+      type: string
+      enum: [platform, seller, partnership, compensation]
+    issuerRef:
+      $ref: '#/ExternalRef'
+    funderType:
+      type: string
+      enum: [platform, seller, joint, compensation]
+    funderRef:
+      $ref: '#/ExternalRef'
+    platformSharePercentage:
+      type: string
+      pattern: '^(100|[0-9]{1,2})(\.[0-9]{1,2})?$'
+
+ProblemViolation:
+  type: object
+  required: [field, reason]
+  additionalProperties: false
+  properties:
+    field:
+      type: string
+      maxLength: 160
+    reason:
+      type: string
+      maxLength: 160
+
+ProblemDetails:
+  type: object
+  required: [type, title, status, code, retryable, requestId]
+  additionalProperties: false
+  properties:
+    type:
+      type: string
+      format: uri
+    title:
+      type: string
+      maxLength: 160
+    status:
+      type: integer
+      minimum: 400
+      maximum: 599
+    code:
+      type: string
+      pattern: '^COUPON_[A-Z0-9_]+$'
+    detail:
+      type: string
+      maxLength: 500
+    retryable:
+      type: boolean
+    requestId:
+      type: string
+      format: uuid
+    violations:
+      type: array
+      maxItems: 20
+      items:
+        $ref: '#/ProblemViolation'
+
+IssueAcceptedData:
+  type: object
+  required: [issueRequestId, status, statusPath]
+  additionalProperties: false
+  properties:
+    issueRequestId:
+      $ref: '#/IssueRequestId'
+    status:
+      type: string
+      description: 요청 접수 뒤 사용자에게 보이는 상태다. 실제 발급 완료를 뜻하지 않는다.
+      enum: [pending]
+    statusPath:
+      type: string
+      format: uri-reference
+      example: /api/v1/users/me/coupons?status=pending
+
+IssueAcceptedResponse:
+  type: object
+  required: [data, meta]
+  additionalProperties: false
+  properties:
+    data:
+      $ref: '#/IssueAcceptedData'
+    meta:
+      $ref: '#/ResponseMeta'
+
+RedeemCouponCodeRequest:
+  type: object
+  required: [code]
+  additionalProperties: false
+  properties:
+    code:
+      type: string
+      minLength: 4
+      maxLength: 128
+      writeOnly: true
+      description: 로그·trace·Event에 기록하지 않는 사용자 입력 코드 원문이다.
+      example: ABCD-1234-EFGH
+
+WalletStatus:
+  type: string
+  enum: [pending, available, reserved, used, reclaimed, expired, failed]
+
+WalletCoupon:
+  type: object
+  required: [userCouponId, campaignId, displayName, benefit, status, usableFrom, expiresAt]
+  additionalProperties: false
+  properties:
+    userCouponId:
+      $ref: '#/UserCouponId'
+    campaignId:
+      $ref: '#/CampaignId'
+    displayName:
+      type: string
+      minLength: 1
+      maxLength: 120
+    benefit:
+      $ref: '#/Benefit'
+    status:
+      $ref: '#/WalletStatus'
+    usableFrom:
+      type: string
+      format: date-time
+    expiresAt:
+      type: string
+      format: date-time
+
+ReadOnlyNotice:
+  type: object
+  required: [controlId, message, effectiveFrom]
+  additionalProperties: false
+  properties:
+    controlId:
+      $ref: '#/ControlId'
+    message:
+      type: string
+      minLength: 1
+      maxLength: 500
+    effectiveFrom:
+      type: string
+      format: date-time
+
+WalletCouponListData:
+  type: object
+  required: [items, activeNotices]
+  additionalProperties: false
+  properties:
+    items:
+      type: array
+      items:
+        $ref: '#/WalletCoupon'
+    nextCursor:
+      type: string
+      maxLength: 512
+    activeNotices:
+      type: array
+      maxItems: 10
+      items:
+        $ref: '#/ReadOnlyNotice'
+
+WalletCouponListResponse:
+  type: object
+  required: [data, meta]
+  additionalProperties: false
+  properties:
+    data:
+      $ref: '#/WalletCouponListData'
+    meta:
+      $ref: '#/ResponseMeta'
+
+CouponDetailData:
+  type: object
+  required: [userCouponId, campaignId, displayName, benefit, status, usableFrom, expiresAt, policyVersion, applicability, issuerAndFunding]
+  additionalProperties: false
+  properties:
+    userCouponId:
+      $ref: '#/UserCouponId'
+    campaignId:
+      $ref: '#/CampaignId'
+    displayName:
+      type: string
+      minLength: 1
+      maxLength: 120
+    benefit:
+      $ref: '#/Benefit'
+    status:
+      $ref: '#/WalletStatus'
+    usableFrom:
+      type: string
+      format: date-time
+    expiresAt:
+      type: string
+      format: date-time
+    policyVersion:
+      type: integer
+      minimum: 1
+    applicability:
+      $ref: '#/ApplicabilityPolicy'
+    issuerAndFunding:
+      $ref: '#/IssuerAndFunding'
+    activeNotice:
+      $ref: '#/ReadOnlyNotice'
+
+CouponDetailResponse:
+  type: object
+  required: [data, meta]
+  additionalProperties: false
+  properties:
+    data:
+      $ref: '#/CouponDetailData'
+    meta:
+      $ref: '#/ResponseMeta'
+
+OrderItemSnapshot:
+  type: object
+  required: [productRef, sellerRef, quantity, unitPrice]
+  additionalProperties: false
+  properties:
+    productRef:
+      $ref: '#/ExternalRef'
+    dropRef:
+      $ref: '#/ExternalRef'
+    sellerRef:
+      $ref: '#/ExternalRef'
+    categoryRef:
+      $ref: '#/ExternalRef'
+    quantity:
+      type: integer
+      minimum: 1
+      maximum: 10000
+    unitPrice:
+      $ref: '#/Money'
+
+OrderCandidateSnapshot:
+  type: object
+  required: [snapshotRef, orderId, userId, items, shippingFee]
+  additionalProperties: false
+  properties:
+    snapshotRef:
+      $ref: '#/SnapshotRef'
+    orderId:
+      $ref: '#/OpaqueRef'
+    userId:
+      $ref: '#/UserId'
+    items:
+      type: array
+      minItems: 1
+      maxItems: 500
+      items:
+        $ref: '#/OrderItemSnapshot'
+    shippingFee:
+      $ref: '#/Money'
+
+ValidateCouponRequest:
+  type: object
+  required: [userCouponId, orderSnapshot, policyVersion]
+  additionalProperties: false
+  properties:
+    userCouponId:
+      $ref: '#/UserCouponId'
+    orderSnapshot:
+      $ref: '#/OrderCandidateSnapshot'
+    policyVersion:
+      type: integer
+      minimum: 1
+    stackingPolicyRef:
+      $ref: '#/OpaqueRef'
+
+CostShare:
+  type: object
+  required: [bearerType, amount]
+  additionalProperties: false
+  properties:
+    bearerType:
+      type: string
+      enum: [platform, seller, joint, compensation]
+    bearerRef:
+      $ref: '#/ExternalRef'
+    amount:
+      $ref: '#/Money'
+
+CouponValidationData:
+  type: object
+  required: [redemptionId, eligible, discount, finalOrderAmount, policyVersion, orderSnapshotRef, version]
+  additionalProperties: false
+  properties:
+    redemptionId:
+      $ref: '#/RedemptionId'
+    eligible:
+      type: boolean
+    reasonCode:
+      type: string
+      maxLength: 80
+    discount:
+      $ref: '#/Money'
+    finalOrderAmount:
+      $ref: '#/Money'
+    costShares:
+      type: array
+      items:
+        $ref: '#/CostShare'
+    policyVersion:
+      type: integer
+      minimum: 1
+    orderSnapshotRef:
+      $ref: '#/SnapshotRef'
+    version:
+      $ref: '#/AggregateVersion'
+
+CouponValidationResponse:
+  type: object
+  required: [data, meta]
+  additionalProperties: false
+  properties:
+    data:
+      $ref: '#/CouponValidationData'
+    meta:
+      $ref: '#/ResponseMeta'
+
+ExpectedVersionRequest:
+  type: object
+  required: [expectedVersion]
+  additionalProperties: false
+  properties:
+    expectedVersion:
+      $ref: '#/AggregateVersion'
+
+RedemptionTransitionRequest:
+  type: object
+  required: [expectedVersion, resultRef, reasonCode]
+  additionalProperties: false
+  properties:
+    expectedVersion:
+      $ref: '#/AggregateVersion'
+    resultRef:
+      $ref: '#/ExternalRef'
+    resultSnapshot:
+      $ref: '#/SnapshotRef'
+    reasonCode:
+      type: string
+      minLength: 1
+      maxLength: 80
+
+RedemptionData:
+  type: object
+  required: [redemptionId, status, version, discount]
+  additionalProperties: false
+  properties:
+    redemptionId:
+      $ref: '#/RedemptionId'
+    status:
+      type: string
+      enum: [evaluated, reserved, confirmed, released, reclaimed]
+    version:
+      $ref: '#/AggregateVersion'
+    discount:
+      $ref: '#/Money'
+    reservedUntil:
+      type: string
+      format: date-time
+    resultRef:
+      $ref: '#/ExternalRef'
+
+RedemptionResponse:
+  type: object
+  required: [data, meta]
+  additionalProperties: false
+  properties:
+    data:
+      $ref: '#/RedemptionData'
+    meta:
+      $ref: '#/ResponseMeta'
+
+CreateCouponCampaignRequest:
+  type: object
+  required: [displayName, benefit, applicability, issuerAndFunding, usableFrom, expiresAt, ownerSnapshot, approvalPolicy]
+  additionalProperties: false
+  properties:
+    displayName:
+      type: string
+      minLength: 1
+      maxLength: 120
+    description:
+      type: string
+      maxLength: 1000
+    benefit:
+      $ref: '#/Benefit'
+    applicability:
+      $ref: '#/ApplicabilityPolicy'
+    issuerAndFunding:
+      $ref: '#/IssuerAndFunding'
+    usableFrom:
+      type: string
+      format: date-time
+    expiresAt:
+      type: string
+      format: date-time
+    ownerSnapshot:
+      $ref: '#/SnapshotRef'
+    approvalPolicy:
+      allOf:
+        - $ref: '#/SnapshotRef'
+      description: 승인선·금액·수량 한도를 판정하는 버전이 있는 운영 정책 스냅샷이다.
+    templateRef:
+      allOf:
+        - $ref: '#/ExternalRef'
+      description: 판매자 자체 요청을 허용하는 승인된 템플릿 참조다.
+    externalBusinessRef:
+      $ref: '#/OpaqueRef'
+
+CampaignData:
+  type: object
+  required: [campaignId, status, policyVersion, version]
+  additionalProperties: false
+  properties:
+    campaignId:
+      $ref: '#/CampaignId'
+    status:
+      type: string
+      enum: [draft, under_review, approved, rejected, held, active, ended]
+    policyVersion:
+      type: integer
+      minimum: 1
+    version:
+      $ref: '#/AggregateVersion'
+
+CampaignResponse:
+  type: object
+  required: [data, meta]
+  additionalProperties: false
+  properties:
+    data:
+      $ref: '#/CampaignData'
+    meta:
+      $ref: '#/ResponseMeta'
+
+ConfigureIssuanceRequest:
+  type: object
+  required: [expectedVersion, totalQuantity, perUserLimit, claimStartsAt, claimEndsAt]
+  additionalProperties: false
+  properties:
+    expectedVersion:
+      $ref: '#/AggregateVersion'
+    totalQuantity:
+      type: integer
+      minimum: 1
+      maximum: 1000000000
+    perUserLimit:
+      type: integer
+      minimum: 1
+      maximum: 10000
+    claimStartsAt:
+      type: string
+      format: date-time
+    claimEndsAt:
+      type: string
+      format: date-time
+
+ReviewCampaignRequest:
+  type: object
+  required: [expectedVersion, decision, reasonCode, sellerOwnershipSnapshot]
+  additionalProperties: false
+  properties:
+    expectedVersion:
+      $ref: '#/AggregateVersion'
+    decision:
+      type: string
+      enum: [approved, rejected, held]
+    reasonCode:
+      type: string
+      minLength: 1
+      maxLength: 80
+    sellerOwnershipSnapshot:
+      $ref: '#/SnapshotRef'
+
+CreatePolicyVersionRequest:
+  type: object
+  required: [expectedVersion, effectiveAt]
+  additionalProperties: false
+  properties:
+    expectedVersion:
+      $ref: '#/AggregateVersion'
+    effectiveAt:
+      type: string
+      format: date-time
+    benefit:
+      $ref: '#/Benefit'
+    applicability:
+      $ref: '#/ApplicabilityPolicy'
+    issuerAndFunding:
+      $ref: '#/IssuerAndFunding'
+  minProperties: 3
+
+CreateBulkIssueJobRequest:
+  type: object
+  required: [campaignId, audienceSnapshot, evaluationAsOf, operationTaskRef]
+  additionalProperties: false
+  properties:
+    campaignId:
+      $ref: '#/CampaignId'
+    audienceSnapshot:
+      $ref: '#/SnapshotRef'
+    evaluationAsOf:
+      type: string
+      format: date-time
+    operationTaskRef:
+      $ref: '#/ExternalRef'
+
+BulkJobAcceptedData:
+  type: object
+  required: [bulkJobId, status, statusPath]
+  additionalProperties: false
+  properties:
+    bulkJobId:
+      $ref: '#/BulkJobId'
+    status:
+      type: string
+      enum: [registered]
+    statusPath:
+      type: string
+      format: uri-reference
+
+BulkJobAcceptedResponse:
+  type: object
+  required: [data, meta]
+  additionalProperties: false
+  properties:
+    data:
+      $ref: '#/BulkJobAcceptedData'
+    meta:
+      $ref: '#/ResponseMeta'
+
+BulkJobData:
+  type: object
+  required: [bulkJobId, campaignId, status, counts, evaluationAsOf]
+  additionalProperties: false
+  properties:
+    bulkJobId:
+      $ref: '#/BulkJobId'
+    campaignId:
+      $ref: '#/CampaignId'
+    status:
+      type: string
+      enum: [registered, running, completed, failed]
+    counts:
+      $ref: '#/PerformanceCounts'
+    evaluationAsOf:
+      type: string
+      format: date-time
+    nextCursorRef:
+      $ref: '#/OpaqueRef'
+
+BulkJobResponse:
+  type: object
+  required: [data, meta]
+  additionalProperties: false
+  properties:
+    data:
+      $ref: '#/BulkJobData'
+    meta:
+      $ref: '#/ResponseMeta'
+
+PerformanceCounts:
+  type: object
+  required: [requested, issued, rejected, failedFinal, reserved, confirmed, released, reclaimed]
+  additionalProperties: false
+  properties:
+    requested: {type: integer, format: int64, minimum: 0}
+    issued: {type: integer, format: int64, minimum: 0}
+    rejected: {type: integer, format: int64, minimum: 0}
+    failedFinal: {type: integer, format: int64, minimum: 0}
+    reserved: {type: integer, format: int64, minimum: 0}
+    confirmed: {type: integer, format: int64, minimum: 0}
+    released: {type: integer, format: int64, minimum: 0}
+    reclaimed: {type: integer, format: int64, minimum: 0}
+
+CampaignPerformanceData:
+  type: object
+  required: [campaignId, scope, asOf, counts]
+  additionalProperties: false
+  properties:
+    campaignId:
+      $ref: '#/CampaignId'
+    scope:
+      type: string
+      description: 권한 검사 뒤 적용된 조회 범위다.
+      enum: [seller, marketing, operations]
+    asOf:
+      type: string
+      format: date-time
+      description: 집계 투영이 반영된 기준 시각이다.
+    counts:
+      $ref: '#/PerformanceCounts'
+    confirmedDiscount:
+      allOf:
+        - $ref: '#/Money'
+      description: 조회 권한 범위의 확정 할인액이다. 판매자 범위에서는 판매자 부담액만 포함한다.
+    reclaimedDiscount:
+      allOf:
+        - $ref: '#/Money'
+      description: 조회 권한 범위의 회수 할인액이다. 판매자 범위에서는 판매자 부담액만 포함한다.
+    breakdown:
+      type: array
+      maxItems: 500
+      items:
+        $ref: '#/CampaignPerformanceBreakdown'
+
+CampaignPerformanceBreakdown:
+  type: object
+  required: [dimensionType, counts]
+  additionalProperties: false
+  properties:
+    dimensionType:
+      type: string
+      enum: [campaign, drop, product, day]
+    dimensionRef:
+      allOf:
+        - $ref: '#/OpaqueRef'
+      description: 캠페인·드롭·상품 차원의 opaque 참조다. 일자 차원에서는 생략한다.
+    businessDate:
+      type: string
+      format: date
+      description: 일자 차원의 기준일이다. 다른 차원에서는 생략한다.
+    counts:
+      $ref: '#/PerformanceCounts'
+    confirmedDiscount:
+      allOf:
+        - $ref: '#/Money'
+      description: 조회 권한 범위의 확정 할인액이다.
+    reclaimedDiscount:
+      allOf:
+        - $ref: '#/Money'
+      description: 조회 권한 범위의 회수 할인액이다.
+
+CampaignPerformanceResponse:
+  type: object
+  required: [data, meta]
+  additionalProperties: false
+  properties:
+    data:
+      $ref: '#/CampaignPerformanceData'
+    meta:
+      $ref: '#/ResponseMeta'
+
+OperationalScope:
+  type: object
+  required: [type, ref]
+  additionalProperties: false
+  properties:
+    type:
+      type: string
+      enum: [campaign, drop, user_group]
+    ref:
+      $ref: '#/ExternalRef'
+
+ApplyOperationalControlRequest:
+  type: object
+  required: [scope, blockIssuance, blockRedemption, effectiveFrom, active, operationTaskRef]
+  additionalProperties: false
+  properties:
+    scope:
+      $ref: '#/OperationalScope'
+    blockIssuance:
+      type: boolean
+    blockRedemption:
+      type: boolean
+    effectiveFrom:
+      type: string
+      format: date-time
+    active:
+      type: boolean
+    reasonCode:
+      type: string
+      maxLength: 80
+    operationTaskRef:
+      $ref: '#/ExternalRef'
+
+OperationalControlData:
+  type: object
+  required: [controlId, scope, blockIssuance, blockRedemption, effectiveFrom, active, version]
+  additionalProperties: false
+  properties:
+    controlId:
+      $ref: '#/ControlId'
+    scope:
+      $ref: '#/OperationalScope'
+    blockIssuance:
+      type: boolean
+    blockRedemption:
+      type: boolean
+    effectiveFrom:
+      type: string
+      format: date-time
+    active:
+      type: boolean
+    version:
+      $ref: '#/AggregateVersion'
+
+OperationalControlResponse:
+  type: object
+  required: [data, meta]
+  additionalProperties: false
+  properties:
+    data:
+      $ref: '#/OperationalControlData'
+    meta:
+      $ref: '#/ResponseMeta'
+
+ApplyReadOnlyNoticeRequest:
+  type: object
+  required: [expectedVersion, message, effectiveFrom, active]
+  additionalProperties: false
+  properties:
+    expectedVersion:
+      $ref: '#/AggregateVersion'
+    message:
+      type: string
+      minLength: 1
+      maxLength: 500
+    effectiveFrom:
+      type: string
+      format: date-time
+    active:
+      type: boolean
+
+ReadOnlyNoticeResponse:
+  type: object
+  required: [data, meta]
+  additionalProperties: false
+  properties:
+    data:
+      type: object
+      required: [controlId, message, effectiveFrom, active, version]
+      additionalProperties: false
+      properties:
+        controlId:
+          $ref: '#/ControlId'
+        message:
+          type: string
+          minLength: 1
+          maxLength: 500
+        effectiveFrom:
+          type: string
+          format: date-time
+        active:
+          type: boolean
+        version:
+          $ref: '#/AggregateVersion'
+    meta:
+      $ref: '#/ResponseMeta'
+
+RecoveryStatus:
+  type: string
+  enum: [recorded, retry_pending, retrying, retry_failed, completed, failed_final]
+
+RecoveryItem:
+  type: object
+  required: [recoveryId, status, originalOperationType, originalPayloadRef, businessKeyRef, attemptCount, updatedAt]
+  additionalProperties: false
+  properties:
+    recoveryId:
+      $ref: '#/RecoveryId'
+    status:
+      $ref: '#/RecoveryStatus'
+    originalOperationType:
+      type: string
+      enum: [reserve, commit, release, revoke]
+    originalPayloadRef:
+      $ref: '#/ExternalRef'
+    businessKeyRef:
+      $ref: '#/OpaqueRef'
+    attemptId:
+      $ref: '#/AttemptId'
+    attemptCount:
+      type: integer
+      minimum: 0
+    nextAttemptAt:
+      type: string
+      format: date-time
+    resultKind:
+      type: string
+      enum: [transitioned, already_applied, failed]
+    resultRef:
+      $ref: '#/ExternalRef'
+    failureCode:
+      type: string
+      maxLength: 80
+    updatedAt:
+      type: string
+      format: date-time
+
+RecoveryListData:
+  type: object
+  required: [items]
+  additionalProperties: false
+  properties:
+    items:
+      type: array
+      items:
+        $ref: '#/RecoveryItem'
+    nextCursor:
+      type: string
+      maxLength: 512
+
+RecoveryListResponse:
+  type: object
+  required: [data, meta]
+  additionalProperties: false
+  properties:
+    data:
+      $ref: '#/RecoveryListData'
+    meta:
+      $ref: '#/ResponseMeta'
+
+RetryRecoveryRequest:
+  type: object
+  required: [reasonCode, operationTaskRef]
+  additionalProperties: false
+  properties:
+    reasonCode:
+      type: string
+      minLength: 1
+      maxLength: 80
+    operationTaskRef:
+      $ref: '#/ExternalRef'
+
+RecoveryAttemptAcceptedData:
+  type: object
+  required: [recoveryId, attemptId, status, statusPath]
+  additionalProperties: false
+  properties:
+    recoveryId:
+      $ref: '#/RecoveryId'
+    attemptId:
+      $ref: '#/AttemptId'
+    status:
+      type: string
+      enum: [retry_pending]
+    statusPath:
+      type: string
+      format: uri-reference
+
+RecoveryAttemptAcceptedResponse:
+  type: object
+  required: [data, meta]
+  additionalProperties: false
+  properties:
+    data:
+      $ref: '#/RecoveryAttemptAcceptedData'
+    meta:
+      $ref: '#/ResponseMeta'
+
+FinalizeRecoveryRequest:
+  type: object
+  required: [reasonCode, operationTaskRef]
+  additionalProperties: false
+  properties:
+    reasonCode:
+      type: string
+      minLength: 1
+      maxLength: 80
+    operationTaskRef:
+      $ref: '#/ExternalRef'
+
+RecoveryResponse:
+  type: object
+  required: [data, meta]
+  additionalProperties: false
+  properties:
+    data:
+      $ref: '#/RecoveryItem'
+    meta:
+      $ref: '#/ResponseMeta'
+
+TimelineEvent:
+  type: object
+  required: [eventId, eventType, occurredAt, resultRef]
+  additionalProperties: false
+  properties:
+    eventId:
+      type: string
+      maxLength: 128
+    eventType:
+      type: string
+      pattern: '^EVT\.A\.19-[0-9]{2}$'
+    occurredAt:
+      type: string
+      format: date-time
+    campaignId:
+      $ref: '#/CampaignId'
+    userCouponId:
+      $ref: '#/UserCouponId'
+    resultRef:
+      $ref: '#/ExternalRef'
+    publicReasonCode:
+      type: string
+      maxLength: 80
+
+TimelineData:
+  type: object
+  required: [items]
+  additionalProperties: false
+  properties:
+    items:
+      type: array
+      items:
+        $ref: '#/TimelineEvent'
+    nextCursor:
+      type: string
+      maxLength: 512
+
+TimelineResponse:
+  type: object
+  required: [data, meta]
+  additionalProperties: false
+  properties:
+    data:
+      $ref: '#/TimelineData'
+    meta:
+      $ref: '#/ResponseMeta'
+
+CreateCompensationIssueRequest:
+  type: object
+  required: [campaignId, userId, sourceRef, reasonCode, approvalPolicy]
+  additionalProperties: false
+  properties:
+    campaignId:
+      $ref: '#/CampaignId'
+    userId:
+      $ref: '#/UserId'
+    sourceRef:
+      allOf:
+        - $ref: '#/ExternalRef'
+      description: 보상 근거가 된 주문 또는 인시던트의 opaque 참조다.
+    reasonCode:
+      type: string
+      minLength: 1
+      maxLength: 80
+    approvalPolicy:
+      allOf:
+        - $ref: '#/SnapshotRef'
+      description: 금액·수량 한도와 운영 승인 필요 여부를 판정하는 버전이 있는 정책 스냅샷이다.
+
+SignalStatus:
+  type: object
+  required: [status, asOf]
+  additionalProperties: false
+  properties:
+    status:
+      type: string
+      enum: [normal, degraded, critical, unavailable]
+    asOf:
+      type: string
+      format: date-time
+    lagSeconds:
+      type: integer
+      format: int64
+      minimum: 0
+
+IncidentStatusData:
+  type: object
+  required: [issuance, redemption, recovery, postgres, redis, mq, workers]
+  additionalProperties: false
+  properties:
+    issuance:
+      $ref: '#/SignalStatus'
+    redemption:
+      $ref: '#/SignalStatus'
+    recovery:
+      $ref: '#/SignalStatus'
+    postgres:
+      $ref: '#/SignalStatus'
+    redis:
+      $ref: '#/SignalStatus'
+    mq:
+      $ref: '#/SignalStatus'
+    workers:
+      $ref: '#/SignalStatus'
+
+IncidentStatusResponse:
+  type: object
+  required: [data, meta]
+  additionalProperties: false
+  properties:
+    data:
+      $ref: '#/IncidentStatusData'
+    meta:
+      $ref: '#/ResponseMeta'
+
+CostAttributionItem:
+  type: object
+  required: [attributionId, orderRef, redemptionId, campaignId, kind, discount, shares, occurredAt]
+  additionalProperties: false
+  properties:
+    attributionId:
+      type: string
+      maxLength: 128
+    orderRef:
+      $ref: '#/ExternalRef'
+    redemptionId:
+      $ref: '#/RedemptionId'
+    campaignId:
+      $ref: '#/CampaignId'
+    kind:
+      type: string
+      enum: [confirmed, reclaimed_adjustment]
+    discount:
+      $ref: '#/Money'
+    shares:
+      type: array
+      minItems: 1
+      items:
+        $ref: '#/CostShare'
+    occurredAt:
+      type: string
+      format: date-time
+
+CostAttributionListData:
+  type: object
+  required: [items]
+  additionalProperties: false
+  properties:
+    items:
+      type: array
+      items:
+        $ref: '#/CostAttributionItem'
+    nextCursor:
+      type: string
+      maxLength: 512
+
+CostAttributionListResponse:
+  type: object
+  required: [data, meta]
+  additionalProperties: false
+  properties:
+    data:
+      $ref: '#/CostAttributionListData'
+    meta:
+      $ref: '#/ResponseMeta'
