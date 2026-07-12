@@ -6,7 +6,7 @@ status: draft
 tags: [service-design, coupon, api, code, issuance]
 source: local
 created: 2026-07-11
-updated: 2026-07-11
+updated: 2026-07-12
 service_design: SD.A.19
 api_design: SD.A.1940
 domain_model: SD.A.1910
@@ -111,6 +111,6 @@ service: SD.A.1930
 
 - 코드 정규화 변경은 기존 hash lookup 호환성과 version 전략을 먼저 정의해야 한다.
 
-## 확인 필요
+## 결정 반영
 
-- `HOTSPOT.A.19-01`: 등록 접수 뒤 발급 상태의 사용자 표현.
+- `HOTSPOT.A.19-01`: 코드 검증·예약 뒤에는 `발급 대기`를 반환하고 실제 사용자 쿠폰 생성과 수량 확정 뒤에만 `발급 완료`로 표시한다.

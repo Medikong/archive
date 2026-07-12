@@ -6,7 +6,7 @@ status: draft
 tags: [service-design, coupon, api, redemption, release]
 source: local
 created: 2026-07-11
-updated: 2026-07-11
+updated: 2026-07-12
 service_design: SD.A.19
 api_design: SD.A.1940
 domain_model: SD.A.1910
@@ -100,12 +100,12 @@ service: SD.A.1930
 
 ## 연관 시퀀스
 
-- 주문 생성·결제 실패·주문 만료 시나리오와 연결되며 구체 유예는 아직 없다.
+- 확정 실패·취소는 즉시 호출하고, 결과가 불명확한 경우에만 버전이 있는 운영 설정의 짧은 유예 뒤 호출한다.
 
 ## 호환성과 변경 정책
 
 - 새 release reason 추가는 하위 호환으로 처리하고 기존 의미를 재사용하지 않는다.
 
-## 확인 필요
+## 결정 반영
 
-- `HOTSPOT.A.19-03`: 해제 유예와 예약 중 만료 처리 시점.
+- `HOTSPOT.A.19-03`: 확정 실패·취소는 즉시 해제한다. 결과 불명확 상태의 짧은 유예는 wire 상수가 아니라 운영 설정으로 관리한다.

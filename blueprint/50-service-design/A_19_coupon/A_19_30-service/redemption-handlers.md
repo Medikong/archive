@@ -6,7 +6,7 @@ status: draft
 tags: [service-design, coupon, handler, redemption]
 source: local
 created: 2026-07-10
-updated: 2026-07-10
+updated: 2026-07-12
 service_design: SD.A.19
 bounded_context: BC.A.19
 domain_model: SD.A.1910
@@ -23,6 +23,7 @@ service: SD.A.1930
 ## 연관 문서
 
 - 원천: [BC.A.19](../../../40-event-storming-bounded-context/BC_A_19_coupon.md), [REQ.A.02](../../../00-requirements/REQ_A_02_coupon_benefit.md)
+- 결정: [Context 쿠폰 Hotspot 결정 기록](../hotspot-decisions.md)
 - 도메인: [사용](../A_19_10-domain-model/redemption.md), [공통 계약](../A_19_10-domain-model/shared-contracts.md)
 - 저장: [쓰기 모델](../A_19_20-persistence/write-models.md), [원장과 신뢰성](../A_19_20-persistence/ledgers-and-reliability.md)
 - 복구: [운영 Worker](operations-workers.md), [이벤트 처리](event-processing.md)
@@ -59,7 +60,7 @@ Handler는 주문·결제 포트가 제공한 `order_id`, `user_id`, 상품·드
 5. 서버 기준 할인 금액과 비용 귀속을 계산한다.
 6. 결과와 근거 해시를 `CouponRedemption` 원장에 기록한다.
 
-`HOTSPOT.A.19-08`이 결정되기 전에는 Handler가 중복 조합을 추정하지 않는다. 호출 계약에 정책 식별자가 없으면 명시적 미결정 오류를 반환한다.
+기본 조합은 할인 쿠폰 한 장과 배송비 쿠폰 한 장이다. 그 밖의 플랫폼·판매자·드롭·회원 쿠폰 조합은 버전이 있는 `stackingPolicyRef`가 명시적으로 허용할 때만 처리한다. 할인은 상품·판매자 범위, 주문, 배송비 순서로 적용한다.
 
 ## 예약과 확정
 
@@ -78,14 +79,14 @@ sequenceDiagram
 ```
 
 - `CMD.A.19-10`은 `UNIQUE(user_coupon_id) WHERE status='reserved'` 제약을 최종 방어선으로 사용한다.
-- `CMD.A.19-11`은 `HOTSPOT.A.19-02`가 정한 외부 확정 사건 참조를 요구하되, 그 사건의 원본 상태는 저장하지 않는다.
+- `CMD.A.19-11`은 결제 최종 확정 사건 참조를 요구한다. 주문 생성이나 중간 결제 승인 참조는 거절하며 외부 원본 상태는 저장하지 않는다.
 - 같은 업무 고유키의 재요청은 기존 `result_ref`를 반환한다.
 
 ## 해제와 회수
 
-- 해제는 사용 확정 전의 예약만 닫는다. 결제 실패·주문 만료·사용자 쿠폰 만료 원인을 사유 코드와 외부 참조로 남긴다.
+- 해제는 사용 확정 전의 예약만 닫는다. 확정 실패·취소는 즉시 해제하고, 결과를 판단할 수 없을 때만 버전이 있는 운영 설정의 짧은 유예를 적용한다. 원인은 사유 코드와 외부 참조로 남긴다.
 - 회수는 확정 사용을 보정한다. 원래 사용 Event를 삭제하지 않고 반대 방향의 비용 귀속 Event를 추가한다.
-- `HOTSPOT.A.19-03`이 결정되기 전에는 지연 시간이나 회수 뒤 재사용을 Handler 내부 상수로 정하지 않는다.
+- 회수 뒤 새 예약은 검증된 취소·환불 사건, 남은 유효기간, 캠페인 활성 상태와 운영 중지 부재를 모두 확인한 경우에만 허용한다. 유예 시간은 Handler 상수로 두지 않는다.
 
 ## 비용 귀속
 

@@ -1,5 +1,5 @@
 ---
-id: PAGE.A.19
+id: PAGE.A.19.INDEX
 group_id: PAGE.A.19
 page_ids: [PAGE.A.19]
 title: 보유 쿠폰 페이지 그룹
@@ -8,7 +8,7 @@ status: draft
 tags: [page-group, sitemap, coupon, benefit, my, buyer, dropmong]
 source: local
 created: 2026-07-07
-updated: 2026-07-10
+updated: 2026-07-12
 ---
 
 # 보유 쿠폰 페이지 그룹
@@ -21,7 +21,7 @@ updated: 2026-07-10
 
 | Page ID | 페이지 | 경로 | 역할 |
 | --- | --- | --- | --- |
-| [PAGE.A.19](./PAGE_A_19_owned_coupon.md) | 보유 쿠폰 | /my/coupons, /my/coupons/register | 사용 가능, 사용 완료, 만료 쿠폰을 조회하고 쿠폰 코드를 등록하는 화면 묶음 |
+| [PAGE.A.19](./PAGE_A_19_owned_coupon.md) | 보유 쿠폰 | /my/coupons, /my/coupons/register | 발급 대기, 사용 가능, 사용 완료, 만료 쿠폰을 조회하고 쿠폰 코드를 등록하는 화면 묶음 |
 
 ## 화면 미리보기
 

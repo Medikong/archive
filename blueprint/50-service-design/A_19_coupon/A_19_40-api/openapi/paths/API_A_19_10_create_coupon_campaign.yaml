@@ -1,7 +1,7 @@
 post:
   tags: [CouponCampaign]
   summary: 쿠폰 캠페인 등록
-  description: 혜택·적용 정책·사용 기간·발급 및 비용 주체를 가진 캠페인을 등록한다.
+  description: 혜택·적용 정책·사용 기간·발급 및 비용 주체를 가진 캠페인을 등록한다. 위험 기반 운영 정책이 요구하는 요청에는 승인 참조가 필요하다.
   operationId: createCouponCampaign
   x-api-id: API.A.19-10
   x-use-case: UC.A.19-09
@@ -14,7 +14,7 @@ post:
     - $ref: ../components/parameters.yaml#/XRequestId
     - $ref: ../components/parameters.yaml#/Traceparent
     - $ref: ../components/parameters.yaml#/IdempotencyKey
-    - $ref: ../components/parameters.yaml#/XApprovalRef
+    - $ref: ../components/parameters.yaml#/XApprovalRefOptional
   requestBody:
     required: true
     content:

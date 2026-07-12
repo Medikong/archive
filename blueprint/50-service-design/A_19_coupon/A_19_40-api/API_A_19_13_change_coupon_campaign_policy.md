@@ -6,7 +6,7 @@ status: draft
 tags: [service-design, coupon, api, campaign, policy-version]
 source: local
 created: 2026-07-11
-updated: 2026-07-11
+updated: 2026-07-12
 service_design: SD.A.19
 api_design: SD.A.1940
 domain_model: SD.A.1910
@@ -107,6 +107,6 @@ service: SD.A.1930
 
 - 기존 version은 불변이고 새 의미는 새 version으로만 추가한다.
 
-## 확인 필요
+## 결정 반영
 
-- `HOTSPOT.A.19-04`: 기존 사용자 쿠폰·진행 중 예약에 적용할 version.
+- `HOTSPOT.A.19-04`: 기존 사용자 쿠폰은 발급 당시 version, 진행 중 예약은 검증 당시 version을 유지한다. 새 version은 새 발급·예약부터 적용하고 긴급 중지는 별도 운영 제어로 처리한다.

@@ -6,7 +6,7 @@ status: draft
 tags: [service-design, coupon, campaign, policy]
 source: local
 created: 2026-07-10
-updated: 2026-07-10
+updated: 2026-07-12
 service_design: SD.A.19
 bounded_context: BC.A.19
 domain_model: SD.A.1910
@@ -21,6 +21,7 @@ domain_model: SD.A.1910
 ## 연관 문서
 
 - 원천: [BC.A.19](../../../40-event-storming-bounded-context/BC_A_19_coupon.md), [REQ.A.02](../../../00-requirements/REQ_A_02_coupon_benefit.md)
+- 결정: [Context 쿠폰 Hotspot 결정 기록](../hotspot-decisions.md)
 - 같은 영역: [발급](issuance.md), [사용](redemption.md), [공통 계약](shared-contracts.md)
 - 구현 설계: [쓰기 모델](../A_19_20-persistence/write-models.md), [발급 Handler](../A_19_30-service/issuance-handlers.md)
 
@@ -67,7 +68,7 @@ classDiagram
 | `CouponBenefit` | `benefit_type`, `amount`, `percentage`, `max_discount_amount`, `currency` | 혜택 유형에 맞는 값만 채우며 할인 결과는 0보다 작을 수 없다. |
 | `CouponApplicabilityPolicy` | `policy_version`, `target_type`, `target_ref`, `condition_type`, `condition_value`, `effective_from` | `target_ref`는 opaque 외부 참조다. 상품·드롭 원본 속성을 복제하지 않는다. |
 | `QuantityReservation` | `issue_request_id`, `quantity`, `state`, `reserved_at`, `decided_at` | 동일 `issue_request_id`에는 하나만 존재하고 확정과 해제는 종단 상태다. |
-| `IssuerAndFunding` | `issuer_type`, `issuer_ref`, `funder_type`, `funder_ref`, `approval_ref` | 모든 캠페인과 보상 발급은 책임 주체와 승인 근거를 가진다. |
+| `IssuerAndFunding` | `issuer_type`, `issuer_ref`, `funder_type`, `funder_ref`, `approval_policy_snapshot`, `template_ref`, `approval_ref` | 모든 캠페인은 책임 주체와 적용한 위험 정책을 가지며, 정책이 요구할 때 승인 근거를 가진다. |
 
 ## 상태와 전이
 
@@ -86,7 +87,7 @@ stateDiagram-v2
   Active --> Active: 미래 적용 버전 등록
 ```
 
-정책 변경은 기존 레코드를 덮어쓰지 않고 새 `policy_version`과 `effective_from`을 추가한다. 기존 사용자 쿠폰과 진행 중 예약에 적용할 버전은 `HOTSPOT.A.19-04`가 결정되기 전까지 호출 계약이 넘긴 기준 버전을 그대로 사용한다.
+정책 변경은 기존 레코드를 덮어쓰지 않고 새 `policy_version`과 `effective_from`을 추가한다. 발급된 `UserCoupon`은 발급 당시 `policy_version`을 끝까지 사용하고, 진행 중 예약은 검증 당시 버전을 `DiscountSnapshot`에 고정한다. 새 버전은 새 발급과 새 예약부터 적용하며 긴급 중지는 `CouponOperationalControl`로 분리한다.
 
 ## 불변조건
 
@@ -96,6 +97,7 @@ stateDiagram-v2
 - 같은 전이의 재요청은 이전 결과를 반환한다. `confirmed`와 `released` 사이의 역전이나 교차 전이는 거절한다.
 - 승인 대상 캠페인은 승인 전에 노출하거나 발급하지 않는다.
 - 판매자 캠페인의 적용 대상은 외부 판매자 소유 스냅샷이 확인한 범위를 벗어날 수 없다.
+- 판매자 전액 부담, 판매자 소유 범위와 승인된 템플릿을 모두 만족하는 요청은 판매자 권한으로 제출할 수 있다. 플랫폼·공동 부담, 제휴, 템플릿 초과와 고액·대량 보상은 버전이 있는 운영 정책에 따른 승인이 필요하다.
 - Redis 수량 값은 선행 차단에 사용할 수 있지만 Aggregate의 수량 예약 원장을 대신하지 않는다.
 
 ## BC 추적
@@ -110,11 +112,11 @@ stateDiagram-v2
 | Policy | `POLICY.A.19-01`, `POLICY.A.19-02`, `POLICY.A.19-03`, `POLICY.A.19-07`, `POLICY.A.19-13`, `POLICY.A.19-19` | 책임 주체, 소유 범위, 승인, 버전, 수량 연결 |
 | Business Rule | `RULE.A.19-01`, `RULE.A.19-06`, `RULE.A.19-09` | 수량 멱등성, 영속 원장, 단일 Aggregate 변경 |
 
-## 연결 Hotspot
+## 결정 반영
 
 | Hotspot | 영향 |
 | --- | --- |
-| `HOTSPOT.A.19-04` | 기존 사용자 쿠폰과 진행 중 사용 예약에 적용할 정책 버전 |
-| `HOTSPOT.A.19-05` | 판매자·제휴 캠페인과 보상 발급의 승인선 |
-| `HOTSPOT.A.19-07` | 판매자에게 공개할 성과 집계 범위 |
-| `HOTSPOT.A.19-08` | 쿠폰 유형별 중복 적용 조합 |
+| `HOTSPOT.A.19-04` | 발급 시점과 검증 시점의 정책 버전을 각각 고정하고 긴급 중지를 분리한다. |
+| `HOTSPOT.A.19-05` | 부담 주체·소유 범위·템플릿·금액·수량·증빙에 따른 위험 기반 승인을 적용한다. |
+| `HOTSPOT.A.19-07` | 판매자에게 소유·부담 캠페인의 비식별 집계와 자기 부담 비용만 제공한다. |
+| `HOTSPOT.A.19-08` | 기본 조합과 적용 순서는 버전이 있는 `stackingPolicyRef`에 기록한다. |

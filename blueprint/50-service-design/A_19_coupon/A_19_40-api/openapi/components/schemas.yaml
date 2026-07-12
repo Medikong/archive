@@ -230,7 +230,8 @@ IssueAcceptedData:
       $ref: '#/IssueRequestId'
     status:
       type: string
-      enum: [accepted]
+      description: 요청 접수 뒤 사용자에게 보이는 상태다. 실제 발급 완료를 뜻하지 않는다.
+      enum: [pending]
     statusPath:
       type: string
       format: uri-reference
@@ -535,7 +536,7 @@ RedemptionResponse:
 
 CreateCouponCampaignRequest:
   type: object
-  required: [displayName, benefit, applicability, issuerAndFunding, usableFrom, expiresAt, ownerSnapshot]
+  required: [displayName, benefit, applicability, issuerAndFunding, usableFrom, expiresAt, ownerSnapshot, approvalPolicy]
   additionalProperties: false
   properties:
     displayName:
@@ -559,6 +560,14 @@ CreateCouponCampaignRequest:
       format: date-time
     ownerSnapshot:
       $ref: '#/SnapshotRef'
+    approvalPolicy:
+      allOf:
+        - $ref: '#/SnapshotRef'
+      description: 승인선·금액·수량 한도를 판정하는 버전이 있는 운영 정책 스냅샷이다.
+    templateRef:
+      allOf:
+        - $ref: '#/ExternalRef'
+      description: 판매자 자체 요청을 허용하는 승인된 템플릿 참조다.
     externalBusinessRef:
       $ref: '#/OpaqueRef'
 
@@ -730,17 +739,61 @@ PerformanceCounts:
 
 CampaignPerformanceData:
   type: object
-  required: [campaignId, counts]
+  required: [campaignId, scope, asOf, counts]
   additionalProperties: false
   properties:
     campaignId:
       $ref: '#/CampaignId'
+    scope:
+      type: string
+      description: 권한 검사 뒤 적용된 조회 범위다.
+      enum: [seller, marketing, operations]
+    asOf:
+      type: string
+      format: date-time
+      description: 집계 투영이 반영된 기준 시각이다.
     counts:
       $ref: '#/PerformanceCounts'
     confirmedDiscount:
-      $ref: '#/Money'
+      allOf:
+        - $ref: '#/Money'
+      description: 조회 권한 범위의 확정 할인액이다. 판매자 범위에서는 판매자 부담액만 포함한다.
     reclaimedDiscount:
-      $ref: '#/Money'
+      allOf:
+        - $ref: '#/Money'
+      description: 조회 권한 범위의 회수 할인액이다. 판매자 범위에서는 판매자 부담액만 포함한다.
+    breakdown:
+      type: array
+      maxItems: 500
+      items:
+        $ref: '#/CampaignPerformanceBreakdown'
+
+CampaignPerformanceBreakdown:
+  type: object
+  required: [dimensionType, counts]
+  additionalProperties: false
+  properties:
+    dimensionType:
+      type: string
+      enum: [campaign, drop, product, day]
+    dimensionRef:
+      allOf:
+        - $ref: '#/OpaqueRef'
+      description: 캠페인·드롭·상품 차원의 opaque 참조다. 일자 차원에서는 생략한다.
+    businessDate:
+      type: string
+      format: date
+      description: 일자 차원의 기준일이다. 다른 차원에서는 생략한다.
+    counts:
+      $ref: '#/PerformanceCounts'
+    confirmedDiscount:
+      allOf:
+        - $ref: '#/Money'
+      description: 조회 권한 범위의 확정 할인액이다.
+    reclaimedDiscount:
+      allOf:
+        - $ref: '#/Money'
+      description: 조회 권한 범위의 회수 할인액이다.
 
 CampaignPerformanceResponse:
   type: object
@@ -1031,7 +1084,7 @@ TimelineResponse:
 
 CreateCompensationIssueRequest:
   type: object
-  required: [campaignId, userId, sourceRef, reasonCode]
+  required: [campaignId, userId, sourceRef, reasonCode, approvalPolicy]
   additionalProperties: false
   properties:
     campaignId:
@@ -1039,11 +1092,17 @@ CreateCompensationIssueRequest:
     userId:
       $ref: '#/UserId'
     sourceRef:
-      $ref: '#/ExternalRef'
+      allOf:
+        - $ref: '#/ExternalRef'
+      description: 보상 근거가 된 주문 또는 인시던트의 opaque 참조다.
     reasonCode:
       type: string
       minLength: 1
       maxLength: 80
+    approvalPolicy:
+      allOf:
+        - $ref: '#/SnapshotRef'
+      description: 금액·수량 한도와 운영 승인 필요 여부를 판정하는 버전이 있는 정책 스냅샷이다.
 
 SignalStatus:
   type: object

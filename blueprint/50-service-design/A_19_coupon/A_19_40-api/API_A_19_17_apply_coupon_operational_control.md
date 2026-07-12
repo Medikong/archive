@@ -6,7 +6,7 @@ status: draft
 tags: [service-design, coupon, api, operations, stop]
 source: local
 created: 2026-07-11
-updated: 2026-07-11
+updated: 2026-07-12
 service_design: SD.A.19
 api_design: SD.A.1940
 domain_model: SD.A.1910
@@ -107,6 +107,6 @@ service: SD.A.1930
 
 - 새 scope type은 기존 Handler가 unknown을 거절하는 상태에서 version을 올려 추가한다.
 
-## 확인 필요
+## 결정 반영
 
-- `HOTSPOT.A.19-05`: 운영자와 온콜의 위험 작업 승인 범위.
+- `HOTSPOT.A.19-04~05`: 긴급 중지는 정책 버전 변경과 분리하며 승인된 운영 작업 참조가 필요하다. 구체 승인선은 버전이 있는 위험 기반 운영 정책을 따른다.

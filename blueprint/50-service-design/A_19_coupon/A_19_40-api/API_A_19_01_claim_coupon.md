@@ -6,7 +6,7 @@ status: draft
 tags: [service-design, coupon, api, claim, issuance]
 source: local
 created: 2026-07-11
-updated: 2026-07-11
+updated: 2026-07-12
 service_design: SD.A.19
 api_design: SD.A.1940
 domain_model: SD.A.1910
@@ -114,6 +114,6 @@ service: SD.A.1930
 
 - 선택적 표시 metadata 추가는 하위 호환이다. 동기 발급 완료를 보장하는 변경은 새 계약이 필요하다.
 
-## 확인 필요
+## 결정 반영
 
-- `HOTSPOT.A.19-01`: 접수와 실제 발급 완료를 UI에서 표현하는 방식.
+- `HOTSPOT.A.19-01`: `202 Accepted`는 `발급 대기`를 뜻한다. `UserCoupon` 생성과 수량 확정 뒤에만 `발급 완료`로 표시한다.

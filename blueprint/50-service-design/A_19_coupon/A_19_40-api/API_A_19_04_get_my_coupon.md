@@ -6,7 +6,7 @@ status: draft
 tags: [service-design, coupon, api, detail, query]
 source: local
 created: 2026-07-11
-updated: 2026-07-11
+updated: 2026-07-12
 service_design: SD.A.19
 api_design: SD.A.1940
 domain_model: SD.A.1910
@@ -104,6 +104,6 @@ service: SD.A.1930
 
 - 표시 필드는 선택적으로 추가한다. 할인 계산 의미 변경은 policy schema version이 필요하다.
 
-## 확인 필요
+## 결정 반영
 
-- `HOTSPOT.A.19-04`: 정책 변경이 기존 쿠폰 표시와 사용에 미치는 영향.
+- `HOTSPOT.A.19-04`: 상세와 사용 조건은 발급 당시 정책 버전을 사용한다. 새 정책을 기존 쿠폰에 소급 적용하지 않는다.

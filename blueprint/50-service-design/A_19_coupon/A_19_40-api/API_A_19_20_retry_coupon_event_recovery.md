@@ -6,7 +6,7 @@ status: draft
 tags: [service-design, coupon, api, recovery, retry]
 source: local
 created: 2026-07-11
-updated: 2026-07-11
+updated: 2026-07-12
 service_design: SD.A.19
 api_design: SD.A.1940
 domain_model: SD.A.1910
@@ -108,6 +108,6 @@ service: SD.A.1930
 
 - result kind 추가는 기존 소비자가 unknown을 실패로 처리하는 상태에서 version을 올린다.
 
-## 확인 필요
+## 결정 반영
 
-- `HOTSPOT.A.19-05~06`: 재처리 권한과 횟수·간격·종료 기준.
+- `HOTSPOT.A.19-05~06`: 승인된 운영 작업으로 재처리를 요청하고 버전이 있는 설정의 지수 백오프를 적용한다. 시도 한도 소진만으로 최종 실패로 바꾸지 않는다.

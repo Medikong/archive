@@ -1,7 +1,7 @@
 post:
   tags: [CouponRedemption]
   summary: 쿠폰 사용 확정
-  description: 주문·결제 결과 참조를 검증해 예약을 확정하고 비용 귀속을 기록한다.
+  description: 결제 최종 확정 사건 참조를 검증해 예약을 사용 완료로 전환하고 비용 귀속을 기록한다. 주문 생성이나 중간 결제 승인만으로는 확정하지 않는다.
   operationId: commitCouponRedemption
   x-api-id: API.A.19-07
   x-use-case: UC.A.19-24

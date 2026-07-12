@@ -6,7 +6,7 @@ status: draft
 tags: [service-design, coupon, api, wallet, query]
 source: local
 created: 2026-07-11
-updated: 2026-07-11
+updated: 2026-07-12
 service_design: SD.A.19
 api_design: SD.A.1940
 domain_model: SD.A.1910
@@ -106,6 +106,6 @@ service: SD.A.1930
 
 - 새 wallet status 추가는 클라이언트의 unknown 처리 정책과 함께 배포한다.
 
-## 확인 필요
+## 결정 반영
 
-- `HOTSPOT.A.19-01`: pending·completed 사용자 문구.
+- `HOTSPOT.A.19-01`: `pending`은 `발급 대기`, 실제 발급이 끝난 `completed`는 `발급 완료`로 표시한다. 접수·완료·실패를 같은 상태로 합치지 않는다.

@@ -6,7 +6,7 @@ status: draft
 tags: [service-design, coupon, ledger, idempotency, outbox, inbox]
 source: local
 created: 2026-07-10
-updated: 2026-07-10
+updated: 2026-07-12
 service_design: SD.A.19
 bounded_context: BC.A.19
 domain_model: SD.A.1910
@@ -22,6 +22,7 @@ persistence: SD.A.1920
 ## 연관 문서
 
 - 원천: [BC.A.19](../../../40-event-storming-bounded-context/BC_A_19_coupon.md), [REQ.A.02](../../../00-requirements/REQ_A_02_coupon_benefit.md)
+- 결정: [Context 쿠폰 Hotspot 결정 기록](../hotspot-decisions.md)
 - 도메인: [공통 계약](../A_19_10-domain-model/shared-contracts.md), [운영과 복구](../A_19_10-domain-model/operations-recovery.md)
 - 저장: [쓰기 모델](write-models.md), [조회 모델과 인덱스](read-models-and-indexes.md)
 - 서비스: [이벤트 처리](../A_19_30-service/event-processing.md), [운영 Worker](../A_19_30-service/operations-workers.md)
@@ -31,11 +32,11 @@ persistence: SD.A.1920
 | 테이블 | 기록 단위 | 필수 열 |
 | --- | --- | --- |
 | `coupon_quantity_ledger` | 발급 수량 예약·확정·해제·거절 | `ledger_id`, `campaign_id`, `issue_request_id`, `transition`, `quantity`, `before_state`, `after_state`, `result_ref`, `occurred_at` |
-| `coupon_issue_ledger` | 발급 요청 접수부터 완료·거절·최종 실패 | `ledger_id`, `issue_request_id`, `business_key`, `event_type`, `status`, `result_ref`, `failure_code`, `occurred_at` |
+| `coupon_issue_ledger` | 발급 요청 접수부터 완료·거절·최종 실패 | `ledger_id`, `issue_request_id`, `business_key`, `event_type`, `status`, `policy_version`, `result_ref`, `failure_code`, `approval_ref`, `occurred_at` |
 | `user_coupon_ledger` | 사용자 쿠폰 발급·만료·관리상 회수 | `ledger_id`, `user_coupon_id`, `issue_request_id`, `event_type`, `result_ref`, `occurred_at` |
-| `coupon_redemption_ledger` | 검증·예약·확정·해제·회수·비용 귀속 | `ledger_id`, `redemption_id`, `order_id`, `user_coupon_id`, `event_type`, `amount_snapshot`, `result_ref`, `occurred_at` |
+| `coupon_redemption_ledger` | 검증·예약·확정·해제·회수·비용 귀속 | `ledger_id`, `redemption_id`, `order_id`, `user_coupon_id`, `event_type`, `policy_version`, `stacking_policy_ref`, `external_result_ref`, `amount_snapshot`, `result_ref`, `occurred_at` |
 | `coupon_operation_ledger` | 운영 중지·안내 적용 | `ledger_id`, `control_id`, `scope`, `operation_request_ref`, `approval_ref`, `event_type`, `occurred_at` |
-| `coupon_recovery_ledger` | 실패 기록, 재실행 대기·판정·최종 실패 | `ledger_id`, `recovery_id`, `attempt_id`, `business_key`, `event_type`, `result_ref`, `failure_code`, `occurred_at` |
+| `coupon_recovery_ledger` | 실패 기록, 재실행 대기·판정·최종 실패 | `ledger_id`, `recovery_id`, `attempt_id`, `business_key`, `event_type`, `retry_policy_version`, `result_ref`, `failure_code`, `approval_ref`, `occurred_at` |
 
 원장 행은 수정·삭제하지 않는다. 잘못된 업무 결과는 기존 Event를 지우지 않고 별도 보정 Command와 Event로 남긴다.
 
@@ -68,6 +69,7 @@ persistence: SD.A.1920
 - 같은 키와 다른 해시는 충돌로 거절한다.
 - `processing` 점유 만료만으로 업무 상태를 되돌리지 않는다. Aggregate와 원장을 확인해 재개한다.
 - 수량·발급·사용·복구처럼 장기 감사가 필요한 업무 키는 결과 원장보다 먼저 삭제하지 않는다.
+- 재시도 한도 소진은 멱등 레코드의 `failed_final` 조건이 아니다. 승인된 최종 실패 Command의 결과를 기록한 경우에만 종단 상태로 바꾼다.
 
 ## Outbox
 

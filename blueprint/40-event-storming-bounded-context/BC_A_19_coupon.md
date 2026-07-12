@@ -6,7 +6,7 @@ status: active
 tags: [ddd, event-storming, bounded-context, coupon, benefit, redemption, dropmong]
 source: local
 created: 2026-07-10
-updated: 2026-07-10
+updated: 2026-07-12
 ---
 
 # Context 쿠폰 이벤트스토밍과 바운디드 컨텍스트
@@ -45,7 +45,7 @@ updated: 2026-07-10
 - 주문 사용 Command는 `CouponRedemption`만 변경한다. 쿠폰함의 예약·사용 표시는 `UserCoupon`과 `CouponRedemption` 사건을 합성한 Read Model로 제공한다.
 - 상품·드롭 원본은 Context 쿠폰이 소유하지 않는다. 적용 대상은 `CouponApplicabilityPolicy`의 외부 참조로만 보존한다.
 - Redis와 MQ는 피크 흡수와 비동기 전달 수단이며 최종 발급·사용 원장을 대체하지 않는다.
-- Hotspot은 근거 문서상 추가 합의가 필요한 지점이다. 그 밖의 Catalog 요소와 관계는 이 문서의 현재 기준으로 사용한다.
+- Hotspot ID는 과거 미결정 지점의 추적 식별자로 유지한다. `HOTSPOT.A.19-01~08`의 업무 결론과 `09`의 개인정보 제외 원칙은 2026-07-12에 확정했으며 세부 근거는 [Hotspot 결정 기록](../50-service-design/A_19_coupon/hotspot-decisions.md)에서 관리한다.
 
 ## Event Storming Diagram
 
@@ -1362,15 +1362,15 @@ flowchart LR
 | Business Rule | RULE.A.19-10 | 사용 상태 합성 | Context 쿠폰 | 쿠폰함의 예약·사용 표시는 `UserCoupon`과 `CouponRedemption` 사건을 합성한다. |
 | Business Rule | RULE.A.19-11 | 사용 상태 전이 구분 | Context 쿠폰 | 사용 확정 전에는 예약 해제, 확정 뒤에는 사용 회수로 기록한다. |
 | Business Rule | RULE.A.19-12 | 만료 상태 전이 보호 | Context 쿠폰 | 사용 가능·예약 중 상태만 만료할 수 있고 사용 완료·회수 상태는 보존한다. |
-| Hotspot | HOTSPOT.A.19-01 | 발급 접수·완료 표현 | Context 쿠폰 | 접수와 실제 발급 완료를 사용자에게 어떻게 구분해 보여 줄지 추가 합의가 필요하다. |
-| Hotspot | HOTSPOT.A.19-02 | 쿠폰 사용 확정 시점 | Context 쿠폰 | 주문 생성, 결제 승인, 결제 확정 중 어느 사건을 사용 확정 기준으로 삼을지 추가 합의가 필요하다. |
-| Hotspot | HOTSPOT.A.19-03 | 예약 해제·회수 유예 | Context 쿠폰 | 결제 실패·예약 중 만료 뒤 해제 시점과 확정 사용 회수 뒤 재사용 허용 기준이 필요하다. |
-| Hotspot | HOTSPOT.A.19-04 | 정책 변경 영향 범위 | Context 쿠폰 | 기존 사용자 쿠폰과 진행 중 사용 예약에 적용할 정책 버전에 추가 합의가 필요하다. |
-| Hotspot | HOTSPOT.A.19-05 | 정책·보상 승인 기준 | Context 쿠폰 | 판매자·마케팅·운영·CS의 승인 범위와 보상 한도·증빙 기준이 필요하다. |
-| Hotspot | HOTSPOT.A.19-06 | 대상 평가·재처리 기준 | Context 쿠폰 | 대량 발급 대상 평가 시점과 재처리 횟수·간격·최종 실패 기준이 필요하다. |
-| Hotspot | HOTSPOT.A.19-07 | 판매자 성과 조회 권한 | Context 쿠폰 | 판매자가 조회할 수 있는 발급·사용·회수 범위와 집계 수준이 필요하다. |
-| Hotspot | HOTSPOT.A.19-08 | 쿠폰 중복 적용 조합 | Context 쿠폰 | 드롭·판매자·플랫폼·회원·배송비 쿠폰의 허용 조합이 필요하다. |
-| Hotspot | HOTSPOT.A.19-09 | 자동 지급 원천 계약 | Context 쿠폰 | 시스템 자동 지급을 유발하는 외부 사건의 생산자와 필수 `source_ref` 계약이 필요하다. |
+| Hotspot | HOTSPOT.A.19-01 | 발급 접수·완료 표현 | Context 쿠폰 | 요청 직후에는 `발급 대기`, `UserCoupon` 생성과 수량 확정 뒤에는 `발급 완료`로 표현한다. |
+| Hotspot | HOTSPOT.A.19-02 | 쿠폰 사용 확정 시점 | Context 쿠폰 | 주문 적용 시 사용 예약으로 잠그고 검증된 결제 최종 확정 사건 뒤에만 사용 완료로 전환한다. |
+| Hotspot | HOTSPOT.A.19-03 | 예약 해제·회수 유예 | Context 쿠폰 | 확정 실패·취소는 즉시 해제하고 결과 불명확 상태에만 짧은 유예를 둔다. 회수 뒤 재사용은 취소·환불, 유효기간, 캠페인 상태와 운영 중지를 모두 검증한다. |
+| Hotspot | HOTSPOT.A.19-04 | 정책 변경 영향 범위 | Context 쿠폰 | 발급된 쿠폰은 발급 당시 정책 버전, 진행 중 예약은 검증 당시 정책 버전을 고정하며 새 정책은 새 발급·예약부터 적용한다. |
+| Hotspot | HOTSPOT.A.19-05 | 정책·보상 승인 기준 | Context 쿠폰 | 판매자 자기 부담·자기 범위·승인된 템플릿은 판매자 권한으로 요청하고 그 밖의 공동 부담·제휴·고위험 작업은 운영 승인을 받는다. |
+| Hotspot | HOTSPOT.A.19-06 | 대상 평가·재처리 기준 | Context 쿠폰 | 대량 대상은 `evaluationAsOf` 스냅샷으로 고정하고 필수 조건만 발급 직전에 재검증한다. 재시도 소진 뒤 최종 실패는 승인된 `CMD.A.19-22`로만 확정한다. |
+| Hotspot | HOTSPOT.A.19-07 | 판매자 성과 조회 권한 | Context 쿠폰 | 판매자는 자신이 소유하거나 비용을 부담한 캠페인의 비식별 집계와 자신의 비용 부담분만 조회한다. |
+| Hotspot | HOTSPOT.A.19-08 | 쿠폰 중복 적용 조합 | Context 쿠폰 | 기본 할인 쿠폰 한 장과 배송비 쿠폰 한 장만 허용하며 그 밖의 조합은 버전이 있는 `stackingPolicyRef`의 명시적 허용이 필요하다. |
+| Hotspot | HOTSPOT.A.19-09 | 자동 지급 원천 계약 | Context 쿠폰 | 생일·생년월일을 제외하고 개인정보 원문이 필요 없는 검증된 사건만 허용한다. 실제 생산자·Event 유형·채널은 별도 계약 전까지 미확정이다. |
 | External System | EXT.A.19-01 | 사용자·인증 시스템 | Context 외부 | 로그인 사용자, 차단 상태, 등급 자격 스냅샷을 제공한다. |
 | External System | EXT.A.19-02 | 판매자·상품·드롭 시스템 | Context 외부 | 판매자 소유 관계와 상품·드롭·카테고리 원본을 제공한다. |
 | External System | EXT.A.19-03 | 주문·결제 시스템 | Context 외부 | 주문 스냅샷과 주문·결제 결과를 제공하고 쿠폰 사용을 요청한다. |
@@ -1441,14 +1441,14 @@ flowchart LR
 | POLICY.A.19-21~22 | [REQ.A.02](../00-requirements/REQ_A_02_coupon_benefit.md), [UC.A.19](../30-uc/UC_A_19_coupon_wallet.md), [Coupon 엔티티 설계](../../../workspaces/docs/architecture/coupon-service/02-entity-design.md) | 실패한 사용 이벤트의 원본 Command 재실행과 복구 기록 갱신을 Event와 후속 Command로 분리한다. |
 | RULE.A.19-01~07 | [REQ.A.02](../00-requirements/REQ_A_02_coupon_benefit.md), [Coupon 도메인 모델](../../../workspaces/docs/architecture/coupon-service/01-domain-model.md), [Coupon API](../../../workspaces/docs/architecture/coupon-service/03-api-list.md) | 수량, 발급·사용·재처리 멱등성, 원장, 비용 귀속 불변조건이 필요하다. |
 | RULE.A.19-08~12 | [REQ.A.02](../00-requirements/REQ_A_02_coupon_benefit.md), [Coupon 도메인 모델](../../../workspaces/docs/architecture/coupon-service/01-domain-model.md), [Coupon 엔티티 설계](../../../workspaces/docs/architecture/coupon-service/02-entity-design.md) | 발급 전 상태 소유권, 단일 Aggregate 변경, 조회 상태 합성, 해제·회수 구분, 만료 상태 보호로 경계를 유지한다. |
-| HOTSPOT.A.19-01 | [REQ.A.02](../00-requirements/REQ_A_02_coupon_benefit.md), [PAGE.A.19](../10-sitemap/buyer-mobile-web/PAGE_A_19_coupon_wallet/PAGE_A_19_owned_coupon.md) | 근거 문서는 발급 접수와 실제 발급 완료의 사용자 표현을 확정하지 않았다. |
-| HOTSPOT.A.19-02~03 | [REQ.A.02](../00-requirements/REQ_A_02_coupon_benefit.md), [UC.A.19](../30-uc/UC_A_19_coupon_wallet.md) | 근거 문서는 사용 확정 사건과 결제 실패·예약 중 만료 뒤 해제, 확정 사용 회수 시점을 확정하지 않았다. |
-| HOTSPOT.A.19-04 | [REQ.A.02](../00-requirements/REQ_A_02_coupon_benefit.md) | 근거 문서는 정책 변경이 기존 쿠폰과 진행 중 사용에 미치는 범위를 확정하지 않았다. |
-| HOTSPOT.A.19-05 | [REQ.A.02](../00-requirements/REQ_A_02_coupon_benefit.md), [REQ.A.04](../00-requirements/REQ_A_04_platform_operator_admin.md), [UC.A.19](../30-uc/UC_A_19_coupon_wallet.md) | 근거 문서는 판매자·마케팅·운영·CS의 승인선과 보상 조건을 확정하지 않았다. |
-| HOTSPOT.A.19-06 | [REQ.A.02](../00-requirements/REQ_A_02_coupon_benefit.md) | 근거 문서는 대량 발급 대상 평가와 재처리·최종 실패 기준을 확정하지 않았다. |
-| HOTSPOT.A.19-07 | [UC.A.19](../30-uc/UC_A_19_coupon_wallet.md) | 판매자 성과 조회 목표는 있으나 요구사항에 허용 사용자 범위가 없다. |
-| HOTSPOT.A.19-08 | [REQ.A.02](../00-requirements/REQ_A_02_coupon_benefit.md) | 근거 문서는 쿠폰 유형별 중복 적용 조합을 확정하지 않았다. |
-| HOTSPOT.A.19-09 | [UC.A.19](../30-uc/UC_A_19_coupon_wallet.md), [Coupon 엔티티 설계](../../../workspaces/docs/architecture/coupon-service/02-entity-design.md) | `system_grant` 출처 유형은 정의됐지만 실제 사건 생산자와 `source_ref` 계약은 확정되지 않았다. |
+| HOTSPOT.A.19-01 | [REQ.A.02](../00-requirements/REQ_A_02_coupon_benefit.md), [PAGE.A.19](../10-sitemap/buyer-mobile-web/PAGE_A_19_coupon_wallet/PAGE_A_19_owned_coupon.md) | 발급 대기와 발급 완료의 사용자 표현을 분리한다. |
+| HOTSPOT.A.19-02~03 | [REQ.A.02](../00-requirements/REQ_A_02_coupon_benefit.md), [UC.A.19](../30-uc/UC_A_19_coupon_wallet.md) | 결제 최종 확정 뒤 사용을 확정하고 확정 실패·취소는 즉시 해제한다. 결과 불명확 상태에만 유예를 적용한다. |
+| HOTSPOT.A.19-04 | [REQ.A.02](../00-requirements/REQ_A_02_coupon_benefit.md) | 발급·예약 당시 정책 버전을 고정하고 새 정책을 소급 적용하지 않는다. |
+| HOTSPOT.A.19-05 | [REQ.A.02](../00-requirements/REQ_A_02_coupon_benefit.md), [REQ.A.04](../00-requirements/REQ_A_04_platform_operator_admin.md), [UC.A.19](../30-uc/UC_A_19_coupon_wallet.md) | 자기 부담·자기 범위·승인된 템플릿과 운영 승인이 필요한 고위험 작업을 구분한다. |
+| HOTSPOT.A.19-06 | [REQ.A.02](../00-requirements/REQ_A_02_coupon_benefit.md) | 대상 스냅샷과 발급 직전 필수 조건 재검증을 병행하고 승인된 Command만 최종 실패를 확정한다. |
+| HOTSPOT.A.19-07 | [UC.A.19](../30-uc/UC_A_19_coupon_wallet.md) | 판매자 소유·비용 부담 범위의 비식별 집계와 판매자 부담 비용만 허용한다. |
+| HOTSPOT.A.19-08 | [REQ.A.02](../00-requirements/REQ_A_02_coupon_benefit.md) | 기본 한 장과 배송비 한 장 외 조합은 버전이 있는 정책의 명시적 허용으로 제한한다. |
+| HOTSPOT.A.19-09 | [UC.A.19](../30-uc/UC_A_19_coupon_wallet.md), [Coupon 엔티티 설계](../../../workspaces/docs/architecture/coupon-service/02-entity-design.md) | 생일·생년월일을 제외한다. 생산자별 Event 유형과 `source_ref` schema는 별도 계약으로 남긴다. |
 | EXT.A.19-01~02 | [REQ.A.02](../00-requirements/REQ_A_02_coupon_benefit.md), [Coupon 도메인 모델](../../../workspaces/docs/architecture/coupon-service/01-domain-model.md) | 사용자 자격과 상품·드롭 원본은 Context 쿠폰 밖에서 제공한다. |
 | EXT.A.19-03~06 | [REQ.A.02](../00-requirements/REQ_A_02_coupon_benefit.md), [REQ.A.04](../00-requirements/REQ_A_04_platform_operator_admin.md), [UC.A.19](../30-uc/UC_A_19_coupon_wallet.md) | 주문·CS·정산·알림 시스템은 각자의 업무 원본을 소유하고 쿠폰 사건을 주고받는다. |
 | EXT.A.19-07 | [REQ.A.02](../00-requirements/REQ_A_02_coupon_benefit.md) | 쿠폰 업무 지표와 Redis·MQ·Worker 기술 지표를 함께 관측해야 한다. |
@@ -1566,7 +1566,7 @@ flowchart LR
 | 만료 시각 도달 처리 | 요청한다 | 사용자 쿠폰 만료 | 사용 가능·예약 중 상태이면서 만료 시각을 지난 사용자 쿠폰만 만료 처리한다. |
 | 사용자 쿠폰 만료 | 변경한다 | UserCoupon | 사용 완료·회수 상태를 보존하면서 신규 적용·사용 확정을 차단할 만료 상태를 기록한다. |
 | UserCoupon | 발행한다 | 사용자 쿠폰 만료됨 | 만료 상태 변경 사실을 기록한다. |
-| 사용자 쿠폰 만료됨 | 유발한다 | 만료 쿠폰 예약 해제 | 활성 사용 예약이 있으면 합의된 유예 기준에 따라 후속 해제를 요청한다. |
+| 사용자 쿠폰 만료됨 | 유발한다 | 만료 쿠폰 예약 해제 | 활성 사용 예약이 있으면 즉시 후속 해제를 요청한다. 결과가 불명확한 외부 처리만 버전이 있는 운영 설정의 짧은 유예를 적용한다. |
 | 만료 쿠폰 예약 해제 | 요청한다 | 쿠폰 사용 예약 해제 | 만료된 사용자 쿠폰의 활성 예약을 별도 Command로 해제한다. |
 | 수량 예약 전이 멱등성 | 규정한다 | 쿠폰 발급 수량 예약<br>쿠폰 발급 수량 확정<br>쿠폰 발급 수량 예약 해제<br>CouponCampaign | `issue_request_id`별 미예약 → 예약 → 확정 또는 해제 전이를 한 번만 허용하고 중복·경합 시 이전 결과를 반환한다. |
 | 발급 멱등성<br>발급 전 상태 소유권 | 규정한다 | CouponIssueRequest<br>UserCoupon | 중복 발급 방지와 실제 발급 전 상태 소유권을 규정한다. |
@@ -1576,15 +1576,15 @@ flowchart LR
 | 감사 가능한 비용 귀속 | 규정한다 | CouponRedemption<br>쿠폰 비용 귀속 | 할인 비용과 정산 근거를 연결한다. |
 | 단일 Aggregate 변경 | 규정한다 | 사용자 쿠폰 발급<br>쿠폰 발급 요청 생성<br>쿠폰 코드 등록 확정<br>쿠폰 사용 업무 재처리<br>쿠폰 사용 원본 Command 재실행<br>쿠폰 이벤트 재처리 결과 기록<br>쿠폰 사용 이벤트 처리 실패 기록 | 후속 Aggregate 변경은 Event와 Policy로 연결한다. |
 | 만료 상태 전이 보호 | 규정한다 | 사용자 쿠폰 만료 | 사용 가능·예약 중 상태만 만료하고 사용 완료·회수 상태는 보존한다. |
-| 정책·보상 승인 기준 | 표시한다 | 쿠폰 승인 게이트<br>CS·인시던트 시스템 | 쿠폰 정책 승인선과 보상 요청의 외부 승인 계약에 추가 합의가 필요함을 표시한다. |
-| 정책 변경 영향 범위 | 표시한다 | 정책 버전 적용 | 기존 쿠폰과 진행 중 사용에 미칠 영향에 추가 합의가 필요함을 표시한다. |
-| 판매자 성과 조회 권한 | 표시한다 | 판매자 쿠폰 성과 | 판매자에게 제공할 집계 범위에 추가 합의가 필요함을 표시한다. |
-| 발급 접수·완료 표현 | 표시한다 | 구매자 쿠폰함 | 접수와 실제 발급을 구분하는 사용자 표현에 추가 합의가 필요함을 표시한다. |
-| 쿠폰 사용 확정 시점 | 표시한다 | 쿠폰 사용 확정 | 주문·결제 사건 가운데 사용 확정 기준에 추가 합의가 필요함을 표시한다. |
-| 예약 해제·회수 유예 | 표시한다 | 쿠폰 사용 예약 해제<br>쿠폰 사용 회수 | 결제 실패·예약 중 만료 뒤 해제 시점과 회수 뒤 재사용 조건에 추가 합의가 필요함을 표시한다. |
-| 쿠폰 중복 적용 조합 | 표시한다 | 주문 스냅샷 검증 | 쿠폰 유형별 허용 조합에 추가 합의가 필요함을 표시한다. |
-| 대상 평가·재처리 기준 | 표시한다 | BulkCouponIssueJob<br>쿠폰 발급 재처리<br>쿠폰 사용 업무 재처리 | 대상 평가 시점과 재처리 종료 기준에 추가 합의가 필요함을 표시한다. |
-| 자동 지급 원천 계약 | 표시한다 | 시스템 자동 지급 요청 변환 | 실제 사건 생산자와 원본 식별자 계약에 추가 합의가 필요함을 표시한다. |
+| 정책·보상 승인 기준 | 규정한다 | 쿠폰 승인 게이트<br>CS·인시던트 시스템 | 부담 주체·소유 범위·승인 템플릿·금액·수량·증빙을 기준으로 위험 기반 승인을 적용한다. |
+| 정책 변경 영향 범위 | 규정한다 | 정책 버전 적용 | 발급 쿠폰은 발급 당시 버전, 진행 중 예약은 검증 당시 버전을 고정하고 긴급 중지를 분리한다. |
+| 판매자 성과 조회 권한 | 제한한다 | 판매자 쿠폰 성과 | 소유·부담 캠페인의 비식별 집계, 기준 시각과 판매자 부담 비용만 제공한다. |
+| 발급 접수·완료 표현 | 규정한다 | 구매자 쿠폰함 | 요청 직후 발급 대기, 사용자 쿠폰 생성과 수량 확정 뒤 발급 완료로 구분한다. |
+| 쿠폰 사용 확정 시점 | 규정한다 | 쿠폰 사용 확정 | 결제 최종 확정 사건 뒤에만 사용 완료로 전환한다. |
+| 예약 해제·회수 유예 | 규정한다 | 쿠폰 사용 예약 해제<br>쿠폰 사용 회수 | 확정 실패·취소는 즉시 해제하고 불명확 결과에만 짧은 유예를 적용한다. 재사용은 검증 조건을 모두 만족해야 한다. |
+| 쿠폰 중복 적용 조합 | 규정한다 | 주문 스냅샷 검증 | 할인 한 장과 배송비 한 장을 기본으로 하며 그 밖의 조합은 버전이 있는 명시 정책만 허용한다. |
+| 대상 평가·재처리 기준 | 규정한다 | BulkCouponIssueJob<br>쿠폰 발급 재처리<br>쿠폰 사용 업무 재처리 | `evaluationAsOf` 스냅샷, 직전 제한 재검증, 설정 기반 백오프와 승인된 최종 실패를 적용한다. |
+| 자동 지급 원천 계약 | 제한한다 | 시스템 자동 지급 요청 변환 | 생일·생년월일을 배제하고 필수 envelope를 요구한다. 실제 생산자·Event 유형·채널은 별도 계약까지 비활성화한다. |
 
 ## 유비쿼터스 언어
 
@@ -1626,4 +1626,4 @@ flowchart LR
 | 구독 Event | 주문 생성·결제 승인·실패·취소·주문 만료와 사용자 자격 변경 사건을 멱등하게 반영한다. | [SD.A.1930](../50-service-design/A_19_coupon/A_19_30-service/README.md) |
 | 외부 연동 | 사용자·인증, 판매자·상품·드롭, 주문·결제, CS·인시던트, 운영 작업 관리, 자동 지급 원천, 정산, 알림, 관측 플랫폼의 요청·응답·이벤트 계약과 읽기 전용 안내 조회 계약을 정의한다. | [SD.A.1940](../50-service-design/A_19_coupon/A_19_40-api/README.md) |
 | 정책·불변조건 | 발급 전 상태 소유권, 단일 Aggregate 변경, 원자적 수량 예약, 범위별 운영 중지, 만료 상태 보호, 멱등성, 한 쿠폰 한 활성 주문, 영속 원장 우선, 비용 귀속 감사를 구현 규칙으로 옮긴다. | [SD.A.1910](../50-service-design/A_19_coupon/A_19_10-domain-model/README.md), [SD.A.1920](../50-service-design/A_19_coupon/A_19_20-persistence/README.md) |
-| 열린 질문 | `HOTSPOT.A.19-01~09`의 사용자 표현, 주문 확정·회수 계약, 정책 변경 영향, 승인·보상 기준, 대량·재처리 기준, 판매자 조회 권한, 중복 적용 조합, 자동 지급 원천 계약을 후속 결정 기록으로 닫는다. | [REQ.A.02](../00-requirements/REQ_A_02_coupon_benefit.md), [REQ.A.04](../00-requirements/REQ_A_04_platform_operator_admin.md), [UC.A.19](../30-uc/UC_A_19_coupon_wallet.md) |
+| 결정 기록 | `HOTSPOT.A.19-01~08`의 업무 기준과 `09`의 개인정보 제외 원칙을 확정했다. 자동 지급 생산자별 Event 계약은 후속 결정으로 남긴다. | [Hotspot 결정 기록](../50-service-design/A_19_coupon/hotspot-decisions.md) |

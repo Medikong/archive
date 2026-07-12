@@ -6,7 +6,7 @@ status: draft
 tags: [service-design, coupon, operations, recovery, bulk]
 source: local
 created: 2026-07-10
-updated: 2026-07-10
+updated: 2026-07-12
 service_design: SD.A.19
 bounded_context: BC.A.19
 domain_model: SD.A.1910
@@ -21,6 +21,7 @@ domain_model: SD.A.1910
 ## 연관 문서
 
 - 원천: [BC.A.19](../../../40-event-storming-bounded-context/BC_A_19_coupon.md), [REQ.A.02](../../../00-requirements/REQ_A_02_coupon_benefit.md)
+- 결정: [Context 쿠폰 Hotspot 결정 기록](../hotspot-decisions.md)
 - 도메인: [발급](issuance.md), [사용](redemption.md), [공통 계약](shared-contracts.md)
 - 구현 설계: [원장과 신뢰성](../A_19_20-persistence/ledgers-and-reliability.md), [운영 Worker](../A_19_30-service/operations-workers.md), [이벤트 처리](../A_19_30-service/event-processing.md)
 
@@ -31,12 +32,12 @@ domain_model: SD.A.1910
 | 속성 | 설명 |
 | --- | --- |
 | `bulk_job_id`, `campaign_id` | 작업과 캠페인 식별자 |
-| `audience_definition_ref`, `as_of` | 외부 대상 기준 참조와 평가 기준 시각 |
+| `audience_definition_ref`, `evaluation_as_of`, `audience_snapshot_ref` | 외부 대상 기준 참조, 평가 기준 시각과 불변 대상 스냅샷 참조 |
 | `status` | `registered`, `running`, `completed`, `completed_with_failures`, `failed` |
 | `expected_count`, `accepted_count`, `issued_count`, `rejected_count`, `failed_count` | 진행률과 최종 집계 |
 | `operation_request_ref`, `approval_ref` | 운영 작업·승인 원본 참조 |
 
-대상별 발급은 `bulk_job_id + target_ref`를 업무 고유키로 사용하는 공통 발급 요청으로 분리한다. 작업 집계는 발급 성공·거절·최종 실패 Event만 반영하며 처리 중 실패를 최종 결과로 세지 않는다.
+대상별 발급은 `bulk_job_id + target_ref`를 업무 고유키로 사용하는 공통 발급 요청으로 분리한다. 대상은 `evaluation_as_of` 스냅샷으로 고정하고 발급 직전에 차단, 캠페인 종료와 운영 중지만 다시 확인한다. 작업 집계는 발급 성공·거절·승인된 최종 실패 Event만 반영하며 처리 중 실패나 재시도 한도 소진을 최종 결과로 세지 않는다.
 
 ## CouponOperationalControl
 
@@ -80,6 +81,8 @@ stateDiagram-v2
 
 재실행 결과는 `recovery_id`, 현재 `attempt_id`, `business_key`가 모두 일치할 때만 반영한다. `already_applied`이면 기존 `result_ref`를 재사용하고 `CouponRedemption` 상태를 다시 변경하지 않는다.
 
+재시도는 버전이 있는 운영 설정의 최대 횟수·기본 간격·상한·지수 백오프를 따른다. 한도를 소진하면 자동으로 `failed_final`로 바꾸지 않고 운영 확인 상태에 둔다. `CouponIssueRequest`는 승인된 `CMD.A.19-22`, `CouponEventRecovery`는 승인된 `CMD.A.19-25`로만 최종 실패를 확정한다.
+
 ## 만료
 
 만료 스케줄 입력은 `UserCoupon` 식별자와 기준 시각만 전달한다. `CMD.A.19-24`는 사용 가능 상태이거나 활성 사용 예약과 연결된 사용자 쿠폰만 만료시키며 사용 완료·회수 결과를 덮어쓰지 않는다. 활성 사용 예약 해제는 `EVT.A.19-31` 뒤 `POLICY.A.19-18`이 별도 `CMD.A.19-12`를 요청한다.
@@ -95,9 +98,9 @@ stateDiagram-v2
 | Policy | `POLICY.A.19-08`, `POLICY.A.19-12`, `POLICY.A.19-16`, `POLICY.A.19-17`, `POLICY.A.19-18`, `POLICY.A.19-21`, `POLICY.A.19-22` | 중지, 대량 집계, 자동 지급, 만료, 복구 연결 |
 | Business Rule | `RULE.A.19-05`, `RULE.A.19-06`, `RULE.A.19-09`, `RULE.A.19-12` | 재처리 멱등성, 영속 원장, 단일 Aggregate, 만료 보호 |
 
-## 연결 Hotspot
+## 결정 반영
 
-- `HOTSPOT.A.19-03`: 만료된 예약의 해제 유예와 회수 기준
-- `HOTSPOT.A.19-05`: 운영·CS 보상 승인 기준
-- `HOTSPOT.A.19-06`: 대량 대상 평가 시점과 발급·사용 재처리 종료 기준
-- `HOTSPOT.A.19-09`: 자동 지급 원천 사건 계약
+- `HOTSPOT.A.19-03`: 확정 실패·취소는 즉시 해제하고 결과가 불명확할 때만 짧은 유예를 적용한다.
+- `HOTSPOT.A.19-05`: 운영·CS 보상은 필수 증빙과 위험 기반 승인 정책을 따른다.
+- `HOTSPOT.A.19-06`: 대량 대상 스냅샷, 직전 재검증, 설정 기반 지수 백오프와 승인된 최종 실패를 적용한다.
+- `HOTSPOT.A.19-09`: 자동 지급의 개인정보 원칙과 필수 envelope를 적용하되 생산자 계약은 남은 결정으로 둔다.

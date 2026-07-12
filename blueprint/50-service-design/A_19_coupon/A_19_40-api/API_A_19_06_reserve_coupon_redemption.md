@@ -6,7 +6,7 @@ status: draft
 tags: [service-design, coupon, api, redemption, reserve]
 source: local
 created: 2026-07-11
-updated: 2026-07-11
+updated: 2026-07-12
 service_design: SD.A.19
 api_design: SD.A.1940
 domain_model: SD.A.1910
@@ -107,6 +107,6 @@ service: SD.A.1930
 
 - 예약 TTL을 wire 상수로 고정하지 않고 서버가 `reservedUntil`을 반환한다.
 
-## 확인 필요
+## 결정 반영
 
-- `HOTSPOT.A.19-03`: 예약 해제 유예와 예약 중 만료 처리 시점.
+- `HOTSPOT.A.19-02~03`: 예약과 동시에 다른 주문의 사용을 잠근다. 확정 실패·취소는 즉시 해제하고 결과가 불명확할 때만 서버가 반환한 짧은 유예를 적용한다.

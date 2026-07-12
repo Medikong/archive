@@ -6,7 +6,7 @@ status: draft
 tags: [service-design, coupon, api, recovery, finalization]
 source: local
 created: 2026-07-11
-updated: 2026-07-11
+updated: 2026-07-12
 service_design: SD.A.19
 api_design: SD.A.1940
 domain_model: SD.A.1910
@@ -107,6 +107,6 @@ service: SD.A.1930
 
 - final reason code의 기존 의미를 변경하지 않고 새 code만 추가한다.
 
-## 확인 필요
+## 결정 반영
 
-- `HOTSPOT.A.19-05~06`: 최종 실패 승인자와 종료 기준.
+- `HOTSPOT.A.19-05~06`: 활성 시도가 없고 버전이 있는 운영 정책이 요구한 승인을 확인한 경우에만 `CMD.A.19-25`로 최종 실패를 확정한다.

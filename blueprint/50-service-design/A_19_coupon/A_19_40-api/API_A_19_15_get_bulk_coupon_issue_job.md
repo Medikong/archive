@@ -6,7 +6,7 @@ status: draft
 tags: [service-design, coupon, api, bulk, query]
 source: local
 created: 2026-07-11
-updated: 2026-07-11
+updated: 2026-07-12
 service_design: SD.A.19
 api_design: SD.A.1940
 domain_model: SD.A.1910
@@ -103,6 +103,6 @@ service: SD.A.1930
 
 - 새 집계 필드는 선택 항목으로 추가한다.
 
-## 확인 필요
+## 결정 반영
 
-- `HOTSPOT.A.19-06`: 최종 실패 판정과 목표 완료 기준.
+- `HOTSPOT.A.19-06`: 발급 성공·거절·승인된 최종 실패만 종단 집계로 센다. 재시도 한도 소진은 운영 확인 대기이며 승인된 `CMD.A.19-22`만 최종 실패를 확정한다.

@@ -6,7 +6,7 @@ status: draft
 tags: [service-design, coupon, api, rest, openapi, event-contract]
 source: local
 created: 2026-07-09
-updated: 2026-07-11
+updated: 2026-07-12
 service_design: SD.A.19
 bounded_context: BC.A.19
 domain_model: SD.A.1910
@@ -25,6 +25,7 @@ Context 쿠폰의 공개 REST API, 내부 workload API, 공통 HTTP 계약과 MQ
 - [BC.A.19 Context 쿠폰](../../../40-event-storming-bounded-context/BC_A_19_coupon.md)
 - [REQ.A.02 쿠폰 및 혜택](../../../00-requirements/REQ_A_02_coupon_benefit.md)
 - [UC.A.19 쿠폰 사용자 목표](../../../30-uc/UC_A_19_coupon_wallet.md)
+- [Context 쿠폰 Hotspot 결정 기록](../hotspot-decisions.md)
 - [SD.A.1910 도메인 모델](../A_19_10-domain-model/README.md)
 - [SD.A.1920 영속성](../A_19_20-persistence/README.md)
 - [SD.A.1930 서비스](../A_19_30-service/README.md)
@@ -90,7 +91,7 @@ Context 쿠폰의 공개 REST API, 내부 workload API, 공통 HTTP 계약과 MQ
 | `API.A.19-13` | `POST /api/v1/internal/coupon-campaigns/{campaignId}/policy-versions` | 정책 새 버전 등록 | `CMD.A.19-04` | [정책 변경](API_A_19_13_change_coupon_campaign_policy.md) |
 | `API.A.19-14` | `POST /api/v1/internal/bulk-coupon-issue-jobs` | 대량 발급 작업 접수 | `CMD.A.19-08` | [대량 작업 등록](API_A_19_14_create_bulk_coupon_issue_job.md) |
 | `API.A.19-15` | `GET /api/v1/internal/bulk-coupon-issue-jobs/{bulkJobId}` | 대량 작업 진행·결과 조회 | `RM.A.19-04`, `RM.A.19-05` | [대량 작업 조회](API_A_19_15_get_bulk_coupon_issue_job.md) |
-| `API.A.19-16` | `GET /api/v1/internal/coupon-campaigns/{campaignId}/performance` | 발급·사용 성과 조회 | `RM.A.19-04` | [캠페인 성과](API_A_19_16_get_coupon_campaign_performance.md) |
+| `API.A.19-16` | `GET /api/v1/internal/coupon-campaigns/{campaignId}/performance` | 권한 범위의 발급·사용 성과 조회 | `RM.A.19-03`, `RM.A.19-04` | [캠페인 성과](API_A_19_16_get_coupon_campaign_performance.md) |
 | `API.A.19-17` | `POST /api/v1/internal/coupon-operational-controls` | 승인된 발급·사용 중지 적용 | `CMD.A.19-20` | [운영 중지](API_A_19_17_apply_coupon_operational_control.md) |
 | `API.A.19-18` | `PUT /api/v1/internal/coupon-operational-controls/{controlId}/read-only-notice` | 같은 범위의 안내 적용 | `CMD.A.19-31` | [읽기 전용 안내](API_A_19_18_apply_coupon_read_only_notice.md) |
 
@@ -108,7 +109,7 @@ Context 쿠폰의 공개 REST API, 내부 workload API, 공통 HTTP 계약과 MQ
 
 ## HTTP로 노출하지 않는 Command
 
-`CMD.A.19-07`, `14`, `16~19`, `22~24`, `26~30`, `32~34`는 Policy·Worker·실패 처리기가 실행하는 내부 Command다. 외부 호출자가 이 전이를 직접 건너뛰지 못하도록 REST Endpoint를 만들지 않는다. 자동 지급은 `HOTSPOT.A.19-09`가 닫히기 전까지 외부 Event 계약을 확정하지 않는다.
+`CMD.A.19-07`, `14`, `16~19`, `22~24`, `26~30`, `32~34`는 Policy·Worker·실패 처리기가 실행하는 내부 Command다. 외부 호출자가 이 전이를 직접 건너뛰지 못하도록 REST Endpoint를 만들지 않는다. 자동 지급은 개인정보 원칙과 필수 envelope만 확정했으며 생산자·Event 유형·채널이 원천 계약에서 정해질 때까지 소비 계약을 배포하지 않는다.
 
 ## 공통 오류
 
@@ -125,18 +126,18 @@ Context 쿠폰의 공개 REST API, 내부 workload API, 공통 HTTP 계약과 MQ
 | `COUPON_RATE_LIMITED` | 429 | 공개 수령·코드 등록 또는 운영 보호 한도 초과 |
 | `COUPON_DEPENDENCY_UNAVAILABLE` | 503 | 필수 Snapshot·승인·저장소 확인 불가 |
 
-## Hotspot 경계
+## Hotspot 결정 반영
 
-| Hotspot | API에서 확정하지 않는 내용 |
+| Hotspot | API 반영 내용 |
 | --- | --- |
-| `HOTSPOT.A.19-01` | `202 accepted` 이후 UI의 발급 대기·완료 문구와 자동 이동 방식 |
-| `HOTSPOT.A.19-02~03` | 주문 확정 원천 사건, 예약 해제 유예, 회수 뒤 재사용 여부 |
-| `HOTSPOT.A.19-04` | 새 정책이 기존 사용자 쿠폰과 활성 예약에 미치는 영향 |
-| `HOTSPOT.A.19-05` | 판매자·운영·CS 승인선, 보상 한도와 증빙 기준 |
-| `HOTSPOT.A.19-06` | 대량 대상 평가 시점, 자동 재시도 횟수·간격·최종 실패 기준 |
-| `HOTSPOT.A.19-07` | 판매자 성과 전용 Endpoint와 허용 집계 범위 |
-| `HOTSPOT.A.19-08` | 여러 쿠폰의 조합 검증·예약 계약. 현재 Endpoint는 쿠폰 하나만 처리한다. |
-| `HOTSPOT.A.19-09` | 자동 지급 Event 생산자, event type과 필수 `source_ref` schema |
+| `HOTSPOT.A.19-01` | `202 Accepted` 응답은 `발급 대기`이며 실제 발급 완료와 구분한다. |
+| `HOTSPOT.A.19-02~03` | 예약 시 잠금, 결제 최종 확정, 즉시 해제와 조건부 재사용을 사용 API에 적용한다. |
+| `HOTSPOT.A.19-04` | 발급·검증 시점의 정책 버전을 응답과 Command에 고정한다. |
+| `HOTSPOT.A.19-05` | 위험 기반 승인과 CS 보상 필수 증빙을 내부 API에 적용한다. |
+| `HOTSPOT.A.19-06` | `evaluationAsOf` 스냅샷, 설정 기반 백오프와 승인된 최종 실패를 적용한다. |
+| `HOTSPOT.A.19-07` | `API.A.19-16`이 `RM.A.19-03`과 `RM.A.19-04`를 권한별로 조회한다. Endpoint는 추가하지 않아 HTTP operation 수는 25개다. |
+| `HOTSPOT.A.19-08` | 기본 조합과 순서를 적용하며 그 밖의 조합은 `stackingPolicyRef`로만 허용한다. 각 Command는 쿠폰 하나의 `CouponRedemption`만 변경한다. |
+| `HOTSPOT.A.19-09` | 생일·생년월일을 금지하고 필수 envelope를 정했다. 생산자·Event 유형·채널은 남은 계약 결정이다. |
 
 ## 검증
 

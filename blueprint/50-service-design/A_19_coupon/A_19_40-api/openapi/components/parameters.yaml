@@ -51,7 +51,7 @@ XApprovalRefOptional:
   name: X-Approval-Ref
   in: header
   required: false
-  description: 운영·CS workload가 회수를 요청할 때 필요한 승인 원본의 opaque 참조다.
+  description: 위험 기반 운영 정책이 요구할 때 제공하는 승인 원본의 opaque 참조다.
   schema:
     type: string
     minLength: 1

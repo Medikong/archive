@@ -6,7 +6,7 @@ status: draft
 tags: [service-design, coupon, handler, issuance]
 source: local
 created: 2026-07-10
-updated: 2026-07-10
+updated: 2026-07-12
 service_design: SD.A.19
 bounded_context: BC.A.19
 domain_model: SD.A.1910
@@ -23,6 +23,7 @@ service: SD.A.1930
 ## 연관 문서
 
 - 원천: [BC.A.19](../../../40-event-storming-bounded-context/BC_A_19_coupon.md), [REQ.A.02](../../../00-requirements/REQ_A_02_coupon_benefit.md)
+- 결정: [Context 쿠폰 Hotspot 결정 기록](../hotspot-decisions.md)
 - 도메인: [캠페인과 정책](../A_19_10-domain-model/campaign-policy.md), [발급](../A_19_10-domain-model/issuance.md)
 - 저장: [쓰기 모델](../A_19_20-persistence/write-models.md), [원장과 신뢰성](../A_19_20-persistence/ledgers-and-reliability.md)
 - Event 연결: [이벤트 처리](event-processing.md)
@@ -45,7 +46,7 @@ service: SD.A.1930
 | `CMD.A.19-03` | `ReviewSellerCouponHandler` | `CouponCampaign` | 외부 판매자 소유 스냅샷, 승인 작업 참조 | `EVT.A.19-03`, `EVT.A.19-04`, `EVT.A.19-05` |
 | `CMD.A.19-04` | `ChangeCouponPolicyHandler` | `CouponCampaign` | 새 버전, 미래 적용 시각, 승인 근거 | `EVT.A.19-06` |
 
-`HOTSPOT.A.19-04`와 `HOTSPOT.A.19-05`가 결정되기 전에는 Handler가 기존 쿠폰 영향이나 승인선을 추측하지 않는다. 승인된 작업이 제공한 값만 기록한다.
+`ChangeCouponPolicyHandler`는 기존 `UserCoupon`의 발급 버전과 진행 중 예약의 검증 버전을 바꾸지 않는다. `ReviewSellerCouponHandler`는 판매자 전액 부담·자기 소유 범위·승인된 템플릿이면 판매자 권한을 허용하고, 플랫폼·공동 부담, 제휴, 템플릿 초과와 고액·대량 보상은 버전이 있는 운영 정책과 승인 참조를 요구한다.
 
 ## 발급 접수 Handler
 
@@ -56,6 +57,8 @@ service: SD.A.1930
 | `CMD.A.19-13` | `CreateCouponIssueRequestHandler` | `CouponIssueRequest` | 코드·대량·자동·보상 입력을 `source_type/source_ref`와 동일한 업무 고유키의 요청으로 만든다. |
 
 직접 수령은 `CouponIssueRequest`를 바로 만들지만 코드 등록은 먼저 `CouponCodeBatch`만 변경한다. `EVT.A.19-12` 뒤 `POLICY.A.19-11`이 별도 `CMD.A.19-13`을 요청한다.
+
+공개 응답은 요청 직후 `발급 대기`를 반환한다. `UserCoupon` 생성과 수량 확정 뒤 `CouponIssueRequest.completed`가 기록되어야만 `발급 완료`를 반환한다. 자동 지급은 필수 사건 envelope를 모두 검증하고 생일·생년월일이 없음을 보장하며, 생산자 계약이 확정될 때까지 Handler 진입을 비활성화한다.
 
 ## 수량 Handler
 
@@ -106,6 +109,8 @@ sequenceDiagram
 | `CMD.A.19-17` | `ReleaseCouponCodeHandler` | `CouponCodeBatch` | 최종 실패·거절 결과 참조를 확인하고 예약 코드를 해제한다. |
 
 기술 예외는 성공 응답으로 바꾸지 않는다. 트랜잭션 전 오류는 호출자나 Worker가 재시도하고, 사용자 쿠폰 생성 시도 뒤 업무 실패는 `CMD.A.19-14`로 명시적으로 기록한다.
+
+재시도 한도 소진은 `failed_final`의 충분조건이 아니다. 버전이 있는 운영 설정에 따라 지수 백오프를 적용하고, 승인된 운영 작업 참조를 가진 `CMD.A.19-22`만 최종 실패를 기록한다.
 
 ## 오류 분류
 

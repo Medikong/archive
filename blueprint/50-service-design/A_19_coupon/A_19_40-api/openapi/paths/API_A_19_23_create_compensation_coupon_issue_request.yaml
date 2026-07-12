@@ -1,7 +1,7 @@
 post:
   tags: [CouponOperations]
   summary: 보상 쿠폰 발급 요청
-  description: 승인된 CS·운영 보상 작업을 공통 CouponIssueRequest로 변환한다.
+  description: 필수 증빙과 위험 기반 승인 조건을 충족한 CS·운영 보상 작업을 공통 CouponIssueRequest로 변환한다.
   operationId: createCompensationCouponIssueRequest
   x-api-id: API.A.19-23
   x-use-case: UC.A.19-20
@@ -14,7 +14,7 @@ post:
     - $ref: ../components/parameters.yaml#/XRequestId
     - $ref: ../components/parameters.yaml#/Traceparent
     - $ref: ../components/parameters.yaml#/IdempotencyKey
-    - $ref: ../components/parameters.yaml#/XApprovalRef
+    - $ref: ../components/parameters.yaml#/XApprovalRefOptional
     - $ref: ../components/parameters.yaml#/XCaseRef
   requestBody:
     required: true
@@ -23,7 +23,7 @@ post:
         schema: {$ref: ../components/schemas.yaml#/CreateCompensationIssueRequest}
   responses:
     '202':
-      description: 보상 발급 요청을 접수했다.
+      description: 증빙과 위험 기반 승인 조건을 확인해 보상 발급 요청을 발급 대기 상태로 접수했다.
       headers:
         X-Request-Id: {$ref: ../components/headers.yaml#/XRequestId}
         Cache-Control: {$ref: ../components/headers.yaml#/CacheControlNoStore}

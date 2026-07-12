@@ -1,7 +1,7 @@
 post:
   tags: [CouponWallet]
   summary: 쿠폰 수령 접수
-  description: 구매자의 직접 수령 요청을 발급 요청으로 접수하고 비동기 상태 위치를 반환한다.
+  description: 구매자의 직접 수령 요청을 접수하고 발급 대기 상태와 조회 위치를 반환한다. 실제 발급 완료는 UserCoupon 생성과 수량 확정 뒤 별도 조회에서 확인한다.
   operationId: claimCoupon
   x-api-id: API.A.19-01
   x-use-case: UC.A.19-04
@@ -29,7 +29,7 @@ post:
     - $ref: ../components/parameters.yaml#/IdempotencyKey
   responses:
     '202':
-      description: 발급 요청을 접수했다.
+      description: 발급 요청을 접수해 발급 대기 상태로 전환했다.
       headers:
         X-Request-Id: {$ref: ../components/headers.yaml#/XRequestId}
         Cache-Control: {$ref: ../components/headers.yaml#/CacheControlNoStore}

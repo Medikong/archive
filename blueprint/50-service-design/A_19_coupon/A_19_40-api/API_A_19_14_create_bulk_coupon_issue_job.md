@@ -6,7 +6,7 @@ status: draft
 tags: [service-design, coupon, api, bulk, issuance]
 source: local
 created: 2026-07-11
-updated: 2026-07-11
+updated: 2026-07-12
 service_design: SD.A.19
 api_design: SD.A.1940
 domain_model: SD.A.1910
@@ -107,6 +107,6 @@ service: SD.A.1930
 
 - 대상 정의 schema는 외부 원천이 version을 소유하고 쿠폰은 ref만 받는다.
 
-## 확인 필요
+## 결정 반영
 
-- `HOTSPOT.A.19-06`: 대상 평가 시점과 재처리·종료 기준.
+- `HOTSPOT.A.19-06`: 대상을 `evaluationAsOf`의 불변 스냅샷으로 고정한다. 발급 직전에는 차단·캠페인 종료·운영 중지만 다시 확인하고, 재시도 한도 소진만으로 최종 실패를 확정하지 않는다.

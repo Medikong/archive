@@ -6,7 +6,7 @@ status: draft
 tags: [service-design, coupon, issuance, code, user-coupon]
 source: local
 created: 2026-07-10
-updated: 2026-07-10
+updated: 2026-07-12
 service_design: SD.A.19
 bounded_context: BC.A.19
 domain_model: SD.A.1910
@@ -21,6 +21,7 @@ domain_model: SD.A.1910
 ## 연관 문서
 
 - 원천: [BC.A.19](../../../40-event-storming-bounded-context/BC_A_19_coupon.md), [REQ.A.02](../../../00-requirements/REQ_A_02_coupon_benefit.md)
+- 결정: [Context 쿠폰 Hotspot 결정 기록](../hotspot-decisions.md)
 - 도메인: [캠페인과 정책](campaign-policy.md), [운영과 복구](operations-recovery.md), [공통 계약](shared-contracts.md)
 - 구현 설계: [쓰기 모델](../A_19_20-persistence/write-models.md), [원장과 신뢰성](../A_19_20-persistence/ledgers-and-reliability.md), [발급 Handler](../A_19_30-service/issuance-handlers.md)
 
@@ -62,6 +63,8 @@ stateDiagram-v2
   RetryPending --> FailedFinal: 재처리 종료
 ```
 
+사용자 조회에서 `accepted`와 `pending`은 모두 `발급 대기`로 표시하되 운영 기록에서는 접수와 수량 예약 완료를 구분한다. `UserCoupon` 생성과 수량 확정이 모두 끝난 `completed`만 `발급 완료`로 표시한다. `rejected`, 재처리 중 실패와 승인된 최종 실패는 완료로 표시하지 않는다.
+
 ## 코드 등록
 
 - 코드 원문은 정규화 후 해시로 비교하며 저장하지 않는다.
@@ -92,6 +95,8 @@ stateDiagram-v2
 - `UserCoupon.issue_request_id`는 유일하며 발급 요청의 사용자·캠페인과 일치해야 한다.
 - 코드 확정과 해제는 사용자 쿠폰 발급 결과 Event 뒤의 별도 Command로 수행한다.
 - 대량·자동·보상 발급도 직접 `UserCoupon`을 만들지 않고 공통 발급 요청을 거친다.
+- 자동 지급은 생일·생년월일을 조건이나 입력으로 받지 않는다. 개인정보 원문이 필요 없는 검증된 원천 사건만 허용하며 생산자 계약이 확정될 때까지 자동 지급 Policy를 활성화하지 않는다.
+- 보상 발급은 `caseRef`, 사유와 주문 또는 인시던트 참조를 보존하고 위험 기반 승인 정책의 한도를 적용한다.
 
 ## BC 추적
 
@@ -108,8 +113,8 @@ stateDiagram-v2
 | Policy | `POLICY.A.19-14`, `POLICY.A.19-15`, `POLICY.A.19-19`, `POLICY.A.19-20` | 재처리, 완료, 수량 결과, 처리 대기 |
 | Business Rule | `RULE.A.19-02`, `RULE.A.19-08`, `RULE.A.19-09` | 발급 멱등성, 발급 전 상태 소유권, 단일 Aggregate 변경 |
 
-## 연결 Hotspot
+## 결정 반영
 
-- `HOTSPOT.A.19-01`: 발급 요청 접수와 실제 사용자 쿠폰 발급 완료의 사용자 표현
-- `HOTSPOT.A.19-05`: 보상 발급 승인 한도와 증빙 기준
-- `HOTSPOT.A.19-09`: 자동 지급 사건 생산자와 필수 `source_ref` 계약
+- `HOTSPOT.A.19-01`: 접수·대기와 실제 사용자 쿠폰 발급 완료를 구분한다.
+- `HOTSPOT.A.19-05`: 보상 발급의 필수 증빙과 위험 기반 승인 정책을 적용한다.
+- `HOTSPOT.A.19-09`: 생일·생년월일을 배제하고 필수 사건 envelope를 요구한다. 생산자·Event 유형·채널은 남은 계약 결정이다.

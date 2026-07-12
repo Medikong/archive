@@ -6,7 +6,7 @@ status: draft
 tags: [service-design, coupon]
 source: local
 created: 2026-07-09
-updated: 2026-07-11
+updated: 2026-07-12
 ---
 
 # Context 쿠폰 서비스 상세 설계
@@ -94,6 +94,7 @@ flowchart TB
 
 | 영역 | 하위 문서 |
 | --- | --- |
+| 공통 결정 | [Hotspot 결정 기록](hotspot-decisions.md) |
 | 도메인 모델 | [캠페인과 정책](A_19_10-domain-model/campaign-policy.md), [발급](A_19_10-domain-model/issuance.md), [사용](A_19_10-domain-model/redemption.md), [운영과 복구](A_19_10-domain-model/operations-recovery.md), [공통 계약](A_19_10-domain-model/shared-contracts.md) |
 | 영속성 | [쓰기 모델](A_19_20-persistence/write-models.md), [원장과 신뢰성](A_19_20-persistence/ledgers-and-reliability.md), [조회 모델과 인덱스](A_19_20-persistence/read-models-and-indexes.md) |
 | 서비스 | [발급 Handler](A_19_30-service/issuance-handlers.md), [사용 Handler](A_19_30-service/redemption-handlers.md), [운영 Worker](A_19_30-service/operations-workers.md), [이벤트 처리](A_19_30-service/event-processing.md) |
@@ -102,5 +103,19 @@ flowchart TB
 ## 원천과 경계
 
 - 원천: [BC.A.19](../../40-event-storming-bounded-context/BC_A_19_coupon.md), [REQ.A.02](../../00-requirements/REQ_A_02_coupon_benefit.md)
+- 결정 기록: [HOTSPOT.A.19-01~09](hotspot-decisions.md). `01~08`은 확정했고 `09`는 개인정보 제외 원칙만 확정했으며 생산자별 Event 계약은 열어 둔다.
 - 도메인·영속성·서비스·API 설계는 모두 `draft`다. HTTP wire 계약은 OpenAPI, Event 경계는 API 영역의 Event 계약에서 관리한다.
 - 사용자·상품·드롭·주문·결제·CS·정산 원본은 Context 쿠폰 밖에 두고 외부 참조와 스냅샷만 사용한다.
+
+## 추적성 수치
+
+| 유형 | 범위 | 결정 반영 뒤 수치 |
+| --- | --- | --- |
+| Aggregate | `AGG.A.19-01~08` | 8개 |
+| Command | `CMD.A.19-01~34` | 34개 |
+| Domain Event | `EVT.A.19-01~41` | 41개 |
+| Policy | `POLICY.A.19-01~22` | 22개 |
+| Read Model | `RM.A.19-01~09` | 9개 |
+| HTTP operation | `API.A.19-01~25` | 25개 |
+
+`RM.A.19-03`은 새 ID가 아니라 기존 판매자 성과 조회의 계약을 확정한 것이다. 판매자 조회는 `API.A.19-16`을 권한별로 확장했으므로 HTTP operation 수는 늘지 않는다.

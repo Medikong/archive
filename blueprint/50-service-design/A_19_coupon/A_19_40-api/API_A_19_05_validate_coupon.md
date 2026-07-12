@@ -6,7 +6,7 @@ status: draft
 tags: [service-design, coupon, api, redemption, validation]
 source: local
 created: 2026-07-11
-updated: 2026-07-11
+updated: 2026-07-12
 service_design: SD.A.19
 api_design: SD.A.1940
 domain_model: SD.A.1910
@@ -111,6 +111,6 @@ service: SD.A.1930
 
 - Snapshot schema와 할인 계산 변경은 version을 올리고 기존 판정을 재해석하지 않는다.
 
-## 확인 필요
+## 결정 반영
 
-- `HOTSPOT.A.19-08`: 여러 쿠폰 조합 계약.
+- `HOTSPOT.A.19-08`: 기본 조합은 할인 쿠폰 한 장과 배송비 쿠폰 한 장이다. 그 밖의 조합은 버전이 있는 `stackingPolicyRef`가 명시적으로 허용해야 하며 상품·판매자 범위, 주문, 배송비 순서로 계산한다.

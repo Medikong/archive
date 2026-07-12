@@ -6,7 +6,7 @@ status: draft
 tags: [service-design, coupon, api, redemption, revoke]
 source: local
 created: 2026-07-11
-updated: 2026-07-11
+updated: 2026-07-12
 service_design: SD.A.19
 api_design: SD.A.1940
 domain_model: SD.A.1910
@@ -28,7 +28,7 @@ service: SD.A.1930
 | 노출 범위 | internal |
 | 멱등성 | `Idempotency-Key` 필수 |
 | 캐시 | `no-store` |
-| 호환성 | 재사용 허용 의미는 미확정 |
+| 호환성 | 회수 뒤 재사용은 검증 조건을 모두 만족한 새 예약으로만 허용 |
 
 ## HTTP 계약 원장
 
@@ -96,7 +96,7 @@ service: SD.A.1930
 ## 검증 항목
 
 - 같은 취소 결과가 회수·비용 보정을 한 번만 만든다.
-- 미확정 예약을 회수로 처리하지 않는다.
+- 사용 확정 전 예약을 회수로 처리하지 않는다.
 - 승인 원본 장애를 성공으로 위조하지 않는다.
 
 ## 연관 시퀀스
@@ -107,6 +107,6 @@ service: SD.A.1930
 
 - 회수 뒤 재사용 여부를 추가할 때는 응답 status와 Read Model 계약을 새 version으로 검토한다.
 
-## 확인 필요
+## 결정 반영
 
-- `HOTSPOT.A.19-03`: 회수 유예와 회수 뒤 재사용 허용 기준.
+- `HOTSPOT.A.19-03`: 검증된 취소·환불, 남은 유효기간, 캠페인 활성 상태와 운영 중지 부재를 모두 확인한 경우에만 회수 쿠폰의 새 예약을 허용한다.

@@ -6,7 +6,7 @@ status: draft
 tags: [service-design, coupon, api, redemption, commit]
 source: local
 created: 2026-07-11
-updated: 2026-07-11
+updated: 2026-07-12
 service_design: SD.A.19
 api_design: SD.A.1940
 domain_model: SD.A.1910
@@ -101,12 +101,12 @@ service: SD.A.1930
 
 ## 연관 시퀀스
 
-- 구체 확정 원천 사건은 `HOTSPOT.A.19-02`가 닫힌 뒤 시퀀스에 연결한다.
+- 결제 최종 확정 사건을 원천으로 연결한다. 주문 생성이나 중간 결제 승인만으로는 이 API를 호출하지 않는다.
 
 ## 호환성과 변경 정책
 
 - 확정 원천 event type 변경은 새 Snapshot schema version과 함께 배포한다.
 
-## 확인 필요
+## 결정 반영
 
-- `HOTSPOT.A.19-02`: 주문 생성·결제 승인·결제 확정 가운데 확정 기준 사건.
+- `HOTSPOT.A.19-02`: 결제 최종 확정 사건을 검증한 뒤에만 예약을 사용 완료로 바꾼다.

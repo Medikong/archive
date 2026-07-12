@@ -6,7 +6,7 @@ status: draft
 tags: [service-design, coupon, api, campaign, review]
 source: local
 created: 2026-07-11
-updated: 2026-07-11
+updated: 2026-07-12
 service_design: SD.A.19
 api_design: SD.A.1940
 domain_model: SD.A.1910
@@ -107,6 +107,6 @@ service: SD.A.1930
 
 - 새 review result는 기존 클라이언트의 unknown 처리 확인 뒤 추가한다.
 
-## 확인 필요
+## 결정 반영
 
-- `HOTSPOT.A.19-05`: actor별 승인 범위와 검토 기준.
+- `HOTSPOT.A.19-05`: 부담 주체, 판매자 소유 범위, 승인된 템플릿, 금액·수량과 증빙을 버전이 있는 위험 정책으로 검토한다.

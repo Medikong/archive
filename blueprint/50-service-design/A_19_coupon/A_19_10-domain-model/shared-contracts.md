@@ -6,7 +6,7 @@ status: draft
 tags: [service-design, coupon, contracts, event, policy, read-model]
 source: local
 created: 2026-07-10
-updated: 2026-07-10
+updated: 2026-07-12
 service_design: SD.A.19
 bounded_context: BC.A.19
 domain_model: SD.A.1910
@@ -21,6 +21,7 @@ domain_model: SD.A.1910
 ## 연관 문서
 
 - 원천: [BC.A.19](../../../40-event-storming-bounded-context/BC_A_19_coupon.md), [REQ.A.02](../../../00-requirements/REQ_A_02_coupon_benefit.md)
+- 결정: [Context 쿠폰 Hotspot 결정 기록](../hotspot-decisions.md)
 - 책임 문서: [캠페인과 정책](campaign-policy.md), [발급](issuance.md), [사용](redemption.md), [운영과 복구](operations-recovery.md)
 - 구현 설계: [원장과 신뢰성](../A_19_20-persistence/ledgers-and-reliability.md), [읽기 모델과 인덱스](../A_19_20-persistence/read-models-and-indexes.md), [이벤트 처리](../A_19_30-service/event-processing.md)
 
@@ -41,7 +42,7 @@ domain_model: SD.A.1910
 
 | 외부 Context | 입력으로 받는 것 | 내보내는 것 | 소유하지 않는 것 |
 | --- | --- | --- | --- |
-| 사용자·인증 | `user_id`, 차단·등급 자격 스냅샷 | 발급·만료 결과 | 계정, 인증 수단, 사용자 프로필 |
+| 사용자·인증 | `user_id`, 차단·등급 자격 스냅샷 | 발급·만료 결과 | 계정, 인증 수단, 사용자 프로필, 생일·생년월일 |
 | 판매자·상품·드롭 | 판매자 소유, 상품·드롭·카테고리 참조 스냅샷 | 허용된 성과 집계 | 판매자·상품·드롭 원본 |
 | 주문·결제 | 주문 가격·구성 스냅샷, 주문·결제 결과 참조 | 할인 결과, 사용 예약·확정·해제·회수 결과 | 주문, 결제, PG 상태 |
 | CS·인시던트 | 문의·승인·보상 작업 참조 | 발급·회수·실패 결과 | 문의 원문, 인시던트 원본 |
@@ -52,6 +53,8 @@ domain_model: SD.A.1910
 ## Event 계약
 
 모든 Domain Event는 `event_id`, `event_type`, `aggregate_type`, `aggregate_id`, `aggregate_version`, `occurred_at`, `correlation_id`, `causation_id`, `payload_schema_version`을 가진다. 소비자가 원본 Aggregate를 재구성하지 않아도 되도록 결과 식별자와 판단 스냅샷 참조를 포함하되 외부 원본 `payload` 전체를 복제하지 않는다.
+
+외부 자동 지급 사건은 최소한 `event_id`, `user_id`, `campaign_id`, `source_ref`, `occurred_at`, schema version과 멱등키를 제공해야 한다. 생일·생년월일을 조건이나 payload로 받지 않으며, 원천 문서가 생산자·Event 유형·채널을 확정하기 전에는 계약을 배포하거나 소비자를 활성화하지 않는다.
 
 | Event 범위 | 소유 문서 | 대표 결과 참조 |
 | --- | --- | --- |
@@ -90,7 +93,7 @@ Policy는 Event를 입력으로 받아 다음 Command를 결정하지만 원본 
 | --- | --- | --- | --- |
 | `RM.A.19-01` | 구매자 쿠폰함 | 발급 요청 + 사용자 쿠폰 + 사용 Event | `user_id` 기준 조회, 프로필 미복제 |
 | `RM.A.19-02` | 쿠폰 상세·적용 조건 | 캠페인 + 사용자 쿠폰 | 외부 대상은 표시 스냅샷만 사용 |
-| `RM.A.19-03` | 판매자 쿠폰 성과 | 캠페인 + 발급 + 사용 Event | `HOTSPOT.A.19-07`의 허용 범위 적용 |
+| `RM.A.19-03` | 판매자 쿠폰 성과 | 캠페인 + 발급 + 사용 Event | 소유·부담 캠페인의 비식별 집계, `asOf`와 자기 부담 비용만 제공 |
 | `RM.A.19-04` | 쿠폰 발급·사용 성과 | 대량 작업 + 발급 + 사용 Event | 집계값만 제공 |
 | `RM.A.19-05` | 쿠폰 실패 이벤트 | 발급 요청 + 복구 기록 | `payload` 원문 대신 `payload_ref` 제공 |
 | `RM.A.19-06` | 사용자 쿠폰 타임라인 | 발급 요청 + 사용자 쿠폰 + 사용 Event | CS 시스템의 승인된 조회 주체 참조 필요 |
@@ -98,7 +101,7 @@ Policy는 Event를 입력으로 받아 다음 Command를 결정하지만 원본 
 | `RM.A.19-08` | 쿠폰 비용 귀속 | 사용·회수·비용 Event | 정산 상태 원본은 외부 참조 |
 | `RM.A.19-09` | 쿠폰 읽기 전용 안내 | 운영 제어 Event | 안내 문구와 범위만 소유 |
 
-## Hotspot 연결 지도
+## Hotspot 결정 지도
 
 | Hotspot | 책임 문서 |
 | --- | --- |

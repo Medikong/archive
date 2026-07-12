@@ -6,7 +6,7 @@ status: draft
 tags: [service-design, coupon, api, campaign, quota]
 source: local
 created: 2026-07-11
-updated: 2026-07-11
+updated: 2026-07-12
 service_design: SD.A.19
 api_design: SD.A.1940
 domain_model: SD.A.1910
@@ -107,6 +107,6 @@ service: SD.A.1930
 
 - 수량 정책 필드 의미 변경은 새 policy version을 사용한다.
 
-## 확인 필요
+## 결정 반영
 
-- 없음. 대량 대상 평가 기준은 `HOTSPOT.A.19-06`에서 별도로 다룬다.
+- `HOTSPOT.A.19-06`: 이 API의 발급 조건과 대량 작업의 `evaluationAsOf` 스냅샷을 구분한다. 대량 작업은 발급 직전에 차단·캠페인 종료·운영 중지만 다시 확인한다.

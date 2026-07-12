@@ -6,7 +6,7 @@ status: draft
 tags: [service-design, coupon, api, recovery, query]
 source: local
 created: 2026-07-11
-updated: 2026-07-11
+updated: 2026-07-12
 service_design: SD.A.19
 api_design: SD.A.1940
 domain_model: SD.A.1910
@@ -103,6 +103,6 @@ service: SD.A.1930
 
 - 새 recovery status는 unknown 처리 정책과 함께 추가한다.
 
-## 확인 필요
+## 결정 반영
 
-- `HOTSPOT.A.19-06`: 자동 재처리 횟수·간격·종료 기준.
+- `HOTSPOT.A.19-06`: 설정 기반 지수 백오프의 시도 횟수와 다음 처리 시각을 제공한다. 한도 소진은 최종 실패가 아니라 운영 확인 대기다.

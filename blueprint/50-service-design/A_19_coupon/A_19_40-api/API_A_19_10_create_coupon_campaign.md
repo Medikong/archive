@@ -6,7 +6,7 @@ status: draft
 tags: [service-design, coupon, api, campaign, policy]
 source: local
 created: 2026-07-11
-updated: 2026-07-11
+updated: 2026-07-12
 service_design: SD.A.19
 api_design: SD.A.1940
 domain_model: SD.A.1910
@@ -24,7 +24,7 @@ service: SD.A.1930
 | operationId | `createCouponCampaign` |
 | 역할 | 혜택·적용 조건·기간·발급 및 비용 주체를 가진 캠페인을 등록한다. |
 | API 유형 | Command |
-| 인증·권한 | 판매자·마케팅·운영 workload, 소유·권한 Snapshot과 approvalRef |
+| 인증·권한 | 판매자·마케팅·운영 workload와 소유·권한 스냅샷. 위험 정책이 요구할 때 `approvalRef` |
 | 노출 범위 | internal |
 | 멱등성 | `Idempotency-Key` 필수 |
 | 캐시 | `no-store` |
@@ -45,19 +45,19 @@ service: SD.A.1930
 
 ## 책임과 경계
 
-- `CouponCampaign`에 `CouponBenefit`, `CouponApplicabilityPolicy`와 책임 주체를 등록한다.
+- `CouponCampaign`에 `CouponBenefit`, `CouponApplicabilityPolicy`, 책임 주체, 승인 정책 스냅샷과 선택적 템플릿 참조를 등록한다.
 - 상품·드롭·판매자 원본을 소유하지 않고 검증 SnapshotRef만 보존한다.
 - 선착순 수량은 `API.A.19-11`, 승인 결과는 `API.A.19-12`가 별도 Command로 처리한다.
 
 ## 보안과 개인정보
 
-- workload의 actor type과 issuer·cost bearer 권한, approvalRef를 대조한다.
+- workload의 actor type과 issuer·cost bearer 권한을 대조하고, 위험 정책이 요구하는 요청에는 `approvalRef`를 확인한다.
 - 판매자 소유 Snapshot의 version·hash 불일치 시 등록하지 않는다.
 - 상품 전체 payload와 승인 문서를 저장하지 않는다.
 
 ## 처리 규칙
 
-1. actor, 발급·비용 주체, 기간과 혜택의 완결성을 검사한다.
+1. actor, 발급·비용 주체, 기간, 혜택과 승인 정책 스냅샷의 완결성을 검사하고 위험 정책에 따라 승인 필요 여부를 판단한다.
 2. 적용 대상의 외부 소유 Snapshot을 확인한다.
 3. 정책 version 1을 가진 캠페인과 필요 시 검토 요청 Event를 만든다.
 
@@ -109,6 +109,6 @@ service: SD.A.1930
 
 - 혜택·적용 정책 의미 변경은 policy schema version을 올린다.
 
-## 확인 필요
+## 결정 반영
 
-- `HOTSPOT.A.19-05`: actor별 승인선과 즉시 노출 범위.
+- `HOTSPOT.A.19-05`: 판매자 전액 부담·자기 소유 범위·승인된 템플릿은 판매자 권한으로 요청할 수 있다. 플랫폼·공동 부담, 제휴, 템플릿 초과와 고액·대량 보상은 운영 승인을 요구한다.

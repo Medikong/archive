@@ -6,7 +6,7 @@ status: draft
 tags: [service-design, coupon, api, operations, notice]
 source: local
 created: 2026-07-11
-updated: 2026-07-11
+updated: 2026-07-12
 service_design: SD.A.19
 api_design: SD.A.1940
 domain_model: SD.A.1910
@@ -107,6 +107,6 @@ service: SD.A.1930
 
 - 표시 metadata는 선택 필드로 추가하고 문구의 기존 의미를 재사용하지 않는다.
 
-## 확인 필요
+## 결정 반영
 
-- 없음. 안내 승인 범위는 `HOTSPOT.A.19-05`와 함께 검토한다.
+- `HOTSPOT.A.19-05`: 안내 적용은 승인된 운영 작업 참조와 버전이 있는 위험 기반 승인 정책을 따른다.

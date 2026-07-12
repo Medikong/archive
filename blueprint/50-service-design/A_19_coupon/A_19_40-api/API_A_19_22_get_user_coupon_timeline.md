@@ -6,7 +6,7 @@ status: draft
 tags: [service-design, coupon, api, cs, timeline, query]
 source: local
 created: 2026-07-11
-updated: 2026-07-11
+updated: 2026-07-12
 service_design: SD.A.19
 api_design: SD.A.1940
 domain_model: SD.A.1910
@@ -104,6 +104,6 @@ service: SD.A.1930
 
 - 새 timeline event kind는 기존 클라이언트가 unknown을 표시할 수 있을 때 추가한다.
 
-## 확인 필요
+## 결정 반영
 
-- `HOTSPOT.A.19-05`: CS 조회·위험 작업 승인 범위.
+- `HOTSPOT.A.19-05`: CS 조회에는 `caseRef`와 허용 범위가 필요하며, 회수·보상 같은 위험 작업은 별도 승인 정책을 따른다.

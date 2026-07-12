@@ -6,7 +6,7 @@ status: draft
 tags: [service-design, coupon, persistence, write-model]
 source: local
 created: 2026-07-10
-updated: 2026-07-10
+updated: 2026-07-12
 service_design: SD.A.19
 bounded_context: BC.A.19
 domain_model: SD.A.1910
@@ -22,6 +22,7 @@ persistence: SD.A.1920
 ## 연관 문서
 
 - 원천: [BC.A.19](../../../40-event-storming-bounded-context/BC_A_19_coupon.md), [REQ.A.02](../../../00-requirements/REQ_A_02_coupon_benefit.md)
+- 결정: [Context 쿠폰 Hotspot 결정 기록](../hotspot-decisions.md)
 - 도메인: [캠페인과 정책](../A_19_10-domain-model/campaign-policy.md), [발급](../A_19_10-domain-model/issuance.md), [사용](../A_19_10-domain-model/redemption.md), [운영과 복구](../A_19_10-domain-model/operations-recovery.md)
 - 서비스: [발급 Handler](../A_19_30-service/issuance-handlers.md), [사용 Handler](../A_19_30-service/redemption-handlers.md)
 
@@ -29,7 +30,7 @@ persistence: SD.A.1920
 
 - Aggregate Root는 `id`, `version`, `created_at`, `updated_at`을 가진다. 갱신은 `WHERE id = ? AND version = ?` 조건으로 수행한다.
 - Entity 테이블은 소유 Aggregate의 식별자를 외래 키로 가지며 다른 Aggregate로의 Postgres 외래 키는 만들지 않는다.
-- 외부 `user_id`, `seller_ref`, `product_ref`, `drop_ref`, `order_id`, `approval_ref`, `settlement_ref`는 문자열 참조다.
+- 외부 `user_id`, `seller_ref`, `product_ref`, `drop_ref`, `order_id`, `case_ref`, `incident_ref`, `approval_ref`, `settlement_ref`는 문자열 참조다. 생일·생년월일 열은 만들지 않는다.
 - 상태 값은 도메인 문서의 닫힌 집합만 허용하도록 `CHECK` 또는 enum type으로 제한한다.
 - 삭제 대신 종단 상태와 보존 정책을 사용한다.
 
@@ -63,9 +64,9 @@ erDiagram
 
 | 테이블 | 핵심 열 | 제약 |
 | --- | --- | --- |
-| `coupon_campaigns` | `campaign_id`, `status`, `starts_at`, `ends_at`, `current_policy_version`, `total_quantity`, `reserved_quantity`, `confirmed_quantity`, `issuer_type/ref`, `funder_type/ref`, `approval_ref`, `version` | `starts_at < ends_at`; 수량은 0 이상; `reserved_quantity + confirmed_quantity <= total_quantity` |
+| `coupon_campaigns` | `campaign_id`, `status`, `starts_at`, `ends_at`, `current_policy_version`, `total_quantity`, `reserved_quantity`, `confirmed_quantity`, `issuer_type/ref`, `funder_type/ref`, `approval_policy_snapshot`, `template_ref`, `approval_ref`, `version` | `starts_at < ends_at`; 수량은 0 이상; `reserved_quantity + confirmed_quantity <= total_quantity`; 정책이 요구할 때 승인 참조 필수 |
 | `coupon_benefits` | `benefit_id`, `campaign_id`, `policy_version`, `benefit_type`, `amount`, `percentage`, `max_discount_amount`, `currency` | `(campaign_id, policy_version, benefit_id)` unique; 혜택 유형별 필수값 check |
-| `coupon_applicability_policies` | `policy_id`, `campaign_id`, `policy_version`, `target_type`, `target_ref`, `condition_type`, `condition_value`, `effective_from`, `snapshot_label` | `(campaign_id, policy_version, policy_id)` unique; JSON schema version 필수 |
+| `coupon_applicability_policies` | `policy_id`, `campaign_id`, `policy_version`, `target_type`, `target_ref`, `condition_type`, `condition_value`, `stacking_policy_ref`, `effective_from`, `snapshot_label` | `(campaign_id, policy_version, policy_id)` unique; JSON schema version과 중복 적용 정책 버전 필수 |
 
 `CouponCampaign` 저장 시 Root와 같은 정책 버전의 혜택·적용 정책을 한 트랜잭션에서 기록한다. 발급 수량 전이는 캠페인 Root와 예약 행만 같은 트랜잭션에서 바꾸며 다른 Aggregate를 갱신하지 않는다.
 
@@ -82,7 +83,7 @@ erDiagram
 
 | 테이블 | 핵심 열 | 제약 |
 | --- | --- | --- |
-| `coupon_issue_requests` | `issue_request_id`, `campaign_id`, `user_id`, `business_key`, `source_type`, `source_ref`, `status`, `user_coupon_id`, `failure_code`, `retry_count`, `next_attempt_at`, 발급·비용·승인 스냅샷, `version` | `(campaign_id, user_id, business_key)` unique; `completed`면 `user_coupon_id` 필수 |
+| `coupon_issue_requests` | `issue_request_id`, `campaign_id`, `user_id`, `business_key`, `source_type`, `source_ref`, `case_ref`, `reason_code`, `evidence_ref`, `approval_ref`, `approval_policy_version`, `status`, `user_coupon_id`, `failure_code`, `retry_count`, `next_attempt_at`, 발급·비용 스냅샷, `version` | `(campaign_id, user_id, business_key)` unique; `completed`면 `user_coupon_id` 필수; 보상은 `case_ref`, 사유와 주문·인시던트 `source_ref` 필수 |
 | `user_coupons` | `user_coupon_id`, `campaign_id`, `policy_version`, `user_id`, `issue_request_id`, `status`, `usable_from`, `expires_at`, `grant_snapshot`, `version` | `issue_request_id` unique; `usable_from < expires_at`; 사용자·캠페인은 원본 요청과 일치 |
 
 `coupon_issue_requests.user_coupon_id`는 다른 Aggregate 결과 참조이므로 Postgres 외래 키를 강제하지 않는다. Event와 Policy가 발급 성공을 원본 요청에 기록하며, 조회 검증 작업이 양쪽 참조의 불일치를 감지한다.
@@ -106,10 +107,10 @@ erDiagram
 
 | 테이블 | 핵심 열 | 제약 |
 | --- | --- | --- |
-| `bulk_coupon_issue_jobs` | `bulk_job_id`, `campaign_id`, `audience_definition_ref`, `as_of`, `status`, 결과 카운터, `operation_request_ref`, `approval_ref`, `version` | 각 카운터 0 이상; 최종 합계 검증 |
+| `bulk_coupon_issue_jobs` | `bulk_job_id`, `campaign_id`, `audience_definition_ref`, `evaluation_as_of`, `audience_snapshot_ref`, `retry_policy_version`, `status`, 결과 카운터, `operation_request_ref`, `approval_ref`, `version` | 각 카운터 0 이상; 대상 스냅샷 불변; 최종 합계는 성공·거절·승인된 최종 실패만 포함 |
 | `coupon_operational_controls` | `control_id`, `active`, `effective_from`, `block_issuance`, `block_redemption`, `notice_message`, `operation_request_ref`, `approval_ref`, `reason_code`, `version` | 중지 또는 안내 중 하나 이상 설정 |
 | `coupon_operational_scopes` | `control_id`, `scope_type`, `scope_ref` | `(control_id, scope_type, scope_ref)` unique |
-| `coupon_event_recoveries` | `recovery_id`, `original_operation_type`, `original_payload_ref`, `business_key`, `status`, `current_attempt_id`, `attempt_count`, `next_attempt_at`, `result_kind`, `result_ref`, `failure_code`, `version` | `recovery_id + business_key` 불변; 완료 상태면 결과 참조 필수 |
+| `coupon_event_recoveries` | `recovery_id`, `original_operation_type`, `original_payload_ref`, `business_key`, `status`, `current_attempt_id`, `attempt_count`, `next_attempt_at`, `retry_policy_version`, `result_kind`, `result_ref`, `failure_code`, `finalization_approval_ref`, `version` | `recovery_id + business_key` 불변; 완료 상태면 결과 참조 필수; `failed_final`이면 승인 참조 필수 |
 | `coupon_recovery_attempts` | `recovery_id`, `attempt_id`, `business_key`, `status`, `started_at`, `finished_at`, `result_kind`, `result_ref`, `failure_code` | `(recovery_id, attempt_id, business_key)` unique |
 
 ## Repository 경계

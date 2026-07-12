@@ -6,7 +6,7 @@ status: draft
 tags: [service-design, coupon, event, policy, outbox, inbox, observability]
 source: local
 created: 2026-07-10
-updated: 2026-07-10
+updated: 2026-07-12
 service_design: SD.A.19
 bounded_context: BC.A.19
 domain_model: SD.A.1910
@@ -23,6 +23,7 @@ BC의 41개 Domain Event를 outbox로 전달하고, 22개 Policy와 외부 Event
 ## 연관 문서
 
 - 원천: [BC.A.19](../../../40-event-storming-bounded-context/BC_A_19_coupon.md), [REQ.A.02](../../../00-requirements/REQ_A_02_coupon_benefit.md)
+- 결정: [Context 쿠폰 Hotspot 결정 기록](../hotspot-decisions.md)
 - 도메인: [공통 계약](../A_19_10-domain-model/shared-contracts.md)
 - 저장: [원장과 신뢰성](../A_19_20-persistence/ledgers-and-reliability.md), [조회 모델과 인덱스](../A_19_20-persistence/read-models-and-indexes.md)
 - Handler: [발급](issuance-handlers.md), [사용](redemption-handlers.md), [운영 Worker](operations-workers.md)
@@ -82,12 +83,12 @@ BC의 41개 Domain Event를 outbox로 전달하고, 22개 Policy와 외부 Event
 
 | 생산자 | 수신 내용 | Handler 결과 |
 | --- | --- | --- |
-| 주문·결제 | 주문·결제 확정·실패·취소·만료 참조 | 합의된 유형에 따라 `CMD.A.19-11`, `CMD.A.19-12`, `CMD.A.19-15` 요청 |
-| 시스템 자동 지급 원천 | 사용자, 캠페인, 원본 `source_ref`, 발생 시각 | `POLICY.A.19-16`을 거쳐 `CMD.A.19-13` 요청 |
+| 주문·결제 | 결제 최종 확정, 확정 실패·취소, 검증된 취소·환불 참조 | 확정은 `CMD.A.19-11`, 확정 전 실패·취소는 `CMD.A.19-12`, 확정 뒤 취소·환불은 `CMD.A.19-15` 요청 |
+| 시스템 자동 지급 원천 | `event_id`, `user_id`, `campaign_id`, `source_ref`, `occurred_at`, schema version, 멱등키 | 계약이 확정된 뒤 `POLICY.A.19-16`을 거쳐 `CMD.A.19-13` 요청 |
 | 시간 스케줄러 | 만료 대상 사용자 쿠폰과 기준 시각 | `POLICY.A.19-17`을 거쳐 `CMD.A.19-24` 요청 |
 | 운영 작업 관리 | 승인된 중지·안내·재처리·최종 실패 작업 | 해당 운영 Command 요청 |
 
-주문 사용 확정 사건과 자동 지급 생산자의 구체 유형은 각각 `HOTSPOT.A.19-02`, `HOTSPOT.A.19-09`가 닫힌 뒤 계약 버전에 추가한다.
+주문 사용 확정 기준은 결제 최종 확정 사건이다. 구체 Event 이름과 schema는 주문·결제 원천 계약에 맞춰 연결한다. 자동 지급은 생일·생년월일을 수신·저장하지 않으며, 생산자·Event 유형·채널이 원천 문서에서 확정될 때까지 소비자를 활성화하지 않는다.
 
 ## 외부 포트
 
@@ -106,7 +107,7 @@ BC의 41개 Domain Event를 outbox로 전달하고, 22개 Policy와 외부 Event
 
 - outbox 발행 실패는 같은 `event_id`로 재시도한다.
 - inbox 처리 실패는 같은 소비자·Event 키로 재시도한다.
-- 최대 시도 뒤 DLQ로 이동해도 `CouponIssueRequest` 또는 `CouponEventRecovery`의 업무 상태를 별도로 기록한다.
+- 최대 시도 뒤 DLQ로 이동해도 자동으로 `failed_final`로 바꾸지 않고 `CouponIssueRequest` 또는 `CouponEventRecovery`의 운영 확인 대기 상태를 별도로 기록한다.
 - 손상된 `payload`, 지원하지 않는 스키마, 상관키 불일치는 자동 재시도를 멈추고 운영 확인 대상으로 남긴다.
 - 재처리 시 새 Domain Event를 위조하지 않고 원본 Event 또는 승인된 복구 Command를 사용한다.
 
@@ -124,12 +125,12 @@ BC의 41개 Domain Event를 outbox로 전달하고, 22개 Policy와 외부 Event
 
 로그에는 코드 원문, 외부 `payload` 원문, 사용자 프로필을 남기지 않는다. `trace_id`, 내부 식별자와 승인된 외부 참조만 기록한다.
 
-## Hotspot 연결
+## Hotspot 결정 반영
 
-| Hotspot | 이 문서에서 고정하지 않는 것 |
+| Hotspot | 반영 내용 |
 | --- | --- |
-| `HOTSPOT.A.19-01` | 접수·완료 사용자 표현 |
-| `HOTSPOT.A.19-02`, `HOTSPOT.A.19-03` | 주문 확정 사건, 해제·회수 유예 |
-| `HOTSPOT.A.19-05`, `HOTSPOT.A.19-06` | 승인선, 재처리 횟수·간격·종료 기준 |
-| `HOTSPOT.A.19-07`, `HOTSPOT.A.19-08` | 판매자 조회 범위, 중복 적용 조합 |
-| `HOTSPOT.A.19-09` | 자동 지급 사건 생산자와 필수 원본 계약 |
+| `HOTSPOT.A.19-01` | 발급 대기와 완료 Event 투영을 구분한다. |
+| `HOTSPOT.A.19-02`, `HOTSPOT.A.19-03` | 결제 최종 확정과 즉시 해제·제한적 재사용을 연결한다. |
+| `HOTSPOT.A.19-05`, `HOTSPOT.A.19-06` | 위험 기반 승인, 설정 기반 백오프와 승인된 최종 실패를 적용한다. |
+| `HOTSPOT.A.19-07`, `HOTSPOT.A.19-08` | 판매자 비식별 집계와 명시적 중복 적용 정책을 투영한다. |
+| `HOTSPOT.A.19-09` | 개인정보 원칙과 필수 envelope는 확정했다. 생산자·Event 유형·채널은 남은 계약 결정이다. |

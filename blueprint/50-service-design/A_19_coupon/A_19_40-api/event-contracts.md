@@ -6,7 +6,7 @@ status: draft
 tags: [service-design, coupon, event, mq, outbox, inbox]
 source: local
 created: 2026-07-11
-updated: 2026-07-11
+updated: 2026-07-12
 service_design: SD.A.19
 api_design: SD.A.1940
 bounded_context: BC.A.19
@@ -55,16 +55,16 @@ HTTP 요청 밖에서 전달되는 41개 Domain Event의 공통 envelope, outbox
 
 | 생산자 | 필수 참조 | 처리 결과 | 계약 상태 |
 | --- | --- | --- | --- |
-| 주문·결제 | 주문·결제 결과 ref, 주문 SnapshotRef, 업무 고유키 | `CMD.A.19-11`, `12`, `15` 중 합의된 Command | `HOTSPOT.A.19-02~03` 때문에 구체 event type 미확정 |
-| 시스템 자동 지급 원천 | `user_id`, `campaign_id`, `source_ref`, 발생 시각 | `POLICY.A.19-16` → `CMD.A.19-13` | `HOTSPOT.A.19-09` 때문에 생산자·schema 미확정 |
+| 주문·결제 | 결제 최종 확정, 확정 실패·취소, 검증된 취소·환불 ref, 주문 SnapshotRef, 업무 고유키 | 최종 확정은 `CMD.A.19-11`, 확정 전 실패·취소는 `CMD.A.19-12`, 확정 뒤 취소·환불은 `CMD.A.19-15` | 기준 사건은 확정. 구체 Event 이름과 schema는 주문·결제 원천 계약에 연결 필요 |
+| 시스템 자동 지급 원천 | `event_id`, `user_id`, `campaign_id`, `source_ref`, `occurred_at`, schema version, 멱등키 | 계약 확정 뒤 `POLICY.A.19-16` → `CMD.A.19-13` | 개인정보 원칙과 필수 envelope 확정. 생산자·Event 유형·채널은 미확정 |
 | 시간 스케줄러 | 만료 대상 `user_coupon_id`, 기준 시각 | `POLICY.A.19-17` → `CMD.A.19-24` | 내부 Worker 신호 |
 | 운영 작업 관리 | 작업 ID, approvalRef, 사유 ref, 멱등키 | 운영·복구 Command | HTTP 계약 우선, Event는 결과 전달 보조 |
 
-미확정 외부 Event는 AsyncAPI나 소비자 구현 계약으로 배포하지 않는다. Hotspot이 닫힌 뒤 생산자, event type, schema, 호환성 정책과 채널을 함께 추가한다.
+구체 Event 이름과 schema가 없는 외부 Event는 AsyncAPI나 소비자 구현 계약으로 배포하지 않는다. 주문·결제 원천 계약과 자동 지급 생산자가 확정되면 event type, schema, 호환성 정책과 채널을 함께 추가한다.
 
 ## 보안과 개인정보
 
-- 쿠폰 코드 원문, 사용자 프로필, 상품·주문·CS payload 원문, 승인 원문을 Event에 넣지 않는다.
+- 쿠폰 코드 원문, 사용자 프로필, 생일·생년월일, 상품·주문·CS payload 원문, 승인 원문을 Event에 넣지 않는다.
 - 외부 원본은 `ExternalRef` 또는 `SnapshotRef`로만 전달하고 소비 권한을 workload별로 제한한다.
 - 로그와 metric label에는 `event_type`, schema version, 처리 결과와 지연만 넣고 사용자 ID·코드·payload를 넣지 않는다.
 

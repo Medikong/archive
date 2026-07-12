@@ -6,7 +6,7 @@ status: draft
 tags: [service-design, coupon, api, compensation, issuance, cs]
 source: local
 created: 2026-07-11
-updated: 2026-07-11
+updated: 2026-07-12
 service_design: SD.A.19
 api_design: SD.A.1940
 domain_model: SD.A.1910
@@ -22,9 +22,9 @@ service: SD.A.1930
 | --- | --- |
 | Method / Path | `POST /api/v1/internal/compensation-coupon-issue-requests` |
 | operationId | `createCompensationCouponIssueRequest` |
-| 역할 | 승인된 CS·운영 보상 작업을 공통 쿠폰 발급 요청으로 변환한다. |
+| 역할 | 증빙과 위험 기반 승인 조건을 충족한 CS·운영 보상 작업을 공통 쿠폰 발급 요청으로 변환한다. |
 | API 유형 | Command |
-| 인증·권한 | CS·운영 workload, compensation 권한, approvalRef·caseRef |
+| 인증·권한 | CS·운영 workload, compensation 권한, `caseRef`; 위험 정책이 요구할 때 `approvalRef` |
 | 노출 범위 | internal |
 | 멱등성 | `Idempotency-Key` 필수 |
 | 캐시 | `no-store` |
@@ -45,19 +45,19 @@ service: SD.A.1930
 
 ## 책임과 경계
 
-- `source_type=compensation`과 승인·문의 ref를 가진 `CouponIssueRequest`를 만든다.
+- `source_type=compensation`, `caseRef`, 사유, 주문 또는 인시던트 ref와 승인 정책 스냅샷을 가진 `CouponIssueRequest`를 만든다.
 - 실제 `UserCoupon` 생성, 수량 확정과 발급 완료 기록은 후속 Policy가 처리한다.
-- 보상 한도·승인 판단과 CS 문의 원문은 외부 시스템이 소유한다.
+- 보상 한도·승인 판단과 CS 문의 원문은 외부 시스템이 소유한다. Context 쿠폰은 버전이 있는 위험 정책과 승인 참조의 일치만 확인한다.
 
 ## 보안과 개인정보
 
-- compensation 권한, approvalRef와 caseRef binding을 확인한다.
+- compensation 권한과 `caseRef` binding을 항상 확인하고, 고액·대량 또는 정책 한도 초과 요청에는 `approvalRef`를 요구한다.
 - 문의 내용·증빙·사용자 프로필을 요청·Event·로그에 넣지 않는다.
 - target user ID는 workload 범위 안에서만 허용한다.
 
 ## 처리 규칙
 
-1. workload, target user, campaign, approvalRef와 caseRef를 검증한다.
+1. workload, target user, campaign, `caseRef`, 사유와 주문 또는 인시던트 참조를 검증하고 위험 정책이 요구하면 `approvalRef`를 확인한다.
 2. 동일 보상 작업 ref의 기존 발급 요청을 확인한다.
 3. `CouponIssueRequest`, 원장과 outbox를 저장하고 `202`로 상태 위치를 반환한다.
 
@@ -108,6 +108,6 @@ service: SD.A.1930
 
 - 보상 source subtype 추가는 승인 계약과 함께 version을 올린다.
 
-## 확인 필요
+## 결정 반영
 
-- `HOTSPOT.A.19-05`: 보상 승인자, 최대 한도와 필수 증빙.
+- `HOTSPOT.A.19-05`: `caseRef`, 사유와 주문 또는 인시던트 참조가 필수다. 고액·대량 또는 정책 한도 초과 보상은 운영 승인을 요구하며 구체 한도는 버전이 있는 운영 정책으로 관리한다.
