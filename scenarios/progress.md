@@ -11,6 +11,7 @@
 | 대기 | 선행 Task가 끝나지 않았거나 아직 시작하지 않았다. |
 | 진행 중 | 구현 또는 검증을 수행하고 있다. |
 | 차단 | 외부 환경이나 결정이 필요해 진행할 수 없다. |
+| 실패 | 검증 시도 한도에 도달해 수정 방향을 다시 설계해야 한다. |
 | 완료 | 구현, 실제 표면 검증, cleanup, 문서 기록이 모두 끝났다. |
 
 ## 전체 진행표
@@ -18,7 +19,7 @@
 | 순서 | Task | 상태 | 완료 기준 | 상세 기록 |
 | ---: | --- | --- | --- | --- |
 | 1 | 실제 병렬 주문과 DB oversell 방지 | 완료 | 병렬 주문 결과와 PostgreSQL 예약 합계가 재고를 초과하지 않는다. | `sold-out-concurrency/test-execution-record.md` |
-| 2 | 결제 실패 중복 이벤트 멱등성 | 진행 중 | 동일 실패 요청·이벤트가 결제와 주문 상태를 한 번만 변경한다. | `payment-failure/test-execution-record.md` |
+| 2 | 결제 실패 중복 이벤트 멱등성 | 실패 | 동일 실패 요청·이벤트가 결제와 주문 상태를 한 번만 변경한다. | `payment-failure/test-execution-record.md` |
 | 3 | 구조화 로그 correlation | 대기 | HTTP와 Kafka 경계에서 request/correlation/trace ID를 연결해 검색한다. | `_shared/01-observability-driven-test-contract.md` |
 | 4 | Kafka lag 및 notification metric | 대기 | 알림 지표가 증가하고 consumer lag가 기준 이하로 회복된다. | `_shared/01-observability-driven-test-contract.md` |
 | 5 | Gateway JWT E2E | 대기 | 유효 JWT만 통과하고 누락·위조 토큰과 위조 사용자 헤더가 차단된다. | `_shared/00-shared-infra-test-contract.md` |
@@ -46,16 +47,18 @@ Task를 완료할 때마다 다음 형식으로 항목을 추가한다.
 
 ### Task 2. 결제 실패 중복 이벤트 멱등성
 
-#### Task 2 진행 기록 (2026-07-13)
+#### Task 2 실패 기록 (2026-07-13)
 
-- 상태: 진행 중
+- 상태: 실패, 재시도 설계 필요
 - 현재 확인 사실: payment-service 실제 PostgreSQL 통합 characterization test는 services 커밋 `3a35578`에 포함되어 있다.
 - 구현 커밋: order-service `processed_payment_events` transactional inbox는 services 커밋 `387b3da`에 포함되어 있고, HTTP/Kafka/DB E2E gate는 services 커밋 `b2fd84d`에 포함되어 있다.
-- 신규 실행 명령: `task payment-failure-idempotency`
+- 실행 명령: `task payment-failure-idempotency`는 Windows Git Bash bind mount 문제를 해결한 뒤 다시 사용해야 한다.
 - 통과한 로컬 검증: order-service unit regression 21개 통과, payment-service focused replay unit 1개 통과, Python compile/import, bash syntax, YAML parse, diff check 통과.
 - 검토 기록: review-work 5개 lane은 bounded wait 이후 deliverable을 반환하지 않아 `INCONCLUSIVE`로 기록한다. 승인이나 PASS로 해석하지 않는다.
-- 차단된 검증: 실제 Docker/PostgreSQL/Kafka 검증은 Docker API escalation이 현재 환경 사용량 제한으로 거절되어 실행하지 못했다.
-- ULW 상태: C001, C002, C003은 pending이며, 실제 PostgreSQL 또는 Docker Kafka E2E PASS 증거를 주장하지 않는다.
+- 실제 검증: C001 실제 PostgreSQL 독립 세션 테스트는 `1 passed`로 통과했고 전용 컨테이너를 정리했다.
+- 실패 검증: C002는 clean Compose 서비스가 모두 healthy가 된 뒤 Windows bind mount 하네스에서 세 번 실패했다. 마지막 시도는 `docker compose run`이 `--mount`를 지원하지 않아 smoke 실행 전에 종료됐다.
+- ULW 상태: C001 `PASS`, C002 `FAIL`, C003 미실행이며 G003은 실패 checkpoint됐다.
+- 정리와 revert: 모든 C002 Compose container/volume과 임시 build context를 제거했다. 검증되지 않은 runner 수정 `63babec`, `6d59f6a`는 `e322a52`, `a95a027`로 되돌렸다.
 - 범위 확인: coupon service는 이번 Task 2 진행에서 건드리지 않았다.
 - 남은 위험: payment-service의 DB commit 이후 Kafka publish 구간은 아직 outbox가 없어 원자성이 보장되지 않으며, 이번 범위 밖이다.
 
@@ -64,7 +67,7 @@ Task를 완료할 때마다 다음 형식으로 항목을 추가한다.
 | 항목 | 현재 판단 | 다음 행동 |
 | --- | --- | --- |
 | 쿠폰 서비스 병합 | 현재 시나리오 완성 전까지 보류 | Task 7 이후 별도 병합·연동 계획으로 진행한다. |
-| Task 2 실제 Docker/PostgreSQL/Kafka 검증 | Docker API escalation이 현재 환경 사용량 제한으로 거절되어 실제 PostgreSQL 및 Docker Kafka E2E를 실행하지 못했다. | Docker API 사용이 가능한 환경에서 `task payment-failure-idempotency`와 ULW C001/C002/C003을 다시 실행하고 PASS 증거를 별도 기록한다. |
+| Task 2 Windows runner 재설계 | `docker run`은 구조화 `--mount`가 동작하지만 `docker compose run`은 해당 옵션을 지원하지 않는다. 기존 `-v`는 MSYS가 source/target을 잘못 분리한다. | 다음 retry attempt에서 Compose 실행 컨테이너에 스크립트를 포함하거나 Windows-safe `--volume` 표기를 설계한 뒤 C002와 C003을 다시 실행한다. |
 | Gateway 종류 | 운영 문서는 Kong을 외부 Gateway로 설명하지만 JWT 계약은 Istio를 전제로 한다. | Task 5에서 실제 배포 경로를 먼저 확정한다. |
 | Kafka lag metric | 대시보드 후보만 있고 서비스 metric 계약이 없다. | Task 4에서 metric 이름과 측정 책임을 확정한다. |
 

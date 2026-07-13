@@ -77,21 +77,23 @@ task tests:purchase-e2e SCENARIO=05-payment-failure-flow
 | observability | 실패 metric 증가 확인 | `payments_failed_total`은 확인했다. `orders_payment_failed_total`, `inventory_released_total`은 추가 구현이 필요하다. |
 | observability | PII/raw token 로그 부재 확인 | 실패 로그에 카드 정보, JWT, 개인정보가 남지 않아야 한다. |
 
-## 7. Task 2 진행 기록 (2026-07-13)
+## 7. Task 2 실패 기록 (2026-07-13)
 
-Task 2 `결제 실패 중복 이벤트 멱등성`은 진행 중이며, 완료로 판단하지 않는다.
+Task 2 `결제 실패 중복 이벤트 멱등성`은 첫 ULW 시도에서 실패했으며, 완료로 판단하지 않는다.
 
 | 항목 | 현재 기록 |
 | --- | --- |
 | payment-service characterization | 실제 PostgreSQL 통합 characterization test는 services 커밋 `3a35578`에 포함되어 있다. |
 | 구현 커밋 | payment-service 실제 PostgreSQL characterization test `3a35578`, order-service `processed_payment_events` transactional inbox `387b3da`, HTTP/Kafka/DB E2E gate `b2fd84d` |
-| 신규 실행 명령 | `task payment-failure-idempotency` |
+| 실행 명령 | `task payment-failure-idempotency`는 Windows bind mount runner를 재설계한 뒤 다시 사용해야 한다. |
 | order-service unit regression | 21개 통과 |
 | payment-service focused replay unit | 1개 통과 |
 | 정적·문법 확인 | Python compile/import, bash syntax, YAML parse, diff check 통과 |
-| 실제 PostgreSQL 검증 | BLOCKED: Docker API escalation이 현재 환경 사용량 제한으로 거절되어 실행하지 못했다. |
-| Docker Kafka E2E | BLOCKED: Docker API escalation이 현재 환경 사용량 제한으로 거절되어 실행하지 못했다. |
-| ULW C001/C002/C003 | pending. 실제 PostgreSQL 또는 Docker Kafka E2E PASS 증거를 주장하지 않는다. |
+| 실제 PostgreSQL 검증 | C001 `1 passed`: 두 독립 세션에서 `PaymentFailed` 1건, `PaymentAlreadyFailed` 1건, 결제 1행을 확인했다. |
+| Docker Kafka E2E | C002 `FAIL`: clean Compose가 healthy 상태까지 기동됐지만 Windows bind mount 하네스에서 세 번 실패했다. 마지막 실패는 `docker compose run`의 미지원 `--mount` 옵션이다. |
+| ULW C001/C002/C003 | C001 `PASS`, C002 `FAIL`, C003 미실행. G003은 실패 checkpoint됐다. |
+| cleanup | 모든 C002 Compose container/volume과 임시 build context를 제거했다. |
+| revert | 검증되지 않은 runner 수정 `63babec`, `6d59f6a`는 `e322a52`, `a95a027`로 되돌렸다. |
 | 독립 검토 | review-work 5개 lane은 제한 시간과 후속 요청 후에도 산출물이 없어 모두 `INCONCLUSIVE`이며, 승인으로 간주하지 않는다. |
 | coupon service | 이번 Task 2 진행에서 건드리지 않았다. |
 | 잔여 위험 | payment-service의 DB commit 이후 Kafka publish 구간은 아직 outbox가 없어 원자성이 보장되지 않으며, 이번 범위 밖이다. |
