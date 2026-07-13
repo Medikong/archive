@@ -94,6 +94,7 @@ Task 2 `결제 실패 중복 이벤트 멱등성`은 첫 ULW 시도에서 실패
 | ULW C001/C002/C003 | C001 `PASS`, C002 `FAIL`, C003 미실행. G003은 실패 checkpoint됐다. |
 | cleanup | 모든 C002 Compose container/volume과 임시 build context를 제거했다. |
 | revert | 검증되지 않은 runner 수정 `63babec`, `6d59f6a`는 `e322a52`, `a95a027`로 되돌렸다. |
+| 로컬 환경 주의 | 두 서비스의 Git-ignored `.pytest_cache`는 샌드박스 전용 ACL 때문에 Docker가 읽을 수 없다. 다음 재시도는 clean `git archive` build context 또는 캐시 권한 정리가 필요하다. |
 | 독립 검토 | review-work 5개 lane은 제한 시간과 후속 요청 후에도 산출물이 없어 모두 `INCONCLUSIVE`이며, 승인으로 간주하지 않는다. |
 | coupon service | 이번 Task 2 진행에서 건드리지 않았다. |
 | 잔여 위험 | payment-service의 DB commit 이후 Kafka publish 구간은 아직 outbox가 없어 원자성이 보장되지 않으며, 이번 범위 밖이다. |

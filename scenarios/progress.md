@@ -59,6 +59,7 @@ Task를 완료할 때마다 다음 형식으로 항목을 추가한다.
 - 실패 검증: C002는 clean Compose 서비스가 모두 healthy가 된 뒤 Windows bind mount 하네스에서 세 번 실패했다. 마지막 시도는 `docker compose run`이 `--mount`를 지원하지 않아 smoke 실행 전에 종료됐다.
 - ULW 상태: C001 `PASS`, C002 `FAIL`, C003 미실행이며 G003은 실패 checkpoint됐다.
 - 정리와 revert: 모든 C002 Compose container/volume과 임시 build context를 제거했다. 검증되지 않은 runner 수정 `63babec`, `6d59f6a`는 `e322a52`, `a95a027`로 되돌렸다.
+- 로컬 환경 주의: `order-service`와 `payment-service`의 Git-ignored `.pytest_cache`는 샌드박스 전용 ACL 때문에 Docker build context에서 읽을 수 없다. 다음 재시도는 clean `git archive` context를 사용하거나 캐시 권한을 먼저 정리한다.
 - 범위 확인: coupon service는 이번 Task 2 진행에서 건드리지 않았다.
 - 남은 위험: payment-service의 DB commit 이후 Kafka publish 구간은 아직 outbox가 없어 원자성이 보장되지 않으며, 이번 범위 밖이다.
 
@@ -67,7 +68,7 @@ Task를 완료할 때마다 다음 형식으로 항목을 추가한다.
 | 항목 | 현재 판단 | 다음 행동 |
 | --- | --- | --- |
 | 쿠폰 서비스 병합 | 현재 시나리오 완성 전까지 보류 | Task 7 이후 별도 병합·연동 계획으로 진행한다. |
-| Task 2 Windows runner 재설계 | `docker run`은 구조화 `--mount`가 동작하지만 `docker compose run`은 해당 옵션을 지원하지 않는다. 기존 `-v`는 MSYS가 source/target을 잘못 분리한다. | 다음 retry attempt에서 Compose 실행 컨테이너에 스크립트를 포함하거나 Windows-safe `--volume` 표기를 설계한 뒤 C002와 C003을 다시 실행한다. |
+| Task 2 Windows runner 재설계 | `docker run`은 구조화 `--mount`가 동작하지만 `docker compose run`은 해당 옵션을 지원하지 않는다. 기존 `-v`는 MSYS가 source/target을 잘못 분리하며, 샌드박스 소유 `.pytest_cache`는 로컬 build context 접근도 막는다. | 다음 retry attempt에서 clean `git archive` context를 사용하고, Compose 실행 이미지에 smoke를 포함하거나 Windows-safe `--volume` 표기를 설계한 뒤 C002와 C003을 다시 실행한다. |
 | Gateway 종류 | 운영 문서는 Kong을 외부 Gateway로 설명하지만 JWT 계약은 Istio를 전제로 한다. | Task 5에서 실제 배포 경로를 먼저 확정한다. |
 | Kafka lag metric | 대시보드 후보만 있고 서비스 metric 계약이 없다. | Task 4에서 metric 이름과 측정 책임을 확정한다. |
 
