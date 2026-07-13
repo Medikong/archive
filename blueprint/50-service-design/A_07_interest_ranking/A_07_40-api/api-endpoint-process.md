@@ -74,7 +74,7 @@ service: SD.A.0730
 - 도메인 매핑: Repository → `InterestRepository.listActiveByUser` / Read Model → `RM.A.07-01`.
 - `limit`/`cursor` 공용 pagination parameter를 사용한다(2026-07-13 추가).
 
-## API.A.07-04 드롭 조회 기록
+## API.A.07-04 드롭 조회 기록 (2026-07-14 재설계)
 
 | 항목 | 값 |
 | --- | --- |
@@ -82,16 +82,15 @@ service: SD.A.0730
 | operationId | `recordDropView` |
 | 역할 | 드롭 상세 화면 진입을 관심 신호로 기록한다(`RULE.A.07-04`, catalog-service를 거치지 않는 직접 호출). |
 | 유형 | Command |
-| 멱등성 | 5분 dedup 윈도우 안에서 멱등(`POLICY.A.07-02`). |
+| 멱등성 | 없음(원문 그대로 기록, 반복 호출 시 매번 새 행) — dedup은 이 API가 아니라 랭킹 집계 시점(`COUNT(DISTINCT user_id)`)에서 처리한다. |
 
 - 책임과 경계: 로그인 사용자의 조회만 집계한다(`POLICY.A.07-01`). 비로그인 조회는 이 API를 호출하지 않는 것을 프론트 계약으로 하며, 서버도 인증 실패 시 집계하지 않는다.
-- 처리 규칙: 로그인 게이트 → Redis `SETNX view:{user_id}:{drop_id}` `EX 300` → 실패(이미 존재)면 카운터 변경 없이 `200` → 성공이면 `DropInterestCounterRepository.applyView` 호출 후 `200`.
-- 상태 변경과 트랜잭션: `drop_interest_counters.view_count_total`, `upcoming_count` 증가. dedup 키(Redis)는 DB 트랜잭션 밖의 선행 단계.
-- 멱등성과 동시성: dedup 키가 곧 멱등 범위(사용자·드롭·5분). Redis 성공 후 DB 갱신 실패 시 처리는 확인 필요.
-- 예외: 인증 실패 `401`. dedup에 걸린 경우도 오류가 아니라 `200`(클라이언트는 성공/실패를 구분할 필요 없음).
-- 도메인 매핑: Handler → `ViewRecordingHandler` / Aggregate → `DropInterestCounter`(`AGG.A.07-02`) / Event → `EVT.A.07-03`.
+- 처리 규칙(2026-07-14 단순화): 로그인 게이트 → `DropViewRepository.recordView(drop_id, user_id)`로 `drop_views`에 insert → `204`(본문 없음, `remove_interest`와 동일 패턴). Redis/dedup 단계와 `recorded` boolean이 더는 의미가 없어져 응답 스키마(`ViewRecordResponse`)도 제거했다.
+- 상태 변경과 트랜잭션: `drop_views` insert 하나. 이 API 자체는 랭킹 값을 직접 갱신하지 않는다 — 랭킹은 3시간마다 별도 배치(`SD.A.0730`의 "실시간 조회 랭킹 배치 Worker")가 계산한다.
+- 예외: 인증 실패 `401`.
+- 도메인 매핑: Handler → `ViewRecordingHandler` / 모델 → `DropView`(신규, Aggregate 아님) / Event → `EVT.A.07-03`.
 
-## API.A.07-05 오픈 후 인기 랭킹 조회
+## API.A.07-05 오픈 후 인기 랭킹 조회 (보류)
 
 | 항목 | 값 |
 | --- | --- |
@@ -102,24 +101,44 @@ service: SD.A.0730
 | 인증 | 불필요(비로그인 열람 가능) |
 | 캐시 | 짧은 TTL 캐시 검토(확인 필요, [SD.A.0720](../A_07_20-persistence/persistence-design.md)) |
 
+**2026-07-14: 이 API는 후속 스코프다.** order-service 연동 방식(동기 조회 vs `order.created` 비동기 구독 + raw 판매 속도로 공식 재정의)이 아직 미확정이라 착수 전 별도 논의가 필요하다(`REQ.A.07` 수정 이력 참고). 아래는 목표 설계로 남겨둔다.
+
 - 책임과 경계: `drop_interest_counters WHERE drop_phase = 'OPEN' ORDER BY sell_through_score DESC`. 드롭 상세 원본은 제공하지 않는다(`drop_id`만).
 - 상태 변경: 없음.
 - 도메인 매핑: Repository → `DropInterestCounterRepository.listByPhaseOrderByScore`.
 - `limit`/`cursor` 공용 pagination parameter를 사용한다(2026-07-13 추가).
 
-## API.A.07-06 오픈 예정 랭킹 조회
+## API.A.07-06 기다리는 상품 랭킹 조회(구 "오픈 예정 랭킹", 2026-07-14 재정의)
 
 | 항목 | 값 |
 | --- | --- |
 | Method / Path | `GET /v1/rankings/drops/upcoming` |
-| operationId | `listUpcomingRanking` |
-| 역할 | `SCHEDULED` 상태 드롭을 `upcoming_count` 내림차순으로 반환한다(`RM.A.07-03`). |
+| operationId | `listUpcomingRanking`(확인 필요: "upcoming"이 phase 필터 제거 후에도 적절한 이름인지 — 외부 계약 변경은 팀 확정 필요, 지금은 유지) |
+| 역할 | 드롭 상태 구분 없이, 전체 드롭을 리셋 없는 누적 활성 찜 수(`interest_count`) 내림차순으로 반환한다(`RM.A.07-03`). |
 | 유형 | Query |
 | 인증 | 불필요 |
+| 기본 `limit` | 홈 화면 위젯은 `limit=3`, "전체보기" 페이지는 `limit` 최대 100(2026-07-14 UX 결정) |
 
-- 책임과 경계: `drop_interest_counters WHERE drop_phase = 'SCHEDULED' ORDER BY upcoming_count DESC`.
-- 도메인 매핑: Repository → `DropInterestCounterRepository.listByPhaseOrderByUpcoming`.
-- `API.A.07-05`와 처리 구조가 동일하므로 같은 확인 필요 사항을 공유한다.
+- 책임과 경계(2026-07-14 수정): `drop_interest_counters ORDER BY interest_count DESC, drop_id ASC` — `WHERE drop_phase = 'SCHEDULED'` 필터를 제거했다(catalog-service 의존 제거, `REQ.A.07` 수정 이력 참고).
+- 도메인 매핑: Repository → `DropInterestCounterRepository.listByInterestCount`(구 `listByPhaseOrderByUpcoming`).
+- `limit`/`cursor` 공용 pagination parameter를 사용한다.
+
+## API.A.07-08 실시간 많이 보는 상품 랭킹 조회(신규, 2026-07-14)
+
+| 항목 | 값 |
+| --- | --- |
+| Method / Path | `GET /v1/rankings/drops/trending` |
+| operationId | `listTrendingRanking` |
+| 역할 | 드롭 상태 구분 없이, 가장 최근에 마감된 KST 3시간 구간(00/03/06/09/12/15/18/21시 경계)의 서로 다른 조회자 수 기준 랭킹을 반환한다(`RM.A.07-06`). |
+| 유형 | Query |
+| 인증 | 불필요 |
+| 기본 `limit` | 홈 화면 위젯은 `limit=3`, "전체보기" 페이지는 `limit` 최대 100 |
+
+- 책임과 경계: `drop_view_rankings WHERE bucket_start = (최신 bucket_start) ORDER BY rank ASC LIMIT ?`. 매 요청마다 `drop_views` 원본을 다시 집계하지 않는다 — 3시간 배치가 미리 계산해둔 스냅샷만 읽는다.
+- 상태 변경: 없음.
+- 도메인 매핑: Repository → `DropViewRankingRepository.getLatestBucket`.
+- `limit`/`cursor` 공용 pagination parameter를 사용한다.
+- 확인 필요: 구간 경계 직후(예: 03:00:01)에는 새 구간의 스냅샷이 아직 없을 수 있다 — 이 경우 직전 구간 값을 계속 보여줄지, 빈 리스트를 보여줄지 결정 필요.
 
 ## API.A.07-07 드롭 관심도 통계 조회
 
@@ -127,17 +146,18 @@ service: SD.A.0730
 | --- | --- |
 | Method / Path | `GET /v1/operator/drops/{dropId}/interest-stats` |
 | operationId | `getDropInterestStats` |
-| 역할 | DropMong 운영자가 드롭별 찜·조회·점수 통계를 확인한다(`RM.A.07-04`). |
+| 역할 | DropMong 운영자가 드롭별 찜·조회 통계를 확인한다(`RM.A.07-04`). |
 | 유형 | Query |
 | 인증 | `Authorization: Bearer <JWT>` + `X-User-Id`/`X-User-Role: operator` (실제 코드 컨벤션은 `contracts/jwt-conventions.md` 참고, role enum은 `CUSTOMER`/`OPERATOR`/`ADMIN`) |
 | 노출 범위 | operator (`role=operator`, 2026-07-13 결정으로 브랜드 운영자는 1차 범위 밖) |
 
-- 책임과 경계: `drop_interest_counters`의 `upcoming_count`, `view_count_total`, `sell_through_score`를 드롭 단위로 노출.
+- 책임과 경계(2026-07-14 수정): `drop_interest_counters`의 `interest_count`를 드롭 단위로 노출한다. `sell_through_score`(오픈 후 랭킹 후속)는 응답에서 제외했다.
+- 확인 필요(2026-07-14 추가): 조회 기능이 다시 범위에 들어오면서, 이 통계 응답에 "최근 3시간 조회자 수" 같은 조회 통계도 같이 넣을지는 아직 정하지 않았다 — 지금은 `interest_count`만 노출한다.
 - 1차 스코프 결정(2026-07-13): 브랜드 운영자(`ACTOR.A.07-03`)의 자사 드롭 소유권 검증 메커니즘이 아직 없어 이 Endpoint는 `operator` role로만 제한한다. 브랜드 운영자 접근은 소유권 검증 방식이 정해진 뒤 별도 스코프 확장 또는 별도 API로 다룬다.
 - 경로는 `service` 레포 `contracts/jwt-conventions.md`의 "드롭 운영자 API는 `/operator/...` prefix" 규칙을 따랐다. 다만 실제 코드의 유일한 선례인 `backoffice-service`는 같은 role 체크(`HasRole("operator")`)를 쓰면서도 경로는 `/v1/admin/...`을 쓰고 있어 문서-코드 불일치가 있다(확인 필요, 우리는 문서 규칙을 따름).
-- 처리 규칙: `X-User-Id`/`X-User-Role` 확인(FastAPI `Header` 의존성, order-service의 `x_user_role: Annotated[UserRole, Header(alias="X-User-Role")]` 패턴과 동일) → role이 `OPERATOR`가 아니면 `403` → `DropInterestCounterRepository.findByDrop` 조회.
+- 처리 규칙: `X-User-Id`/`X-User-Role` 확인(FastAPI `Header` 의존성, order-service의 `x_user_role: Annotated[UserRole, Header(alias="X-User-Role")]` 패턴과 동일) → role이 `OPERATOR`가 아니면 `403` → `DropInterestCounterRepository.get` 조회.
 - 예외: `Authorization`/`X-User-*` 없음·무효 `401`, operator role 아님 `403`, 드롭 없음 `404`.
-- 도메인 매핑: Repository → `DropInterestCounterRepository.findByDrop`.
+- 도메인 매핑: Repository → `DropInterestCounterRepository.get`.
 - 확인 필요: 브랜드 운영자의 "자사 드롭" 판정 기준을 어느 Context에서 어떻게 조회할지.
 
 ## 관측성과 운영(공통)
@@ -150,6 +170,15 @@ service: SD.A.0730
 
 - `/v1/operator/...` vs `/v1/admin/...` 경로 접두사 불일치를 팀과 확정할지(위 참고).
 - 커서(`cursor`) 인코딩 방식(어떤 컬럼 기준으로 정렬하고 어떻게 인코딩할지)은 `SD.A.0720`/`SD.A.0730`에서 구현 시 정한다.
+
+## 2026-07-14 수정 이력
+
+- `API.A.07-04`(조회 기록)를 Redis `SETNX` dedup 방식에서 "원문 기록 + 집계 시점 `COUNT(DISTINCT user_id)`" 방식으로 재설계해 후속 스코프에서 1차 구현으로 복귀시켰다.
+- `API.A.07-06`(구 "오픈 예정 랭킹")을 "기다리는 상품 랭킹"으로 재정의했다 — `drop_phase=SCHEDULED` 필터를 제거하고 전체 드롭 대상 누적 찜 수 기준으로 바꿨다(catalog-service 의존 제거).
+- `API.A.07-08`(실시간 많이 보는 상품 랭킹)을 신설했다. KST 3시간 고정 구간 배치 스냅샷을 읽는 방식이며, `API.A.07-05`(오픈 후 랭킹, order-service 필요)와 달리 카탈로그/오더 서비스 의존이 없다.
+- `API.A.07-05`(오픈 후 랭킹)는 후속 스코프로 명시했다 — order-service 연동 방식 미확정.
+- `API.A.07-07`(드롭 관심도 통계)의 응답에서 `dropPhase`/`viewCountTotal`/`sellThroughScore`를 제거하고 `interestCount`만 남겼다. 조회 통계를 이 API에 다시 추가할지는 확인 필요로 남겼다.
+- 근거: `REQ.A.07`의 "2026-07-14 수정 이력" 1~3차 참고 — 티켓팅/드롭 커머스 유사 사례 조사(오픈전·후 랭킹은 분리하되 신호는 섞지 않음), 사용자 제안(신호 기준 두 랭킹으로 재구성), 부하테스트 대비 논의(고정 3시간 배치로 읽기 경로 단순화) 순으로 반영됐다.
 
 ## 2026-07-13 수정 이력
 

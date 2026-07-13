@@ -1,8 +1,11 @@
 get:
   tags:
     - Ranking
-  summary: 오픈 후 인기 랭킹 조회
-  description: OPEN 상태 드롭을 소진율 기반 점수(sell_through_score) 내림차순으로 반환한다.
+  summary: 오픈 후 인기 랭킹 조회 (보류)
+  description: |
+    OPEN 상태 드롭을 소진율 기반 점수(sell_through_score) 내림차순으로 반환한다.
+    2026-07-14: order-service 연동 방식이 미확정이라 후속 스코프다. 목표 설계로 문서만 남겨둔다
+    (api-endpoint-process.md의 API.A.07-05 참고).
   operationId: listOpenRanking
   x-api-id: API.A.07-05
   x-use-case: UC.A.07

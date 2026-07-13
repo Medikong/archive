@@ -23,6 +23,7 @@ updated: 2026-07-10
 | --- | --- | --- | --- | --- |
 | [PAGE.A.01](PAGE_A_01_homepage.md) | `/` | 홈 | 공개, 개인화 영역만 선택 인증 | [UI.A.01](../../20-ui/buyer-mobile-web/UI_A_01_homepage.md) |
 | [PAGE.A.02](PAGE_A_02_product_detail.md) | `/products/{productId}` | 상품 상세 | 조회 공개, 개인 행동은 로그인 필요 | [UI.A.02](../../20-ui/buyer-mobile-web/UI_A_02_product_detail.md) |
+| [PAGE.A.09](PAGE_A_09_waiting_products.md) | `/rankings/waiting` | 기다리는 상품(전체 보기) | 공개 | [UI.A.09](../../20-ui/buyer-mobile-web/UI_A_09_waiting_products.md) |
 | [PAGE.A.06](PAGE_A_06_shopping_cart.md) | `/cart` | 장바구니 | 로그인 필요 | [UI.A.06](../../20-ui/buyer-mobile-web/UI_A_06_shopping_cart.md) |
 | [PAGE.A.10](PAGE_A_10_my.md) | `/my` | 마이 | 로그인 필요 | [UI.A.10](../../20-ui/buyer-mobile-web/UI_A_10_my.md) |
 | [PAGE.A.11](PAGE_A_11_payment.md) | `/checkout` | 주문·결제 | 로그인과 재검증 필요 | [UI.A.11](../../20-ui/buyer-mobile-web/UI_A_11_payment.md) |
@@ -32,12 +33,17 @@ updated: 2026-07-10
 | [PAGE.A.17](PAGE_A_17_shipping_order_manage.md) | `/orders/:orderId/manage` | 배송·주문 관리 | 주문 소유자 확인 | [UI.A.17](../../20-ui/buyer-mobile-web/UI_A_17_shipping_order_manage.md) |
 | [PAGE.A.19](PAGE_A_19_coupon_wallet/README.md) | `/my/coupons` | 보유 쿠폰·코드 등록 | 로그인 필요 | [UI.A.19](../../20-ui/buyer-mobile-web/UI_A_19_coupon_wallet/UI_A_19_coupon_wallet.md) |
 | [PAGE.A.22](PAGE_A_22_wishlist.md) | `/my/wishlist` | 찜리스트 | 로그인 필요 | [UI.A.22](../../20-ui/buyer-mobile-web/UI_A_22_wishlist.md) |
+| [PAGE.A.23](PAGE_A_23_trending_products.md) | `/rankings/trending` | 실시간 많이 보는 상품(전체 보기) | 공개 | [UI.A.23](../../20-ui/buyer-mobile-web/UI_A_23_trending_products.md) |
 
 ## 핵심 사용자 여정
 
 ```mermaid
 flowchart LR
     Home["PAGE.A.01 홈"] --> Detail["PAGE.A.02 상품 상세"]
+    Home -->|"기다리는 상품 전체 보기"| Waiting["PAGE.A.09 기다리는 상품"]
+    Home -->|"실시간 많이 보는 상품 전체 보기"| Trending["PAGE.A.23 실시간 많이 보는 상품"]
+    Waiting --> Detail
+    Trending --> Detail
     Detail -->|"장바구니 담기"| Cart["PAGE.A.06 장바구니"]
     Detail -->|"바로 구매"| Checkout["PAGE.A.11 주문·결제"]
     Cart -->|"선택 상품 주문"| Checkout
@@ -51,6 +57,8 @@ flowchart LR
     Coupon -->|"주문에서 사용"| Checkout
     Detail -. "로그인 필요 행동" .-> Auth["PAGE.A.300 공용 인증"]
     Checkout -. "세션 만료" .-> Auth
+    My --> Wishlist["PAGE.A.22 찜리스트"]
+    Wishlist --> Detail
 ```
 
 ## 반응형 기준
@@ -71,4 +79,4 @@ flowchart LR
 
 ## 연관 태그
 
-🏷️ 요구사항 참조: [REQ.A.01](../../00-requirements/REQ_A_01_limited_drop_commerce.md), [REQ.A.02](../../00-requirements/REQ_A_02_coupon_benefit.md), [REQ.A.05](../../00-requirements/REQ_A_05_auth_member.md), [REQ.A.08](../../00-requirements/REQ_A_08_web_application.md) | UI 참조: [구매자 모바일 웹앱 UI](../../20-ui/buyer-mobile-web/README.md) | 웹 애플리케이션 참조: [WEB 설계](../../60-web-application/README.md)
+🏷️ 요구사항 참조: [REQ.A.01](../../00-requirements/REQ_A_01_limited_drop_commerce.md), [REQ.A.02](../../00-requirements/REQ_A_02_coupon_benefit.md), [REQ.A.05](../../00-requirements/REQ_A_05_auth_member.md), [REQ.A.07](../../00-requirements/REQ_A_07_interest_ranking.md), [REQ.A.08](../../00-requirements/REQ_A_08_web_application.md) | UI 참조: [구매자 모바일 웹앱 UI](../../20-ui/buyer-mobile-web/README.md) | 웹 애플리케이션 참조: [WEB 설계](../../60-web-application/README.md)

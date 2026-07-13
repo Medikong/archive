@@ -27,6 +27,7 @@ updated: 2026-07-10
 ## 실제 문서
 
 - [BC.A.01 한정 상품 드롭 커머스 MVP 이벤트스토밍과 바운디드 컨텍스트](BC_A_01_limited_drop_commerce.md)
+- [BC.A.07 관심 신호 및 인기 랭킹 이벤트스토밍과 바운디드 컨텍스트](BC_A_07_interest_ranking.md)
 - [BC.A.19 Context 쿠폰 이벤트스토밍과 바운디드 컨텍스트](BC_A_19_coupon.md)
 - [BC.A.200 판매자 운영 이벤트스토밍과 바운디드 컨텍스트](BC_A_200_seller.md)
 - [BC.A.300 Context 인증 이벤트스토밍과 바운디드 컨텍스트](BC_A_300_auth_member.md)

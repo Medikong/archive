@@ -64,6 +64,8 @@ InterestStatus:
   type: string
   enum: [active, inactive]
 
+# 2026-07-14: 현재 어떤 스키마도 참조하지 않는다 — DropInterestCounter가 drop_phase 추적을 그만뒀다
+# (catalog-service 의존 제거). 오픈 후 랭킹(API.A.07-05) 착수 시 다시 쓰일 목표 설계로 남겨둔다.
 DropPhase:
   type: string
   enum: [SCHEDULED, OPEN, CLOSED]
@@ -117,23 +119,9 @@ InterestListResponse:
     pageInfo:
       $ref: '#/PageInfo'
 
-ViewRecordResult:
-  type: object
-  required: [dropId, recorded]
-  properties:
-    dropId:
-      type: string
-      format: uuid
-    recorded:
-      type: boolean
-      description: dedup 윈도우를 통과해 실제 카운터에 반영됐는지 여부다. false여도 오류가 아니다.
-
-ViewRecordResponse:
-  type: object
-  required: [data]
-  properties:
-    data:
-      $ref: '#/ViewRecordResult'
+# 2026-07-14: ViewRecordResult/ViewRecordResponse 제거 — 조회 기록 API가 204 No Content로 바뀌면서
+# (dedup이 쓰기 시점이 아니라 랭킹 집계 시점으로 이동, api-endpoint-process.md API.A.07-04 참고)
+# 응답 본문 자체가 필요 없어졌다.
 
 OpenRankingItem:
   type: object
@@ -157,14 +145,15 @@ OpenRankingListResponse:
     pageInfo:
       $ref: '#/PageInfo'
 
+# 2026-07-14: upcomingCount -> interestCount로 개명(의미가 "당일 누적"에서 "리셋 없는 누적"으로 바뀜).
 UpcomingRankingItem:
   type: object
-  required: [dropId, upcomingCount]
+  required: [dropId, interestCount]
   properties:
     dropId:
       type: string
       format: uuid
-    upcomingCount:
+    interestCount:
       type: integer
       minimum: 0
 
@@ -179,24 +168,50 @@ UpcomingRankingListResponse:
     pageInfo:
       $ref: '#/PageInfo'
 
-DropInterestStats:
+# 2026-07-14 신규: 실시간 많이 보는 상품 랭킹(API.A.07-08).
+TrendingRankingItem:
   type: object
-  required: [dropId, dropPhase, upcomingCount, viewCountTotal]
+  required: [dropId, rank, viewerCount]
   properties:
     dropId:
       type: string
       format: uuid
-    dropPhase:
-      $ref: '#/DropPhase'
-    upcomingCount:
+    rank:
+      type: integer
+      minimum: 1
+      maximum: 100
+    viewerCount:
       type: integer
       minimum: 0
-    viewCountTotal:
+      description: 가장 최근 KST 3시간 구간의 서로 다른 조회자 수다.
+
+TrendingRankingListResponse:
+  type: object
+  required: [data, pageInfo, bucketStart]
+  properties:
+    data:
+      type: array
+      items:
+        $ref: '#/TrendingRankingItem'
+    pageInfo:
+      $ref: '#/PageInfo'
+    bucketStart:
+      type: string
+      format: date-time
+      description: 이 스냅샷이 집계한 KST 3시간 구간의 시작 시각이다.
+
+# 2026-07-14: dropPhase/viewCountTotal/sellThroughScore 제거 — 오픈 후 랭킹·조회수 통계가
+# 후속 스코프라 지금은 누적 찜 수만 노출한다(api-endpoint-process.md API.A.07-07 확인 필요 참고).
+DropInterestStats:
+  type: object
+  required: [dropId, interestCount]
+  properties:
+    dropId:
+      type: string
+      format: uuid
+    interestCount:
       type: integer
       minimum: 0
-    sellThroughScore:
-      type: [number, "null"]
-      format: float
 
 DropInterestStatsResponse:
   type: object

@@ -18,7 +18,7 @@ bounded_context: BC.A.07
 - Context: Context 찜, Context 랭킹 집계
 - 상태: draft
 - 책임: 찜 상태 관리, 조회 신호 집계, 오픈 전/오픈 후 인기 랭킹 산출, 드롭 상태 전환에 따른 랭킹 리스트 전환, 관심도 통계(1차 스코프는 role=operator용(실제 코드 role enum), 브랜드 운영자는 범위 밖 — 2026-07-13 결정, [API.A.07-07](A_07_40-api/api-endpoint-process.md) 참고)를 구현 관점에서 상세화한다.
-- 구현 언어: Python(FastAPI) — catalog-service/order-service와 동일 스택(2026-07-13 결정). 첫 구현 범위는 `Interest` Aggregate(API.A.07-01/-02/-03, 찜 추가·해제·목록)만이며, `DropInterestCounter`(랭킹/이벤트 구독 파트)는 catalog-service가 실제로 이벤트를 발행하기 시작한 뒤 다음 단계로 진행한다 — catalog-service는 현재 Kafka 연동이 전혀 없는 최소 스텁 상태임을 확인했다(2026-07-13).
+- 구현 언어: Python(FastAPI) — catalog-service/order-service와 동일 스택(2026-07-13 결정). 첫 구현 범위는 `Interest` Aggregate(API.A.07-01/-02/-03, 찜 추가·해제·목록)에 더해, `DropInterestCounter`의 **리셋 없는 누적 활성 찜 수** 반영과 오픈 전 랭킹 조회(API.A.07-06)까지 포함한다(2026-07-14 확장 — catalog-service/order-service 이벤트 구독 없이 찜 추가/해제 이벤트만으로 구현 가능하도록 범위를 좁혔다). `catalog.drop.updated` 구독이 필요한 랭킹 리스트 전환, order-service 연동이 필요한 오픈 후 점수 갱신, Redis가 필요한 조회수 집계는 여전히 다음 단계다. 자세한 배경은 [REQ.A.07 2026-07-14 수정 이력](../../00-requirements/REQ_A_07_interest_ranking.md#2026-07-14-수정-이력) 참고.
 
 ## 기준 결정
 
@@ -134,13 +134,15 @@ flowchart TB
 | Domain Event | `EVT.A.07-01~06` | 6개 |
 | Policy | `POLICY.A.07-01~03` | 3개 |
 | Read Model | `RM.A.07-01~04` | 4개 |
-| HTTP operation | `API.A.07-01~07` | 7개 |
+| HTTP operation | `API.A.07-01~08` | 8개(2026-07-14: API.A.07-08 신설) |
 
 ## 현재 확인 필요
 
-- 오픈 전 카운터의 "당일" 기준 시간대(KST 자정 기준 확정 필요).
-- `confirmed_count`/`total_quantity`를 캐시로 보관할지, 매번 order-service에 조회할지.
+- (2026-07-14 해소) 오픈 전 카운터의 "당일" 기준 시간대 — 리셋 자체를 없애 더 이상 해당 없음.
+- `confirmed_count`/`total_quantity`를 캐시로 보관할지, 매번 order-service에 조회할지 — 오픈 후 랭킹 착수 시 결정.
 - 핫키 버퍼링 주기/배치 크기, 오픈 후 재계산 주기(`HOTSPOT.A.07-01`, `-02`).
-- `DropInterestCounter`의 저장소를 Redis로 할지 Postgres로 할지 (20-persistence에서 결정).
+- `DropInterestCounter`의 저장소를 Redis로 할지 Postgres로 할지 (20-persistence에서 결정, 1차는 Postgres `INSERT ... ON CONFLICT`로 확정).
 - Event Consumer(오픈전카운터반영/랭킹전환/점수갱신)의 재시도·DLQ 정책이 아직 A_19의 `CouponEventRecovery` 수준으로 설계되지 않았다([SD.A.0730](A_07_30-service/service-design.md) 확인 필요).
 - `API.A.07-07`의 경로 접두사 `/operator/...`가 문서 규칙(`contracts/jwt-conventions.md`)과 실제 코드 선례(`backoffice-service`의 `/admin/...`)가 달라 팀 확정이 필요하다.
+- (2026-07-14 추가) `API.A.07-06`의 이름(`listUpcomingRanking`/`/rankings/drops/upcoming`)이 phase 필터 제거 후에도 "upcoming"을 그대로 쓰는 게 맞는지 — 외부 계약 변경 여부라 팀 확정 필요.
+- (2026-07-14 추가) 오픈 후 랭킹을 order-service와 동기 API 호출 없이 어떻게 연동할지(`order.created` 비동기 구독 + raw 판매 속도로 공식 재정의 vs 완전 보류) — 착수 전 별도 논의.

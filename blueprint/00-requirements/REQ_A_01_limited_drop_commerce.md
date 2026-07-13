@@ -113,7 +113,7 @@ updated: 2026-07-07
 | `REQ.A.01.FR-016` | DropMong 운영자는 특정 드롭, 브랜드, API, 사용자 그룹에 대해 임시 차단 또는 읽기 전용 공지를 적용한다. | DropMong 운영자 | Must | TBD |
 | `REQ.A.01.FR-017` | 시스템은 비동기 처리 실패를 DLQ 또는 재처리 큐에 남기고, 운영자가 재처리 또는 보상 처리를 수행할 수 있게 한다. | DropMong 운영자 | Must | TBD |
 | `REQ.A.01.FR-018` | CS 담당자는 사용자 단위로 알림 신청, 구매 시도, 재고 배정, 주문, 결제, 실패 사유의 타임라인을 조회한다. | CS | Should | TBD |
-| `REQ.A.01.FR-019` | 시스템은 찜, 알림 신청, 상세 조회, 검색, 구매 시도 로그를 드롭 성과 분석에 사용할 수 있게 저장한다. | 브랜드 운영자, DropMong 운영자 | Should | TBD |
+| `REQ.A.01.FR-019` | 시스템은 찜, 알림 신청, 상세 조회, 검색, 구매 시도 로그를 드롭 성과 분석에 사용할 수 있게 저장한다. | 브랜드 운영자, DropMong 운영자 | Should | 찜/조회는 [REQ.A.07](REQ_A_07_interest_ranking.md)(interest-service)이 소유 — [PAGE.A.22](../10-sitemap/buyer-mobile-web/PAGE_A_22_wishlist.md), [API.A.07-07](../50-service-design/A_07_interest_ranking/A_07_40-api/README.md) 드롭 관심도 통계로 구현됨(2026-07-14). 알림 신청/검색/구매 시도 로그는 여전히 TBD. |
 | `REQ.A.01.FR-020` | 시스템은 추천/검색/노출 실험을 드롭 단위로 설정하고, 실험 결과를 동일한 metric 정의로 집계한다. | DropMong 운영자 | Could | TBD |
 | `REQ.A.01.FR-021` | 사용자는 기본 등록된 결제수단으로 빠른 결제를 수행한다. | 구매자 | Must | TBD |
 | `REQ.A.01.FR-022` | 사용자는 로그인하지 않아도 홈, 드롭 목록, 드롭 상세, 검색, 공지처럼 내 정보나 결제 정보가 필요 없는 화면을 탐색할 수 있다. | 구매자 | Must | TBD |

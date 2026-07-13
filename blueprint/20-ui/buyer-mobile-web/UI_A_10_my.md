@@ -27,7 +27,7 @@ updated: 2026-07-10
 
 ## 연관 태그
 
-🏷️ 요구사항 참조: [REQ.A.01](../../00-requirements/REQ_A_01_limited_drop_commerce.md), [REQ.A.02](../../00-requirements/REQ_A_02_coupon_benefit.md) | 페이지 참조: [PAGE.A.10](../../10-sitemap/buyer-mobile-web/PAGE_A_10_my.md) | UC 참조: UC.A.10 | 영속성 참조: PST.A.10 | 서비스 참조: SVC.A.10 | 시나리오 참조: SCN.A.10 | API 참조: API.A.10
+🏷️ 요구사항 참조: [REQ.A.01](../../00-requirements/REQ_A_01_limited_drop_commerce.md), [REQ.A.02](../../00-requirements/REQ_A_02_coupon_benefit.md), [REQ.A.07](../../00-requirements/REQ_A_07_interest_ranking.md) | 페이지 참조: [PAGE.A.10](../../10-sitemap/buyer-mobile-web/PAGE_A_10_my.md) | UC 참조: UC.A.10 | 영속성 참조: PST.A.10 | 서비스 참조: SVC.A.10 | 시나리오 참조: SCN.A.10 | API 참조: API.A.10 | 찜 UI 참조: [UI.A.22](UI_A_22_wishlist.md)
 
 ## 에셋
 

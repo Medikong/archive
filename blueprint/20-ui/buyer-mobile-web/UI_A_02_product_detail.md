@@ -27,7 +27,7 @@ updated: 2026-07-10
 
 ## 연관 태그
 
-🏷️ 요구사항 참조: [REQ.A.01](../../00-requirements/REQ_A_01_limited_drop_commerce.md) | 페이지 참조: [PAGE.A.02](../../10-sitemap/buyer-mobile-web/PAGE_A_02_product_detail.md) | UC 참조: UC.A.02 | 영속성 참조: PST.A.02 | 서비스 참조: SVC.A.02 | 시나리오 참조: SCN.A.02 | API 참조: API.A.02
+🏷️ 요구사항 참조: [REQ.A.01](../../00-requirements/REQ_A_01_limited_drop_commerce.md), [REQ.A.07](../../00-requirements/REQ_A_07_interest_ranking.md) | 페이지 참조: [PAGE.A.02](../../10-sitemap/buyer-mobile-web/PAGE_A_02_product_detail.md) | UC 참조: UC.A.02, [UC.A.07](../../30-uc/UC_A_07_interest_ranking.md) | 영속성 참조: PST.A.02 | 서비스 참조: SVC.A.02 | 시나리오 참조: SCN.A.02 | API 참조: API.A.02, [API.A.07-01/-02](../../50-service-design/A_07_interest_ranking/A_07_40-api/README.md) | 찜 UI 참조: [UI.A.22](UI_A_22_wishlist.md)
 
 ## 에셋
 

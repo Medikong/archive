@@ -85,8 +85,9 @@ updated: 2026-07-13
 | 찜 카드 | `brandDisplayName` | string | 브랜드명 표시 |
 | 찜 카드 | `productName` | string | 상품명 표시 |
 | 찜 카드 | `price` | number | 가격 표시 |
-| 찜 카드 | `dropStatus` | enum | D-day/오픈중/오픈예정/품절 배지 표시(카탈로그 출처) |
-| 찜 카드 | `badges[]` | string[] | LIMITED, ONLY 같은 배지 표시(카탈로그 출처) |
+| 찜 카드 | `status` | enum(`UPCOMING`/`OPEN`/`SOLD_OUT`/`CLOSED`) | D-day/오픈중/오픈예정/품절 배지 계산의 원재료(카탈로그 출처, `contracts/services/catalog-service/openapi.yaml`의 `DropStatus`) |
+| 찜 카드 | `opensAt` | datetime | D-day/카운트다운 계산용(카탈로그 출처) |
+| 찜 카드 | `remainingQuantity` | number | LIMITED/ONLY N 같은 배지 판단 기준(카탈로그 출처, `ProductSummary`) |
 | 찜 카드 | `interestedAt` | datetime | 정렬 후보(찜한 시각) |
 | 페이지네이션 | `nextCursor` | string? | 다음 페이지 커서 |
 | 페이지네이션 | `hasNext` | boolean | 추가 로드 가능 여부 |
@@ -100,7 +101,7 @@ updated: 2026-07-13
 
 ## 설계 반영 사항
 
-- Read Model 후보: `RM.A.22 WishlistReadModel`(interest-service의 찜 목록 + catalog-service의 드롭 표시 정보를 화면 조합 시점에 합친 결과)
+- Read Model 후보: `RM.A.22 WishlistReadModel`(interest-service의 찜 목록 + catalog-service의 드롭 표시 정보를 화면 조합 시점에 합친 결과 — 조합은 프론트에서, dropId별 `GET /drops/{dropId}` 병렬 호출로 수행. 결정 근거는 `PAGE.A.22`의 "결정됨" 섹션 참고)
 - Command 후보: `CMD.A.07.RemoveInterest`(찜리스트 화면에서의 찜 해제, 상품 상세의 `ToggleInterest`와 동일 API를 재사용)
 - Error 후보: `ERR.A.22.WISHLIST_LOGIN_REQUIRED`, `ERR.A.22.INTEREST_REMOVE_FAILED`, `ERR.A.22.CATALOG_INFO_UNAVAILABLE`
 - 권한 후보: 찜리스트 전체가 로그인 필요(비회원 접근 불가)
@@ -108,7 +109,6 @@ updated: 2026-07-13
 ## 확인 필요
 
 - 찜 해제를 낙관적 업데이트로 할지 서버 응답 대기 후 반영할지
-- 찜 목록(interest-service)과 드롭 표시 정보(catalog-service)를 프론트에서 합칠지 BFF에서 합칠지
 - 품절/종료된 드롭을 찜리스트에서 계속 보여줄지, 별도 섹션으로 분리할지
 - 정렬 기준(찜한 최신순 vs 드롭 오픈 임박순)
 - 페이지당 개수와 무한 스크롤 여부

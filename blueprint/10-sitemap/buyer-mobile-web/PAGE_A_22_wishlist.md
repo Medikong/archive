@@ -82,7 +82,7 @@ flowchart TD
 | 데이터 | 설명 | 출처/후속 연결 |
 | --- | --- | --- |
 | 찜 목록 | 찜한 드롭 ID, 찜 등록 시각, 커서 페이지네이션 | `interest-service` `GET /v1/users/me/interests`(`API.A.07-03`) |
-| 드롭 표시 정보 | 상품 썸네일, 브랜드명, 상품명, 가격, D-day, LIMITED/ONLY 배지, 품절 여부 | `catalog-service`(interest-service 응답엔 없음 — 화면 조합 시점에 별도로 불러와야 함) |
+| 드롭 표시 정보 | 상품 썸네일, 브랜드명, 상품명, 가격, `status`(`UPCOMING`/`OPEN`/`SOLD_OUT`/`CLOSED`), `opensAt`, `remainingQuantity` | `catalog-service` `GET /drops/{dropId}`(`contracts/services/catalog-service/openapi.yaml`의 `DropDetailResponse`) — dropId별로 개별 호출, 화면에서 병렬로(`Promise.all` 등) 조회한다. D-day 문구·LIMITED/ONLY 배지는 catalog-service가 완성된 문자열로 주지 않으므로 `status`/`opensAt`/`remainingQuantity`를 이 화면(프론트)에서 계산해 만든다. |
 | 찜 개수 | 앱 바에 표시할 총 찜 개수 | 찜 목록 응답의 페이지 정보 또는 개수 |
 
 ## 상태와 예외
@@ -108,10 +108,17 @@ flowchart TD
 
 🏷️ 요구사항 참조: [REQ.A.07](../../00-requirements/REQ_A_07_interest_ranking.md) | 플로우 참조: FLOW.A.07 | UI 참조: [UI.A.22](../../20-ui/buyer-mobile-web/UI_A_22_wishlist.md) | UC 참조: [UC.A.07-02](../../30-uc/UC_A_07_interest_ranking.md) | 영속성 참조: [PST.A.0720](../../50-service-design/A_07_interest_ranking/A_07_20-persistence/persistence-design.md) | 서비스 참조: [SD.A.0730](../../50-service-design/A_07_interest_ranking/A_07_30-service/service-design.md) | 시나리오 참조: SCN.A.07 예정 | API 참조: [API.A.07-03](../../50-service-design/A_07_interest_ranking/A_07_40-api/openapi/paths/API_A_07_03_list_my_interests.yaml)
 
+## 결정됨(2026-07-13): 찜 목록 + 카탈로그 표시 정보 조합 방식
+
+`interest-service`의 찜 목록(dropId만 있음)과 `catalog-service`의 드롭 표시 정보(썸네일/가격/상태)를 어디서 합칠지가 미결이었는데, 이렇게 결정함:
+
+- **프론트에서 두 API를 각각 불러와 합친다**(BFF 신설 안 함). `interest-service`가 이미 있는 API를 그대로 쓰고, catalog-service에도 새 작업을 요구하지 않아도 되기 때문.
+- catalog-service엔 dropId 여러 개를 한 번에 조회하는 배치 API가 없다(`GET /drops`는 페이지네이션 목록, `GET /drops/{dropId}`는 단건 조회뿐). 그래서 찜한 드롭 수만큼 `GET /drops/{dropId}`를 **병렬로**(순차 아님) 호출해서 조합한다.
+- 지금 찜 개수 규모(수십 개 이하로 예상)에서는 이 방식이 비효율적이어 보여도 실사용상 문제없다고 판단함 — 트래픽이 실제로 이 조합 방식을 못 버틸 정도가 되면, 그때 catalog-service에 배치 조회 API(`GET /drops?ids=...` 등)를 요청하는 쪽으로 재검토한다. 지금은 없는 문제를 미리 풀지 않는다.
+
 ## 확인 필요
 
 - 찜 해제를 낙관적 업데이트(즉시 카드 제거 후 실패 시 롤백)로 할지, 서버 응답을 기다린 뒤 제거할지 정한다. 이 목업은 전자를 가정했다.
-- 찜 목록과 카탈로그 표시 정보(썸네일/가격/배지)를 화면에서 조합하는 방식 — BFF에서 합칠지, 프론트에서 두 API를 각각 불러와 합칠지 정한다. `interest-service` 자체는 드롭 표시 정보를 갖고 있지 않다.
 - 찜한 드롭이 이미 품절/종료된 경우 카드에 어떤 상태 배지와 문구를 보여줄지 정한다(이 목업은 "품절" 배지로 임시 처리).
 - 목록 정렬 기준(찜한 최신순 vs 드롭 오픈 임박순)을 정한다. 현재 API는 `dropId` 기준 커서만 제공한다.
 - 페이지당 개수/무한 스크롤 여부를 정한다.

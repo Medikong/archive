@@ -29,6 +29,9 @@ paths:
   /v1/rankings/drops/upcoming:
     get:
       $ref: ./paths/API_A_07_06_list_upcoming_ranking.yaml#/get
+  /v1/rankings/drops/trending:
+    get:
+      $ref: ./paths/API_A_07_08_list_trending_ranking.yaml#/get
   /v1/operator/drops/{dropId}/interest-stats:
     get:
       $ref: ./paths/API_A_07_07_get_interest_stats.yaml#/get
