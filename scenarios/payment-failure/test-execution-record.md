@@ -77,7 +77,24 @@ task tests:purchase-e2e SCENARIO=05-payment-failure-flow
 | observability | 실패 metric 증가 확인 | `payments_failed_total`은 확인했다. `orders_payment_failed_total`, `inventory_released_total`은 추가 구현이 필요하다. |
 | observability | PII/raw token 로그 부재 확인 | 실패 로그에 카드 정보, JWT, 개인정보가 남지 않아야 한다. |
 
-## 7. 완료 판단
+## 7. Task 2 진행 기록 (2026-07-13)
+
+Task 2 `결제 실패 중복 이벤트 멱등성`은 진행 중이며, 완료로 판단하지 않는다.
+
+| 항목 | 현재 기록 |
+| --- | --- |
+| payment-service characterization | 실제 PostgreSQL 통합 characterization test는 services 커밋 `3a35578`에 포함되어 있다. |
+| order-service worktree | `processed_payment_events` transactional inbox와 HTTP/Kafka/DB gate 구현은 worktree에 있으나, 이 기록 작성 시점에는 아직 커밋되지 않았다. |
+| order-service unit regression | 21개 통과 |
+| payment-service focused replay unit | 1개 통과 |
+| 정적·문법 확인 | Python compile/import, bash syntax, YAML parse, diff check 통과 |
+| 실제 PostgreSQL 검증 | BLOCKED: Docker API escalation이 현재 환경 사용량 제한으로 거절되어 실행하지 못했다. |
+| Docker Kafka E2E | BLOCKED: Docker API escalation이 현재 환경 사용량 제한으로 거절되어 실행하지 못했다. |
+| ULW C001/C002/C003 | pending. 실제 PostgreSQL 또는 Docker Kafka E2E PASS 증거를 주장하지 않는다. |
+| coupon service | 이번 Task 2 진행에서 건드리지 않았다. |
+| 잔여 위험 | payment-service의 DB commit 이후 Kafka publish 구간은 아직 outbox가 없어 원자성이 보장되지 않으며, 이번 범위 밖이다. |
+
+## 8. 완료 판단
 
 결제 실패 시나리오는 다음 조건을 만족하면 완료로 본다.
 

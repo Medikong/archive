@@ -18,7 +18,7 @@
 | 순서 | Task | 상태 | 완료 기준 | 상세 기록 |
 | ---: | --- | --- | --- | --- |
 | 1 | 실제 병렬 주문과 DB oversell 방지 | 완료 | 병렬 주문 결과와 PostgreSQL 예약 합계가 재고를 초과하지 않는다. | `sold-out-concurrency/test-execution-record.md` |
-| 2 | 결제 실패 중복 이벤트 멱등성 | 대기 | 동일 실패 요청·이벤트가 결제와 주문 상태를 한 번만 변경한다. | `payment-failure/test-execution-record.md` |
+| 2 | 결제 실패 중복 이벤트 멱등성 | 진행 중 | 동일 실패 요청·이벤트가 결제와 주문 상태를 한 번만 변경한다. | `payment-failure/test-execution-record.md` |
 | 3 | 구조화 로그 correlation | 대기 | HTTP와 Kafka 경계에서 request/correlation/trace ID를 연결해 검색한다. | `_shared/01-observability-driven-test-contract.md` |
 | 4 | Kafka lag 및 notification metric | 대기 | 알림 지표가 증가하고 consumer lag가 기준 이하로 회복된다. | `_shared/01-observability-driven-test-contract.md` |
 | 5 | Gateway JWT E2E | 대기 | 유효 JWT만 통과하고 누락·위조 토큰과 위조 사용자 헤더가 차단된다. | `_shared/00-shared-infra-test-contract.md` |
@@ -44,11 +44,25 @@ Task를 완료할 때마다 다음 형식으로 항목을 추가한다.
 - 커밋: services `ee68f5f`, `3147dae`, `b07e20b`
 - 남은 위험: advisory lock은 PostgreSQL 전용이며, 다중 상품 주문과 장시간 spike의 p95/p99 및 `oversell_count` 운영 지표는 별도 부하 테스트가 필요하다.
 
+### Task 2. 결제 실패 중복 이벤트 멱등성
+
+#### Task 2 진행 기록 (2026-07-13)
+
+- 상태: 진행 중
+- 현재 확인 사실: payment-service 실제 PostgreSQL 통합 characterization test는 services 커밋 `3a35578`에 포함되어 있다.
+- 현재 worktree 사실: order-service의 `processed_payment_events` transactional inbox와 HTTP/Kafka/DB gate 구현은 worktree에 있으나, 이 기록 작성 시점에는 아직 커밋되지 않았다.
+- 통과한 로컬 검증: order-service unit regression 21개 통과, payment-service focused replay unit 1개 통과, Python compile/import, bash syntax, YAML parse, diff check 통과.
+- 차단된 검증: 실제 PostgreSQL 검증과 Docker Kafka E2E는 Docker API escalation이 현재 환경 사용량 제한으로 거절되어 실행하지 못했다.
+- ULW 상태: C001, C002, C003은 pending이며, 실제 PostgreSQL 또는 Docker Kafka E2E PASS 증거를 주장하지 않는다.
+- 범위 확인: coupon service는 이번 Task 2 진행에서 건드리지 않았다.
+- 남은 위험: payment-service의 DB commit 이후 Kafka publish 구간은 아직 outbox가 없어 원자성이 보장되지 않으며, 이번 범위 밖이다.
+
 ## 차단 사항과 후속 작업
 
 | 항목 | 현재 판단 | 다음 행동 |
 | --- | --- | --- |
 | 쿠폰 서비스 병합 | 현재 시나리오 완성 전까지 보류 | Task 7 이후 별도 병합·연동 계획으로 진행한다. |
+| Task 2 실제 PostgreSQL/Kafka E2E | Docker API escalation이 현재 환경 사용량 제한으로 거절되어 실제 PostgreSQL 및 Docker Kafka E2E를 실행하지 못했다. | Docker API 사용이 가능한 환경에서 ULW C001/C002/C003을 다시 실행하고 PASS 증거를 별도 기록한다. |
 | Gateway 종류 | 운영 문서는 Kong을 외부 Gateway로 설명하지만 JWT 계약은 Istio를 전제로 한다. | Task 5에서 실제 배포 경로를 먼저 확정한다. |
 | Kafka lag metric | 대시보드 후보만 있고 서비스 metric 계약이 없다. | Task 4에서 metric 이름과 측정 책임을 확정한다. |
 
