@@ -2,6 +2,7 @@
 
 작성일: 2026-07-07
 최종 Kafka trace E2E 재검증: 2026-07-12
+최종 Loki log correlation 재검증: 2026-07-13
 
 이 문서는 DropMong 시나리오 테스트를 실제 운영에 가깝게 만들기 위한 관측성 기반 검증 기준을 정의한다. 기존 E2E가 API 응답과 상태 전이를 확인한다면, 관측성 기반 테스트는 같은 흐름이 trace, metric, log, Kafka lag, alert 기준에서도 추적 가능하고 안전한지 확인한다.
 
@@ -107,7 +108,7 @@ API E2E 성공
 | metric | `07-purchase-flow-metrics`로 order/payment 주요 counter 확인 |
 | trace | `08-purchase-flow-trace-smoke`로 catalog/order/payment/notification 주요 API span 확인 |
 | Kafka trace | 최종 post-security/post-distinct 재실행에서 `09-purchase-kafka-trace-smoke` 통과, Newman CLI 결과 5 requests / 14 assertions / failures 0. 서로 다른 order root와 payment root에서 6개 필수 producer/consumer service/span pair 확인 |
-| Loki log | 정상 구매 6개 Kafka 경계와 결제 실패 `payment.failed` producer/consumer를 `correlation_id`로 조회하고 HTTP request correlation과 민감 필드 부재를 자동 판정했다. |
+| Loki log | 정상 구매 6개 Kafka 경계와 결제 실패 `payment.failed` producer/consumer를 `correlation_id`로 조회하고, 대응 HTTP/Kafka `trace_id` 일치와 민감 필드 부재를 자동 판정했다. |
 | 남은 범위 | notification 업무 metric, Kafka lag |
 
 Kafka trace 자동 판정은 고유 request ID로 현재 실행을 분리한다. 전체 구매 여정을 하나의 trace로 보지 않으며, 다음 두 root를 각각 확인한다.
@@ -204,7 +205,7 @@ Kafka trace 자동 판정은 고유 request ID로 현재 실행을 분리한다.
 2. `catalog-service`, `order-service`, `payment-service`, `notification-service`에 FastAPI trace instrumentation을 붙인다. 현재 정상 구매 API span smoke는 완료했다.
 3. E2E 요청에 고유 `X-Request-Id`를 넣는다. 현재 `04`, `08`, `09`가 고유 request ID 기반 검색으로 현재 실행을 분리한다.
 4. Kafka producer/consumer header에 `traceparent`, `tracestate`, `correlation_id`를 전파한다. 정상 구매의 producer/consumer span graph 자동 판정까지 완료했다.
-5. `04/05/06` Newman 실행 뒤 Tempo, Prometheus, Loki 또는 log output을 조회하는 검증 스크립트를 추가한다. 현재 `/metrics`, HTTP/Kafka trace, 정상 구매와 결제 실패 Loki correlation 판정까지 완료했다.
+5. `04/05/06` Newman 실행 뒤 Tempo, Prometheus, Loki 또는 log output을 조회하는 검증 스크립트를 추가한다. 현재 `/metrics`, HTTP/Kafka trace, 정상 구매와 결제 실패 Loki correlation 판정까지 완료했다. Loki E2E는 non-root Alloy, 읽기 전용 Docker socket proxy, Compose project 격리를 사용한다.
 6. 품절/동시성은 순차 E2E와 별도로 병렬 주문 스크립트 또는 k6 테스트를 추가한다.
 7. canary/rollout에서는 `oversell_count > 0`, error rate 급등, p95 초과, Kafka lag 미회복을 중단 조건으로 사용한다.
 
@@ -224,4 +225,4 @@ task tests:purchase-e2e-with-log-correlation
 - notification 업무 metric, Kafka lag metric, oversell metric 추가
 - 결제 실패, 품절/동시성 시나리오의 trace smoke 확장
 
-즉, 현재 구매 시나리오는 기능 E2E, order/payment 업무 metric, HTTP trace, Kafka span graph, 정상 구매와 결제 실패 Loki log correlation 자동 판정을 갖췄다. Kafka lag와 notification 업무 metric 자동 판정은 다음 개발 task로 분리한다.
+즉, 현재 구매 시나리오는 기능 E2E, order/payment 업무 metric, HTTP trace, Kafka span graph, 정상 구매와 결제 실패 Loki log correlation 자동 판정을 갖췄다. 최종 로그 검증에서는 middleware 11개, kafka-utils 15개, observability 55개와 네 구매 서비스 단위 테스트, Newman `04`부터 `09`까지 모두 통과했고 cleanup 후 container/volume/network와 임시 context가 남지 않았다. Kafka lag와 notification 업무 metric 자동 판정은 다음 개발 task로 분리한다.

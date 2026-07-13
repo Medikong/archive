@@ -68,17 +68,18 @@ Task를 완료할 때마다 다음 형식으로 항목을 추가한다.
 - 상태: 완료
 - 구현 내용: HTTP 완료 로그에 `correlation_id=request_id`를 추가하고, 구매 Kafka 이벤트의 `correlationId`를 `orderId`로 통일했다. producer/consumer span 안에서 payload를 제외한 구조화 로그를 남긴다.
 - 로그 필드: `service.name`, `messaging.operation`, `messaging.destination.name`, partition/offset, `correlation_id`, `trace_id`, `span_id`, `outcome`, 선택적 `failure.code`
-- 수집 경로: 컨테이너 stdout JSON -> Grafana Alloy Docker source -> Loki 3.7. 동적 ID는 Loki label로 올리지 않고 JSON field로 검색한다.
+- 수집 경로: 컨테이너 stdout JSON -> 읽기 전용 Docker socket proxy -> non-root Grafana Alloy Docker source -> Loki 3.7. Compose project로 실행을 격리하고, 동적 ID는 Loki label로 올리지 않고 JSON field로 검색한다.
 - 실행 명령: `task tests:purchase-e2e-with-log-correlation`
-- 정상 구매 결과: 동일 `orderId` correlation으로 `order.created`, `payment.approved`, `notification.requested`의 producer/consumer 6개 경계를 확인했다.
-- 결제 실패 결과: `payment.failed` producer/consumer를 같은 correlation으로 확인했고 `failure.code=payment_failed_event`, raw payload/token/card 필드 부재를 확인했다.
-- 단위 회귀: kafka-utils 14개, observability 50개, order 23개, payment 24개, notification 14개 통과
+- 정상 구매 결과: 동일 `orderId` correlation으로 `order.created`, `payment.approved`, `notification.requested`의 producer/consumer 6개 경계를 확인했다. 주문·결제 HTTP 로그와 대응 Kafka 로그의 `trace_id`도 각각 일치했다.
+- 결제 실패 결과: `payment.failed` producer/consumer를 같은 correlation으로 확인했고, 결제 HTTP 로그와 Kafka 로그의 `trace_id`가 일치했다. `failure.code=payment_failed_event`와 raw payload/token/card 필드 부재도 확인했다.
+- 보안 판정: token, card, JWT처럼 민감한 모양의 `X-Request-Id`는 UUID로 교체하며, Kafka 로그는 명시적 metadata allowlist만 기록한다.
+- 단위 회귀: middleware 11개, kafka-utils 15개, observability 55개, catalog 7개, order 23개, payment 24개, notification 14개 통과
 - 전체 회귀: `04` 6/12, `05` 4/14, `06` 8/15, `07` 2/8, `08` 4/4, `09` 5/14, 모든 Newman failures 0
-- cleanup: 증거 실행 후 container 0, volume 0
-- 커밋: services `1b1c055`, `0276cbc`
+- cleanup: 증거 실행 후 container 0, volume 0, network 0, 임시 clean build context 부재
+- 커밋: services `1b1c055`, `0276cbc`, `d539ecf`, `f6ab769`, `2dc792f`, `1338150`
 - 증거: ULW `G004-C001-happy-log-correlation.txt`, `G004-C002-failure-log-correlation.txt`, `G004-C003-purchase-regression.txt`
 - 범위 확인: coupon service는 수정하거나 병합하지 않았다.
-- 남은 위험: Docker socket mount는 로컬 E2E 전용이다. 운영 환경의 Alloy 권한, Loki 보존 기간, tenant/auth, alert 정책은 infra 배포 설계에서 별도로 확정해야 한다.
+- 남은 위험: Docker socket proxy와 Alloy Docker discovery는 로컬 E2E 전용이다. 운영 환경의 수집 권한, Loki 보존 기간, tenant/auth, alert 정책은 infra 배포 설계에서 별도로 확정해야 한다.
 
 ## 차단 사항과 후속 작업
 

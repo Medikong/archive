@@ -78,7 +78,7 @@ task tests:purchase-e2e-with-log-correlation
 | observability | 실패 metric 증가 확인 | `payments_failed_total`은 확인했다. `orders_payment_failed_total`, `inventory_released_total`은 추가 구현이 필요하다. |
 | observability | PII/raw token 로그 부재 확인 | 실패 로그에 카드 정보, JWT, 개인정보가 남지 않아야 한다. |
 
-2026-07-13의 Loki log correlation gate에서 결제 실패 주문의 `payment-service` `payment.failed` publish와 `order-service` process 로그를 같은 `orderId` correlation으로 조회했다. 두 로그의 trace/span ID가 존재했고, consumer 로그는 bounded code `payment_failed_event`를 남겼다. payload, value, authorization, token, card 필드는 검색된 로그에 없었다. 이 검증은 services `0276cbc`에서 통과했고 cleanup은 container 0, volume 0이었다.
+2026-07-13의 Loki log correlation gate에서 결제 실패 주문의 `payment-service` `payment.failed` publish와 `order-service` process 로그를 같은 `orderId` correlation으로 조회했다. 두 로그의 trace/span ID가 존재했고 결제 HTTP 로그와 Kafka 로그의 `trace_id`도 일치했다. consumer 로그는 bounded code `payment_failed_event`를 남겼으며 payload, value, authorization, token, card 필드는 검색된 로그에 없었다. 민감한 모양의 `X-Request-Id`는 UUID로 교체되고 Kafka 로그는 metadata allowlist만 기록한다. 최종 검증은 services `1338150`에서 통과했고 cleanup은 container 0, volume 0, network 0, 임시 context 부재였다.
 
 ## 7. Task 2 실패 기록 (2026-07-13)
 
