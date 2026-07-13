@@ -76,8 +76,9 @@ Task를 완료할 때마다 다음 형식으로 항목을 추가한다.
 - 단위 회귀: middleware 11개, kafka-utils 15개, observability 55개, catalog 7개, order 23개, payment 24개, notification 14개 통과
 - 전체 회귀: `04` 6/12, `05` 4/14, `06` 8/15, `07` 2/8, `08` 4/4, `09` 5/14, 모든 Newman failures 0
 - cleanup: 증거 실행 후 container 0, volume 0, network 0, 임시 clean build context 부재
-- 커밋: services `1b1c055`, `0276cbc`, `d539ecf`, `f6ab769`, `2dc792f`, `1338150`
+- 커밋: services `1b1c055`, `0276cbc`, `d539ecf`, `f6ab769`, `2dc792f`, `1338150`, 문서 정합성 `71555fa`
 - 증거: ULW `G004-C001-happy-log-correlation.txt`, `G004-C002-failure-log-correlation.txt`, `G004-C003-purchase-regression.txt`
+- 독립 검토: 목표 충족, 수동 QA, 코드 품질, 보안, 맥락 검토 5개 lane 모두 `PASS`, 차단 이슈 없음
 - 범위 확인: coupon service는 수정하거나 병합하지 않았다.
 - 남은 위험: Docker socket proxy와 Alloy Docker discovery는 로컬 E2E 전용이다. 운영 환경의 수집 권한, Loki 보존 기간, tenant/auth, alert 정책은 infra 배포 설계에서 별도로 확정해야 한다.
 
