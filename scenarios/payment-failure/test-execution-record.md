@@ -18,8 +18,8 @@
 
 | 계층 | 테스트 | 결과 | 확인 내용 |
 | --- | --- | --- | --- |
-| unit | `order-service` pytest | 통과, 21개 테스트 | `payment.failed` 이벤트 처리, 주문 상태 `PAYMENT_FAILED`, 결제 실패 후 예약 재고 release, 업무 metric, request id 응답 echo |
-| unit | `payment-service` pytest | 통과, 22개 테스트 | mock 실패 결제 생성, idempotency, 실패 metric, request id 응답 echo |
+| unit | `order-service` pytest | 통과, 23개 테스트 | `payment.failed` 이벤트 처리, 주문 상태 `PAYMENT_FAILED`, 결제 실패 후 예약 재고 release, 업무 metric, request/correlation id, 이벤트 correlation |
+| unit | `payment-service` pytest | 통과, 24개 테스트 | mock 실패 결제 생성, idempotency, 실패 metric, request/correlation id, 이벤트 correlation |
 | e2e | `05-payment-failure-flow` Newman | 통과, 4 requests / 14 assertions | 주문 생성, 결제 실패, 주문 실패 상태 조회, 실패 후 재고 회복 경로 |
 
 ## 3. Docker E2E 실행 기록
@@ -62,6 +62,7 @@ task test-service SERVICE=payment-service
 
 ```bash
 task tests:purchase-e2e SCENARIO=05-payment-failure-flow
+task tests:purchase-e2e-with-log-correlation
 ```
 
 ## 6. 아직 분리해서 추가하면 좋은 테스트
@@ -76,6 +77,8 @@ task tests:purchase-e2e SCENARIO=05-payment-failure-flow
 | observability | `payment.failed` trace/log 검색 | 결제 실패 원인과 주문 실패 반영이 같은 correlation으로 추적되어야 한다. |
 | observability | 실패 metric 증가 확인 | `payments_failed_total`은 확인했다. `orders_payment_failed_total`, `inventory_released_total`은 추가 구현이 필요하다. |
 | observability | PII/raw token 로그 부재 확인 | 실패 로그에 카드 정보, JWT, 개인정보가 남지 않아야 한다. |
+
+2026-07-13의 Loki log correlation gate에서 결제 실패 주문의 `payment-service` `payment.failed` publish와 `order-service` process 로그를 같은 `orderId` correlation으로 조회했다. 두 로그의 trace/span ID가 존재했고, consumer 로그는 bounded code `payment_failed_event`를 남겼다. payload, value, authorization, token, card 필드는 검색된 로그에 없었다. 이 검증은 services `0276cbc`에서 통과했고 cleanup은 container 0, volume 0이었다.
 
 ## 7. Task 2 실패 기록 (2026-07-13)
 

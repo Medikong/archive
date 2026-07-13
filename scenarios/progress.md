@@ -20,7 +20,7 @@
 | ---: | --- | --- | --- | --- |
 | 1 | 실제 병렬 주문과 DB oversell 방지 | 완료 | 병렬 주문 결과와 PostgreSQL 예약 합계가 재고를 초과하지 않는다. | `sold-out-concurrency/test-execution-record.md` |
 | 2 | 결제 실패 중복 이벤트 멱등성 | 실패 | 동일 실패 요청·이벤트가 결제와 주문 상태를 한 번만 변경한다. | `payment-failure/test-execution-record.md` |
-| 3 | 구조화 로그 correlation | 대기 | HTTP와 Kafka 경계에서 request/correlation/trace ID를 연결해 검색한다. | `_shared/01-observability-driven-test-contract.md` |
+| 3 | 구조화 로그 correlation | 완료 | HTTP와 Kafka 경계에서 request/correlation/trace ID를 연결해 검색한다. | `_shared/01-observability-driven-test-contract.md` |
 | 4 | Kafka lag 및 notification metric | 대기 | 알림 지표가 증가하고 consumer lag가 기준 이하로 회복된다. | `_shared/01-observability-driven-test-contract.md` |
 | 5 | Gateway JWT E2E | 대기 | 유효 JWT만 통과하고 누락·위조 토큰과 위조 사용자 헤더가 차단된다. | `_shared/00-shared-infra-test-contract.md` |
 | 6 | 세 시나리오 전체 회귀 테스트 | 대기 | 정상 구매, 결제 실패, 품절/동시성과 모든 신규 gate가 clean 환경에서 통과한다. | `_shared/02-docker-purchase-e2e-runbook.md` |
@@ -62,6 +62,23 @@ Task를 완료할 때마다 다음 형식으로 항목을 추가한다.
 - 로컬 환경 주의: `order-service`와 `payment-service`의 Git-ignored `.pytest_cache`는 샌드박스 전용 ACL 때문에 Docker build context에서 읽을 수 없다. 다음 재시도는 clean `git archive` context를 사용하거나 캐시 권한을 먼저 정리한다.
 - 범위 확인: coupon service는 이번 Task 2 진행에서 건드리지 않았다.
 - 남은 위험: payment-service의 DB commit 이후 Kafka publish 구간은 아직 outbox가 없어 원자성이 보장되지 않으며, 이번 범위 밖이다.
+
+### Task 3. 구조화 로그 correlation
+
+- 상태: 완료
+- 구현 내용: HTTP 완료 로그에 `correlation_id=request_id`를 추가하고, 구매 Kafka 이벤트의 `correlationId`를 `orderId`로 통일했다. producer/consumer span 안에서 payload를 제외한 구조화 로그를 남긴다.
+- 로그 필드: `service.name`, `messaging.operation`, `messaging.destination.name`, partition/offset, `correlation_id`, `trace_id`, `span_id`, `outcome`, 선택적 `failure.code`
+- 수집 경로: 컨테이너 stdout JSON -> Grafana Alloy Docker source -> Loki 3.7. 동적 ID는 Loki label로 올리지 않고 JSON field로 검색한다.
+- 실행 명령: `task tests:purchase-e2e-with-log-correlation`
+- 정상 구매 결과: 동일 `orderId` correlation으로 `order.created`, `payment.approved`, `notification.requested`의 producer/consumer 6개 경계를 확인했다.
+- 결제 실패 결과: `payment.failed` producer/consumer를 같은 correlation으로 확인했고 `failure.code=payment_failed_event`, raw payload/token/card 필드 부재를 확인했다.
+- 단위 회귀: kafka-utils 14개, observability 50개, order 23개, payment 24개, notification 14개 통과
+- 전체 회귀: `04` 6/12, `05` 4/14, `06` 8/15, `07` 2/8, `08` 4/4, `09` 5/14, 모든 Newman failures 0
+- cleanup: 증거 실행 후 container 0, volume 0
+- 커밋: services `1b1c055`, `0276cbc`
+- 증거: ULW `G004-C001-happy-log-correlation.txt`, `G004-C002-failure-log-correlation.txt`, `G004-C003-purchase-regression.txt`
+- 범위 확인: coupon service는 수정하거나 병합하지 않았다.
+- 남은 위험: Docker socket mount는 로컬 E2E 전용이다. 운영 환경의 Alloy 권한, Loki 보존 기간, tenant/auth, alert 정책은 infra 배포 설계에서 별도로 확정해야 한다.
 
 ## 차단 사항과 후속 작업
 
