@@ -21,7 +21,7 @@
 | 1 | 실제 병렬 주문과 DB oversell 방지 | 완료 | 병렬 주문 결과와 PostgreSQL 예약 합계가 재고를 초과하지 않는다. | `sold-out-concurrency/test-execution-record.md` |
 | 2 | 결제 실패 중복 이벤트 멱등성 | 실패 | 동일 실패 요청·이벤트가 결제와 주문 상태를 한 번만 변경한다. | `payment-failure/test-execution-record.md` |
 | 3 | 구조화 로그 correlation | 완료 | HTTP와 Kafka 경계에서 request/correlation/trace ID를 연결해 검색한다. | `_shared/01-observability-driven-test-contract.md` |
-| 4 | Kafka lag 및 notification metric | 대기 | 알림 지표가 증가하고 consumer lag가 기준 이하로 회복된다. | `_shared/01-observability-driven-test-contract.md` |
+| 4 | Kafka lag 및 notification metric | 실패 | 핵심 metric/lag 검증은 통과했지만 전체 `04`~`09` 회귀 gate가 runner 환경 문제로 완료되지 않았다. | `_shared/01-observability-driven-test-contract.md` |
 | 5 | Gateway JWT E2E | 대기 | 유효 JWT만 통과하고 누락·위조 토큰과 위조 사용자 헤더가 차단된다. | `_shared/00-shared-infra-test-contract.md` |
 | 6 | 세 시나리오 전체 회귀 테스트 | 대기 | 정상 구매, 결제 실패, 품절/동시성과 모든 신규 gate가 clean 환경에서 통과한다. | `_shared/02-docker-purchase-e2e-runbook.md` |
 | 7 | 실행 결과 문서화 | 대기 | 모든 Task의 명령, 결과, 증거, cleanup, 커밋과 잔여 위험이 연결된다. | 이 문서와 각 실행 기록 |
@@ -82,6 +82,22 @@ Task를 완료할 때마다 다음 형식으로 항목을 추가한다.
 - 범위 확인: coupon service는 수정하거나 병합하지 않았다.
 - 남은 위험: Docker socket proxy와 Alloy Docker discovery는 로컬 E2E 전용이다. 운영 환경의 수집 권한, Loki 보존 기간, tenant/auth, alert 정책은 infra 배포 설계에서 별도로 확정해야 한다.
 
+### Task 4. Kafka lag 및 notification metric
+
+- 상태: 실패, 핵심 시나리오 검증은 통과했고 전체 회귀 runner 재설계가 필요하다.
+- 구현 내용: `notification-service`에 이벤트 소비, 알림 생성, 중복 재수신, 잘못된 이벤트 counter를 추가했다. 동적 ID는 metric label로 사용하지 않는다.
+- lag 책임: 애플리케이션이 자체 추정 gauge를 내보내지 않는다. 실제 Kafka consumer group `notification-service-notification-requested`의 `notification.requested` committed offset을 조회해 lag를 판정한다.
+- 실행 명령: `task purchase-e2e-with-notification-metrics`
+- 정상 구매 결과: Newman `04` 6 requests / 12 assertions / failures 0, metric `consumed=1`, `created=1`, `replayed=0`, `invalid=0`, 알림 존재, offset/end/lag `1/1/0`, Newman `10` 1/5/0
+- 중복 이벤트 결과: 같은 유효 이벤트를 두 번 추가 발행한 뒤 metric `3/2/1/0`, 중복 이벤트 알림 정확히 1건, offset/end/lag `3/3/0`, Newman `11` 2/7/0
+- 전체 회귀 결과: notification 단위 테스트 18개와 Newman `04` 6/12/0, `05` 4/14/0, `06` 8/15/0, `07` 2/8/0, trace `04` 6/12/0, `08` 4/4/0 통과. `09` runner는 Go Task 내장 셸에 `grep`이 없어 Newman 전에 종료됐다.
+- 실패 시도: 원본 context의 `.pytest_cache` ACL, 기존 G004 검토 스택의 `18084` 충돌, `09` runner의 `grep` 의존성으로 C003 하네스 시도 3회가 소진됐다.
+- cleanup: 관련 Compose project의 container, volume, network는 모두 0이고 임시 clean clone context도 제거했다.
+- 구현 커밋: services `4164553`, `7923597`, `f7052a4`
+- 증거: ULW `G005-C001-notification-metrics-lag.txt`, `G005-C002-notification-replay-lag.txt`, `G005-C003-purchase-regression.txt`
+- 범위 확인: coupon service는 수정하거나 병합하지 않았다.
+- 다음 행동: `09` runner의 외부 `grep` 의존성을 내장 셸 호환 판정으로 교체한 뒤 `04`부터 `09`까지 전체 회귀를 다시 실행한다.
+
 ## 차단 사항과 후속 작업
 
 | 항목 | 현재 판단 | 다음 행동 |
@@ -89,7 +105,7 @@ Task를 완료할 때마다 다음 형식으로 항목을 추가한다.
 | 쿠폰 서비스 병합 | 현재 시나리오 완성 전까지 보류 | Task 7 이후 별도 병합·연동 계획으로 진행한다. |
 | Task 2 Windows runner 재설계 | `docker run`은 구조화 `--mount`가 동작하지만 `docker compose run`은 해당 옵션을 지원하지 않는다. 기존 `-v`는 MSYS가 source/target을 잘못 분리하며, 샌드박스 소유 `.pytest_cache`는 로컬 build context 접근도 막는다. | 다음 retry attempt에서 clean `git archive` context를 사용하고, Compose 실행 이미지에 smoke를 포함하거나 Windows-safe `--volume` 표기를 설계한 뒤 C002와 C003을 다시 실행한다. |
 | Gateway 종류 | 운영 문서는 Kong을 외부 Gateway로 설명하지만 JWT 계약은 Istio를 전제로 한다. | Task 5에서 실제 배포 경로를 먼저 확정한다. |
-| Kafka lag metric | 대시보드 후보만 있고 서비스 metric 계약이 없다. | Task 4에서 metric 이름과 측정 책임을 확정한다. |
+| Kafka trace runner portability | `09` runner가 Go Task 내장 셸에 없는 `grep`에 의존한다. | 내장 셸 호환 검증으로 교체하고 `04`~`09` 전체 회귀를 다시 실행한다. |
 
 ## 공통 회귀 기준
 

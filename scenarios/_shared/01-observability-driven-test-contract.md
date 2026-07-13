@@ -28,7 +28,7 @@ tests/e2e/observability/
 | 대상 서비스 | 현재 기본값은 `coupon-service` |
 | 제외 endpoint | `/healthz`, `/readyz`, `/metrics`는 trace에 남지 않아야 함 |
 | 구매 시나리오 서비스 | `catalog-service`, `order-service`, `payment-service`, `notification-service`에 FastAPI trace instrumentation을 연결했고, 정상 구매 주요 API span은 `08-purchase-flow-trace-smoke`로 검색한다. Kafka producer/consumer span graph는 `09-purchase-kafka-trace-smoke`로 확인한다. |
-| 구매 서비스 metric | `order-service`, `payment-service`는 구매 업무 metric을 제공하고 `07-purchase-flow-metrics`가 자동 판정한다. `notification-service` 업무 metric과 Kafka lag는 추가 작업이 필요하다. |
+| 구매 서비스 metric | `order-service`, `payment-service`는 `07-purchase-flow-metrics`로 판정한다. `notification-service` counter와 committed Kafka consumer lag는 `10`, `11` 및 `purchase-e2e-with-notification-metrics`로 판정한다. |
 
 따라서 구매 시나리오의 실전형 테스트는 기존 E2E에 관측성 검증을 붙이는 방향으로 확장한다.
 
@@ -84,7 +84,7 @@ Idempotency-Key: idem-syn-20260707-001
 | --- | --- |
 | trace | `GET /drops`, `POST /orders`, `POST /payments/mock-approvals`, `GET /orders/{orderId}`, `GET /notifications` 요청 span이 있다. |
 | event trace | `order.created`, `payment.approved`, `order.confirmed`, `notification.requested` 경계가 trace 또는 log correlation으로 이어진다. |
-| metric | `orders_created_total`, `payments_approved_total`, `notifications_requested_total`이 증가한다. |
+| metric | `orders_created_total`, `payments_approved_total`, notification counter 4종이 증가한다. |
 | latency | 정상 구매 journey 전체 p95가 목표 시간 이하이다. |
 | log | 같은 `request_id` 또는 `correlation_id`로 주문 생성부터 결제 승인까지 찾을 수 있다. |
 | error | 해당 synthetic run 동안 관련 서비스에 ERROR 로그가 없어야 한다. |
@@ -109,7 +109,7 @@ API E2E 성공
 | trace | `08-purchase-flow-trace-smoke`로 catalog/order/payment/notification 주요 API span 확인 |
 | Kafka trace | 최종 post-security/post-distinct 재실행에서 `09-purchase-kafka-trace-smoke` 통과, Newman CLI 결과 5 requests / 14 assertions / failures 0. 서로 다른 order root와 payment root에서 6개 필수 producer/consumer service/span pair 확인 |
 | Loki log | 정상 구매 6개 Kafka 경계와 결제 실패 `payment.failed` producer/consumer를 `correlation_id`로 조회하고, 대응 HTTP/Kafka `trace_id` 일치와 민감 필드 부재를 자동 판정했다. |
-| 남은 범위 | notification 업무 metric, Kafka lag |
+| 남은 범위 | 운영 alert threshold, 장시간 spike의 lag SLO |
 
 Kafka trace 자동 판정은 고유 request ID로 현재 실행을 분리한다. 전체 구매 여정을 하나의 trace로 보지 않으며, 다음 두 root를 각각 확인한다.
 
@@ -192,8 +192,11 @@ Kafka trace 자동 판정은 고유 request ID로 현재 실행을 분리한다.
 | `order_create_duration_seconds` | histogram | 주문 생성 latency |
 | `payments_approved_total` | counter | 결제 승인 수 |
 | `payments_failed_total` | counter | 결제 실패 수 |
-| `notification_requested_total` | counter | 알림 요청 수 |
-| `kafka_consumer_lag` | gauge | consumer lag |
+| `notification_requested_events_consumed_total` | counter | 소비한 알림 요청 이벤트 수 |
+| `notifications_created_total` | counter | 새로 생성한 알림 수 |
+| `notification_requested_events_replayed_total` | counter | 중복 재수신 이벤트 수 |
+| `notification_requested_events_invalid_total` | counter | 검증 실패 이벤트 수 |
+| Kafka committed consumer lag | Kafka group 상태 | `kafka-consumer-groups.sh --describe`의 `LAG`; 앱 metric이 아님 |
 | `outbox_pending_count` | gauge | 발행 대기 이벤트 수 |
 | `oversell_count` | gauge | 항상 0이어야 하는 안전 지표 |
 
@@ -218,11 +221,12 @@ task tests:test-observability-e2e
 task tests:purchase-e2e-with-traces
 task tests:purchase-e2e-with-kafka-traces
 task tests:purchase-e2e-with-log-correlation
+task tests:purchase-e2e-with-notification-metrics
 ```
 
 구매 시나리오의 기능 E2E, order/payment 업무 metric 자동 확인, 정상 구매 주요 API trace 검색, 정상 구매 Kafka producer/consumer span graph 판정은 `02-docker-purchase-e2e-runbook.md` 기준으로 바로 실행할 수 있다.
 
-- notification 업무 metric, Kafka lag metric, oversell metric 추가
+- oversell 운영 metric과 부하 기반 lag SLO 추가
 - 결제 실패, 품절/동시성 시나리오의 trace smoke 확장
 
-즉, 현재 구매 시나리오는 기능 E2E, order/payment 업무 metric, HTTP trace, Kafka span graph, 정상 구매와 결제 실패 Loki log correlation 자동 판정을 갖췄다. 최종 로그 검증에서는 middleware 11개, kafka-utils 15개, observability 55개와 네 구매 서비스 단위 테스트, Newman `04`부터 `09`까지 모두 통과했고 cleanup 후 container/volume/network와 임시 context가 남지 않았다. Kafka lag와 notification 업무 metric 자동 판정은 다음 개발 task로 분리한다.
+즉, 현재 구매 시나리오는 기능 E2E, order/payment 업무 metric, HTTP trace, Kafka span graph, Loki log correlation에 더해 notification 업무 counter와 committed consumer lag 자동 판정을 갖췄다. 정상 구매에서는 counter `1/1/0/0`과 lag 0, 같은 이벤트를 두 번 추가 발행한 뒤에는 `3/2/1/0`과 lag 0, 중복 이벤트당 알림 1건을 확인했다. 다만 최종 전체 회귀에서 `09` runner가 Go Task 내장 셸의 `grep` 부재로 Newman 전에 중단되어 Task 4는 실패 상태로 남긴다.
