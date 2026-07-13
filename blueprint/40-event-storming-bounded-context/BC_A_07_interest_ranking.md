@@ -24,10 +24,11 @@ updated: 2026-07-10
 
 - 🏷️ 요구사항 참조: [REQ.A.07](../00-requirements/REQ_A_07_interest_ranking.md)
 - 🏷️ UC 참조: [UC.A.07](../30-uc/UC_A_07_interest_ranking.md)
-- 🏷️ 영속성 참조: PST.A.07 예정
-- 🏷️ 서비스 참조: SVC.A.07 예정
+- 🏷️ 도메인 참조: [SD.A.0710](../50-service-design/A_07_interest_ranking/A_07_10-domain-model/SD_A_0710_interest_domain_model.md)
+- 🏷️ 영속성 참조: SD.A.0720 예정
+- 🏷️ 서비스 참조: SD.A.0730 예정
 - 🏷️ 시나리오 참조: SCN.A.07 예정
-- 🏷️ API 참조: API.A.07 예정
+- 🏷️ API 참조: SD.A.0740 예정
 
 ## 컨텍스트 경계
 
@@ -158,7 +159,7 @@ flowchart LR
 | --- | --- | --- | --- | --- |
 | Actor | ACTOR.A.07-01 | 구매자 | Context 외부 | 찜을 추가/해제하고, 찜 목록과 랭킹을 조회한다. |
 | Actor | ACTOR.A.07-02 | DropMong 운영자 | Context 외부 | 드롭별 관심도 통계를 조회해 운영 판단에 사용한다. |
-| Actor | ACTOR.A.07-03 | 브랜드 운영자 | Context 외부 | 자사 드롭의 찜/조회 통계를 조회한다. |
+| Actor | ACTOR.A.07-03 | 브랜드 운영자 | Context 외부 | 자사 드롭의 찜/조회 통계를 조회한다. 소유권 검증 메커니즘 미확정으로 `SD.A.0740` API.A.07-07의 1차 스코프는 범위 밖이다(2026-07-13 결정, 후속 설계 메모 참고). |
 | Context | CTX.A.07-01 | Context 찜 | BC 내부 | 찜 상태의 즉시 정합성을 담당한다. |
 | Context | CTX.A.07-02 | Context 랭킹 집계 | BC 내부 | 조회 기록, 랭킹 산출, 통계 제공을 담당하며 지연을 허용한다. |
 | Command | CMD.A.07-01 | 찜 추가/해제 | Context 찜 | 사용자의 찜 토글 요청을 처리한다. |
@@ -276,12 +277,13 @@ flowchart LR
 
 | 항목 | 메모 | 연결 문서 |
 | --- | --- | --- |
-| 도메인 모델 | `Interest`, `DropInterestCounter`의 Entity/Value Object, 상태 전이를 나눠 설계한다. | AGG.A.07 예정 |
-| 영속성 | 찜 상태(즉시 쓰기)와 카운터(Redis `ZINCRBY` 등 지연 허용 저장)의 저장소 분리 근거를 정리한다. | PST.A.07 예정 |
-| 서비스 | 찜 토글 서비스와 랭킹 집계 서비스(이벤트 컨슈머 포함)를 컨텍스트별로 분리한다. | SVC.A.07 예정 |
-| API | 찜 토글/목록 API와 랭킹/통계 조회 API의 요청·응답, 인증 요구사항을 정의한다. | API.A.07 예정 |
+| 도메인 모델 | `Interest`, `DropInterestCounter`의 필드, 불변조건, 상태 전이를 설계했다. | [SD.A.0710](../50-service-design/A_07_interest_ranking/A_07_10-domain-model/SD_A_0710_interest_domain_model.md) |
+| 영속성 | 찜 상태(Postgres, 즉시 쓰기)와 카운터(Postgres 1차, 핫키 실측 후 Redis 전환 검토)의 저장소 분리와 dedup 키 설계를 정리했다. | [SD.A.0720](../50-service-design/A_07_interest_ranking/A_07_20-persistence/persistence-design.md) |
+| 서비스 | 찜 토글·조회기록 Handler, 카운터반영·랭킹전환·점수갱신 Event Consumer, 자정 리셋 Worker로 분리했다. | [SD.A.0730](../50-service-design/A_07_interest_ranking/A_07_30-service/service-design.md) |
+| API | 찜 토글/목록/조회기록/랭킹/통계 API 7개의 요청·응답, 인증 요구사항을 정의했다. | [SD.A.0740](../50-service-design/A_07_interest_ranking/A_07_40-api/README.md) |
+| 권한 범위(2026-07-13 결정) | `RM.A.07-04`(관심도 통계) API는 1차 스코프에서 `ACTOR.A.07-02`(DropMong 운영자, `role=operator`)로만 제한한다. `ACTOR.A.07-03`(브랜드 운영자)은 자사 드롭 소유권 검증 메커니즘이 확정되기 전까지 범위 밖이다. | [SD.A.0740 API.A.07-07](../50-service-design/A_07_interest_ranking/A_07_40-api/api-endpoint-process.md) |
 | 발행 Event | 찜 추가/해제, 랭킹 리스트 전환, 오픈후 점수 갱신 이벤트를 다른 BC가 구독할 계약으로 정할지 검토한다. | SCN.A.07 예정 |
-| 구독 Event | `catalog.drop.updated`, `order.created`/`order.confirmed`의 구독 방식을 확정한다. 조회 기록은 이벤트 구독이 아니라 화면의 직접 API 호출로 확정했다(`RULE.A.07-04`). | SVC.A.07 예정 |
-| 외부 연동 | `catalog.drop.updated`가 `packages/contracts`에 아직 없다는 제약을 언제 해소할지 catalog 담당자와 협의한다. | API.A.07 예정 |
-| 정책/불변조건 | 로그인 게이트, dedup, 찜 카운터 대칭, 핫키 완충, 조회 기록 직접 연동을 불변조건으로 상세화한다. | PST.A.07 예정, SVC.A.07 예정 |
-| 열린 질문 | 핫키 버퍼링 주기/배치 크기, 오픈 후 재계산 주기, dedup 윈도우 실측 검증을 결정한다. | SCN.A.07 예정 |
+| 구독 Event | `catalog.drop.updated`, `order.created`/`order.confirmed`의 구독 방식을 확정한다. 조회 기록은 이벤트 구독이 아니라 화면의 직접 API 호출로 확정했다(`RULE.A.07-04`). | [SD.A.0730](../50-service-design/A_07_interest_ranking/A_07_30-service/service-design.md) |
+| 외부 연동 | `catalog.drop.updated`가 `packages/contracts`에 아직 없다는 제약을 언제 해소할지 catalog 담당자와 협의한다. | [SD.A.0730](../50-service-design/A_07_interest_ranking/A_07_30-service/service-design.md) |
+| 정책/불변조건 | 로그인 게이트, dedup, 찜 카운터 대칭, 핫키 완충, 조회 기록 직접 연동을 불변조건으로 상세화했다. | [SD.A.0720](../50-service-design/A_07_interest_ranking/A_07_20-persistence/persistence-design.md), [SD.A.0730](../50-service-design/A_07_interest_ranking/A_07_30-service/service-design.md) |
+| 열린 질문 | 핫키 버퍼링 주기/배치 크기, 오픈 후 재계산 주기, dedup 윈도우 실측 검증, 이벤트 재처리/DLQ 정책을 결정한다. | SCN.A.07 예정, [SD.A.0730](../50-service-design/A_07_interest_ranking/A_07_30-service/service-design.md) |

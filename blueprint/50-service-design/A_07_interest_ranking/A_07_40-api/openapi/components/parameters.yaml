@@ -1,0 +1,75 @@
+XUserId:
+  name: X-User-Id
+  in: header
+  required: true
+  description: Authenticated user id forwarded by the trusted gateway in local E2E. (`service` 레포 `contracts/common/components.yaml`와 동일)
+  schema:
+    type: string
+
+XUserEmail:
+  name: X-User-Email
+  in: header
+  required: false
+  description: Authenticated user email forwarded by the trusted gateway in local E2E.
+  schema:
+    type: string
+    format: email
+
+XUserRole:
+  name: X-User-Role
+  in: header
+  required: true
+  description: Authenticated role forwarded by the trusted gateway in local E2E.
+  schema:
+    $ref: ./schemas.yaml#/UserRole
+
+IdempotencyKey:
+  name: Idempotency-Key
+  in: header
+  required: false
+  description: 재시도 시 같은 요청으로 처리하기 위한 선택적 안정 키다.
+  schema:
+    type: string
+
+XRequestId:
+  name: X-Request-Id
+  in: header
+  required: false
+  description: Request correlation id. If absent, the server may generate one.
+  schema:
+    type: string
+
+Traceparent:
+  name: traceparent
+  in: header
+  required: false
+  description: W3C trace context header.
+  schema:
+    type: string
+
+Limit:
+  name: limit
+  in: query
+  required: false
+  schema:
+    type: integer
+    minimum: 1
+    maximum: 100
+    default: 20
+
+Cursor:
+  name: cursor
+  in: query
+  required: false
+  description: Cursor from the previous page response.
+  schema:
+    type: string
+
+DropIdPath:
+  name: dropId
+  in: path
+  required: true
+  description: 드롭 식별자.
+  schema:
+    type: string
+    format: uuid

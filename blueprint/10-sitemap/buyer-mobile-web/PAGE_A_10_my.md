@@ -58,7 +58,7 @@ flowchart TD
     CouponBox["PAGE.A.19 보유 쿠폰"]
     Point["포인트"]
     PaymentMethod["결제수단 관리"]
-    Wishlist["찜리스트"]
+    Wishlist["PAGE.A.22 찜리스트"]
     Invite["친구 초대"]
     Support["고객지원"]
 
@@ -79,6 +79,7 @@ flowchart TD
     click Cart "./PAGE_A_06_shopping_cart.md"
     click OrderHistory "./PAGE_A_15_order_history.md"
     click CouponBox "./PAGE_A_19_coupon_wallet/PAGE_A_19_owned_coupon.md"
+    click Wishlist "./PAGE_A_22_wishlist.md"
 ```
 
 ## 진입 경로
@@ -101,6 +102,7 @@ flowchart TD
 | 전체 주문 선택 | 주문 내역 | 로그인 필요 |
 | 배송중 선택 | 주문 내역 | 배송중 필터 적용 가능 |
 | 보유쿠폰 선택 | [PAGE.A.19 보유 쿠폰](./PAGE_A_19_coupon_wallet/PAGE_A_19_owned_coupon.md) | 로그인 필요 |
+| 찜리스트 선택 | [PAGE.A.22 찜리스트](./PAGE_A_22_wishlist.md) | 로그인 필요 |
 | 포인트 선택 | 포인트 | 포인트 내역 조회 |
 | 주문내역 전체보기 선택 | 주문 내역 | 최근 주문 목록 전체 이동 |
 | 최근 주문 카드 선택 | 주문 상세 | 주문 소유자만 조회 |
@@ -146,7 +148,7 @@ flowchart TD
 | `PAGE.A.19` | [보유 쿠폰](./PAGE_A_19_coupon_wallet/PAGE_A_19_owned_coupon.md) | 작성 완료 | 보유쿠폰, 쿠폰함 |
 | `PAGE.A.20` | 포인트 | 문서 예정 | 포인트 |
 | `PAGE.A.21` | 결제수단 관리 | 문서 예정 | 결제수단 관리 |
-| `PAGE.A.22` | 찜리스트 | 문서 예정 | 찜리스트 |
+| `PAGE.A.22` | [찜리스트](./PAGE_A_22_wishlist.md) | 작성 완료 | 찜리스트 |
 
 ## 연관 요구사항
 

@@ -1,0 +1,36 @@
+post:
+  tags:
+    - Interest
+  summary: 드롭 조회 기록
+  description: 드롭 상세 화면 진입을 관심 신호로 기록한다. 5분 dedup 윈도우 안의 중복 조회는 카운터에 반영되지 않지만 오류로 취급하지 않는다.
+  operationId: recordDropView
+  x-api-id: API.A.07-04
+  x-use-case: UC.A.07
+  x-service-design: SD.A.0740
+  x-design-doc: ../../api-endpoint-process.md
+  security:
+    - BearerAuth: []
+  parameters:
+    - $ref: ../components/parameters.yaml#/XUserId
+    - $ref: ../components/parameters.yaml#/XUserRole
+    - $ref: ../components/parameters.yaml#/IdempotencyKey
+    - $ref: ../components/parameters.yaml#/XRequestId
+    - $ref: ../components/parameters.yaml#/Traceparent
+    - $ref: ../components/parameters.yaml#/DropIdPath
+  responses:
+    '200':
+      description: 조회 기록 요청을 처리했다(dedup 통과 여부와 무관하게 성공).
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas.yaml#/ViewRecordResponse
+          example:
+            data:
+              dropId: 7d4a8f2c-5e14-46be-9b9b-987f5d69e001
+              recorded: true
+    '401':
+      $ref: ../components/responses.yaml#/AuthenticationRequired
+    '404':
+      $ref: ../components/responses.yaml#/ResourceNotFound
+    '503':
+      $ref: ../components/responses.yaml#/ServiceUnavailable

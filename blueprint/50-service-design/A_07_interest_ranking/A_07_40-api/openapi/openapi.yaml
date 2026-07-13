@@ -1,0 +1,62 @@
+openapi: 3.1.0
+info:
+  title: Interest Ranking Service API
+  version: 0.1.0
+  description: Owns wishlist (Interest) toggling, view-signal aggregation, and pre/post-open drop ranking (DropInterestCounter).
+servers:
+  - url: https://api.dropmong.example
+    description: 공개 Gateway 예시 주소
+tags:
+  - name: Interest
+    description: 찜 상태와 조회 신호 관련 API
+  - name: Ranking
+    description: 랭킹과 관심도 통계 조회 API
+paths:
+  /v1/users/me/interests/{dropId}:
+    put:
+      $ref: ./paths/API_A_07_01_add_interest.yaml#/put
+    delete:
+      $ref: ./paths/API_A_07_02_remove_interest.yaml#/delete
+  /v1/users/me/interests:
+    get:
+      $ref: ./paths/API_A_07_03_list_my_interests.yaml#/get
+  /v1/drops/{dropId}/views:
+    post:
+      $ref: ./paths/API_A_07_04_record_view.yaml#/post
+  /v1/rankings/drops/open:
+    get:
+      $ref: ./paths/API_A_07_05_list_open_ranking.yaml#/get
+  /v1/rankings/drops/upcoming:
+    get:
+      $ref: ./paths/API_A_07_06_list_upcoming_ranking.yaml#/get
+  /v1/operator/drops/{dropId}/interest-stats:
+    get:
+      $ref: ./paths/API_A_07_07_get_interest_stats.yaml#/get
+  /healthz:
+    $ref: ./operational/healthz.yaml
+  /readyz:
+    $ref: ./operational/readyz.yaml
+  /metrics:
+    $ref: ./observability/metrics.yaml
+components:
+  parameters:
+    XUserId:
+      $ref: ./components/parameters.yaml#/XUserId
+    XUserEmail:
+      $ref: ./components/parameters.yaml#/XUserEmail
+    XUserRole:
+      $ref: ./components/parameters.yaml#/XUserRole
+    IdempotencyKey:
+      $ref: ./components/parameters.yaml#/IdempotencyKey
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        `service` 레포 `contracts/common/components.yaml#/components/securitySchemes/BearerAuth`와
+        동일하다. auth-service가 발급한 access token(HS256 JWT)을 `Authorization: Bearer <token>`으로
+        전달한다. 목표 ingress 구조에서는 Istio Gateway가 이 토큰을 검증하고, 검증된 claim에서 만든
+        `X-User-Id`/`X-User-Email`/`X-User-Role` 헤더(`components/parameters.yaml`)를 서비스에 전달한다.
+        서비스는 두 표현(BearerAuth 검증 + X-User-* 신뢰)을 함께 문서화하며, 클라이언트가 직접 보낸
+        X-User-* 값은 신뢰하지 않는다(`contracts/jwt-conventions.md` 기준).

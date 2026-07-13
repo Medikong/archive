@@ -1,0 +1,20 @@
+get:
+  tags:
+    - operational
+  summary: Service readiness.
+  description: Checks whether interest-service can receive traffic (database and Redis dedup gate).
+  operationId: getReadyz
+  security: []
+  responses:
+    "200":
+      description: Service is ready.
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas.yaml#/ReadinessResponse
+    "503":
+      description: Service is not ready.
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas.yaml#/ReadinessResponse

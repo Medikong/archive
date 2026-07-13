@@ -31,6 +31,7 @@ updated: 2026-07-10
 | [PAGE.A.16](PAGE_A_16_track_order.md) | `/orders/:orderId/tracking` | 배송 조회 | 주문 소유자 확인 | [UI.A.16](../../20-ui/buyer-mobile-web/UI_A_16_track_order.md) |
 | [PAGE.A.17](PAGE_A_17_shipping_order_manage.md) | `/orders/:orderId/manage` | 배송·주문 관리 | 주문 소유자 확인 | [UI.A.17](../../20-ui/buyer-mobile-web/UI_A_17_shipping_order_manage.md) |
 | [PAGE.A.19](PAGE_A_19_coupon_wallet/README.md) | `/my/coupons` | 보유 쿠폰·코드 등록 | 로그인 필요 | [UI.A.19](../../20-ui/buyer-mobile-web/UI_A_19_coupon_wallet/UI_A_19_coupon_wallet.md) |
+| [PAGE.A.22](PAGE_A_22_wishlist.md) | `/my/wishlist` | 찜리스트 | 로그인 필요 | [UI.A.22](../../20-ui/buyer-mobile-web/UI_A_22_wishlist.md) |
 
 ## 핵심 사용자 여정
 

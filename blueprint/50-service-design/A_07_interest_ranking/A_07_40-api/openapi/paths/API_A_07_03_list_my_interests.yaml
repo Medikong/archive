@@ -1,0 +1,35 @@
+get:
+  tags:
+    - Interest
+  summary: 내 찜 목록 조회
+  description: 로그인 사용자가 찜한 드롭 목록을 반환한다.
+  operationId: listMyInterests
+  x-api-id: API.A.07-03
+  x-use-case: UC.A.07
+  x-service-design: SD.A.0740
+  x-design-doc: ../../api-endpoint-process.md
+  security:
+    - BearerAuth: []
+  parameters:
+    - $ref: ../components/parameters.yaml#/XUserId
+    - $ref: ../components/parameters.yaml#/XUserRole
+    - $ref: ../components/parameters.yaml#/XRequestId
+    - $ref: ../components/parameters.yaml#/Traceparent
+    - $ref: ../components/parameters.yaml#/Limit
+    - $ref: ../components/parameters.yaml#/Cursor
+  responses:
+    '200':
+      description: 찜한 드롭 목록이다. 없으면 빈 배열이다.
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas.yaml#/InterestListResponse
+          example:
+            data:
+              - dropId: 7d4a8f2c-5e14-46be-9b9b-987f5d69e001
+                addedAt: '2026-07-13T09:00:00Z'
+            pageInfo:
+              nextCursor: null
+              hasNext: false
+    '401':
+      $ref: ../components/responses.yaml#/AuthenticationRequired

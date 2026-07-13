@@ -29,6 +29,7 @@ updated: 2026-07-10
 | [UI.A.16](UI_A_16_track_order.md) | 배송 조회 | [PAGE.A.16](../../10-sitemap/buyer-mobile-web/PAGE_A_16_track_order.md) | [시안](assets/UI_A_16_track_order/UI_A_16_10_buyer_mobile_web.png) |
 | [UI.A.17](UI_A_17_shipping_order_manage.md) | 배송·주문 관리 | [PAGE.A.17](../../10-sitemap/buyer-mobile-web/PAGE_A_17_shipping_order_manage.md) | [시안](assets/UI_A_17_shipping_order_manage/UI_A_17_10_buyer_mobile_web.png) |
 | [UI.A.19](UI_A_19_coupon_wallet/UI_A_19_coupon_wallet.md) | 보유 쿠폰·코드 등록 | [PAGE.A.19](../../10-sitemap/buyer-mobile-web/PAGE_A_19_coupon_wallet/PAGE_A_19_owned_coupon.md) | [시안](assets/UI_A_19_coupon_wallet/UI_A_19_10_buyer_mobile_web.png) |
+| [UI.A.22](UI_A_22_wishlist.md) | 찜리스트 | [PAGE.A.22](../../10-sitemap/buyer-mobile-web/PAGE_A_22_wishlist.md) | [시안](assets/UI_A_22_wishlist/UI_A_22_10_buyer_mobile_web.png) |
 
 ## 시각 기준
 

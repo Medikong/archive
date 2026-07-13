@@ -1,0 +1,206 @@
+HealthResponse:
+  type: object
+  required: [status, service]
+  properties:
+    status:
+      type: string
+      enum: [ok]
+    service:
+      type: string
+      examples: [interest-service]
+    timestamp:
+      type: string
+      format: date-time
+
+ReadinessResponse:
+  type: object
+  required: [status, service, checks]
+  properties:
+    status:
+      type: string
+      enum: [ready, not_ready]
+    service:
+      type: string
+      examples: [interest-service]
+    checks:
+      type: object
+      additionalProperties:
+        type: string
+    timestamp:
+      type: string
+      format: date-time
+
+PageInfo:
+  type: object
+  required: [hasNext]
+  properties:
+    nextCursor:
+      type: [string, "null"]
+    hasNext:
+      type: boolean
+
+ErrorResponse:
+  type: object
+  required: [error, requestId, occurredAt]
+  properties:
+    error:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+          description: 업무 오류 코드(내부 원인이 아니라 공개 가능한 조건).
+          examples: [interest.drop_not_found]
+        message:
+          type: string
+    requestId:
+      type: string
+      format: uuid
+    occurredAt:
+      type: string
+      format: date-time
+
+InterestStatus:
+  type: string
+  enum: [active, inactive]
+
+DropPhase:
+  type: string
+  enum: [SCHEDULED, OPEN, CLOSED]
+
+UserRole:
+  type: string
+  enum: [CUSTOMER, OPERATOR, ADMIN]
+  description: '`service` 레포 `contracts/common/components.yaml`의 UserRole과 동일하다.'
+
+Interest:
+  type: object
+  required: [dropId, status, updatedAt]
+  properties:
+    dropId:
+      type: string
+      format: uuid
+    status:
+      $ref: '#/InterestStatus'
+    updatedAt:
+      type: string
+      format: date-time
+
+# 단일 리소스 응답은 data로 감싼다(catalog-service의 DropDetailResponse, order-service의 OrderResponse와 동일한 패턴).
+InterestResponse:
+  type: object
+  required: [data]
+  properties:
+    data:
+      $ref: '#/Interest'
+
+InterestListItem:
+  type: object
+  required: [dropId, addedAt]
+  properties:
+    dropId:
+      type: string
+      format: uuid
+    addedAt:
+      type: string
+      format: date-time
+
+# 목록 응답은 catalog-service의 DropListResponse와 동일하게 data + pageInfo 구조를 쓴다(제네릭 data/meta 래퍼가 아니라 커서 페이지네이션 전용 구조다).
+InterestListResponse:
+  type: object
+  required: [data, pageInfo]
+  properties:
+    data:
+      type: array
+      items:
+        $ref: '#/InterestListItem'
+    pageInfo:
+      $ref: '#/PageInfo'
+
+ViewRecordResult:
+  type: object
+  required: [dropId, recorded]
+  properties:
+    dropId:
+      type: string
+      format: uuid
+    recorded:
+      type: boolean
+      description: dedup 윈도우를 통과해 실제 카운터에 반영됐는지 여부다. false여도 오류가 아니다.
+
+ViewRecordResponse:
+  type: object
+  required: [data]
+  properties:
+    data:
+      $ref: '#/ViewRecordResult'
+
+OpenRankingItem:
+  type: object
+  required: [dropId, sellThroughScore]
+  properties:
+    dropId:
+      type: string
+      format: uuid
+    sellThroughScore:
+      type: number
+      format: float
+
+OpenRankingListResponse:
+  type: object
+  required: [data, pageInfo]
+  properties:
+    data:
+      type: array
+      items:
+        $ref: '#/OpenRankingItem'
+    pageInfo:
+      $ref: '#/PageInfo'
+
+UpcomingRankingItem:
+  type: object
+  required: [dropId, upcomingCount]
+  properties:
+    dropId:
+      type: string
+      format: uuid
+    upcomingCount:
+      type: integer
+      minimum: 0
+
+UpcomingRankingListResponse:
+  type: object
+  required: [data, pageInfo]
+  properties:
+    data:
+      type: array
+      items:
+        $ref: '#/UpcomingRankingItem'
+    pageInfo:
+      $ref: '#/PageInfo'
+
+DropInterestStats:
+  type: object
+  required: [dropId, dropPhase, upcomingCount, viewCountTotal]
+  properties:
+    dropId:
+      type: string
+      format: uuid
+    dropPhase:
+      $ref: '#/DropPhase'
+    upcomingCount:
+      type: integer
+      minimum: 0
+    viewCountTotal:
+      type: integer
+      minimum: 0
+    sellThroughScore:
+      type: [number, "null"]
+      format: float
+
+DropInterestStatsResponse:
+  type: object
+  required: [data]
+  properties:
+    data:
+      $ref: '#/DropInterestStats'
