@@ -1,6 +1,7 @@
 # 결제 실패 테스트 실행 기록
 
 작성일: 2026-07-07
+최종 중복 멱등성 재검증: 2026-07-13
 
 이 문서는 결제 실패 시나리오를 구현하면서 실제로 확인한 테스트와 앞으로 추가해야 할 테스트를 기록한다. 상세 설계는 `00-detailed-design.md`를 기준으로 한다.
 
@@ -82,7 +83,7 @@ task tests:purchase-e2e-with-log-correlation
 
 ## 7. Task 2 실패 기록 (2026-07-13)
 
-Task 2 `결제 실패 중복 이벤트 멱등성`은 첫 ULW 시도에서 실패했으며, 완료로 판단하지 않는다.
+Task 2 `결제 실패 중복 이벤트 멱등성`은 첫 ULW 시도에서 실패했다. 이 절은 G003 당시의 실패 사실을 보존하며, 최종 상태는 다음 절의 재설계 성공 기록으로 판단한다.
 
 | 항목 | 현재 기록 |
 | --- | --- |
@@ -102,7 +103,26 @@ Task 2 `결제 실패 중복 이벤트 멱등성`은 첫 ULW 시도에서 실패
 | coupon service | 이번 Task 2 진행에서 건드리지 않았다. |
 | 잔여 위험 | payment-service의 DB commit 이후 Kafka publish 구간은 아직 outbox가 없어 원자성이 보장되지 않으며, 이번 범위 밖이다. |
 
-## 8. 완료 판단
+## 8. Task 2 재설계 성공 기록 (G008, 2026-07-13)
+
+Windows bind mount와 `git archive`에 의존하던 runner를 `Python`으로 교체했다. 새 runner는 Git에 추적된 파일만 깨끗한 임시 context로 복사하고 smoke 코드를 image에 포함하므로 host bind mount를 사용하지 않는다.
+
+| 항목 | 최종 결과 |
+| --- | --- |
+| 실행 gate | `task payment-failure-idempotency` |
+| HTTP 중복 요청 | 결제 1행만 유지 |
+| Kafka 재전달 | 3건 모두 동일한 `eventId` 1개로 처리 |
+| transactional inbox | `processed_payment_events` 1행 |
+| 주문 최종 상태 | `PAYMENT_FAILED` |
+| 재고 처리 | 실패 주문을 활성 예약 합계에서 제외해 수량 회복 |
+| 통합 실행 | services `ea9710d`, `task purchase-internal-regression`, exit 0, 522.6초 |
+| 최종 기준선 | services `34f909b` |
+| 정리 결과 | container/network/volume/image/임시 context 모두 0 |
+| 독립 검토 | 최종 5개 검토 영역 모두 `PASS` |
+
+현재 수용 동작은 `PAYMENT_FAILED`와 예약 집계 제외 방식이다. `CANCELLED`, `EXPIRED`, 늦은 승인, 실패 알림, transactional outbox는 연기된 후속 범위다. Gateway JWT도 이번 내부 gate에 포함되지 않았으며 운영 또는 외부 요청 경계가 준비됐다고 해석하지 않는다.
+
+## 9. 완료 판단
 
 결제 실패 시나리오는 다음 조건을 만족하면 완료로 본다.
 

@@ -2,6 +2,7 @@
 
 작성일: 2026-07-07
 최종 병렬 주문/DB 재검증: 2026-07-13
+최종 내부 통합 재검증: 2026-07-13
 
 이 문서는 품절/동시성 시나리오를 구현하면서 실제로 확인한 테스트와 앞으로 추가해야 할 테스트를 기록한다. 상세 설계는 `00-detailed-design.md`를 기준으로 한다.
 
@@ -69,6 +70,22 @@ POST /orders x 여러 고객
 | cleanup | container/volume 0 | container/volume 0 |
 
 PostgreSQL repository는 drop/product 조합의 advisory transaction lock을 획득한 뒤 활성 예약 합계를 읽고 주문을 저장한다. 실제 검증에서 oversell이 재현되지 않아 운영 트랜잭션 코드는 변경하지 않았다.
+
+### 최종 통합 확인 (G009)
+
+services `ea9710d`의 `task purchase-internal-regression`에서 실제 concurrency gate를 포함한 8개 내부 gate가 exit 0, 522.6초로 통과했다. 최종 기준선은 services `34f909b`이다.
+
+| 불변 조건 | 최종 결과 |
+| --- | --- |
+| 동시 주문 | 5건 |
+| 응답 분포 | `201` 4건, `409` 1건 |
+| DB 활성 주문 | 4건 |
+| DB 예약 수량 | 40 |
+| 재고 상한 | 40이 42 이하 |
+| 정리 결과 | container/network/volume/image/임시 context 모두 0 |
+| 독립 검토 | 최종 5개 검토 영역 모두 `PASS` |
+
+이 결과는 Gateway를 통과하지 않는 내부 회귀다. 신뢰된 `X-User-*` header만 사용했으며 JWT와 위조 header 차단은 별도 Gateway E2E로 남는다.
 
 ## 6. 실행 명령 기준
 
