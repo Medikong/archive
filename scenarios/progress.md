@@ -50,9 +50,11 @@ Task를 완료할 때마다 다음 형식으로 항목을 추가한다.
 
 - 상태: 진행 중
 - 현재 확인 사실: payment-service 실제 PostgreSQL 통합 characterization test는 services 커밋 `3a35578`에 포함되어 있다.
-- 현재 worktree 사실: order-service의 `processed_payment_events` transactional inbox와 HTTP/Kafka/DB gate 구현은 worktree에 있으나, 이 기록 작성 시점에는 아직 커밋되지 않았다.
+- 구현 커밋: order-service `processed_payment_events` transactional inbox는 services 커밋 `387b3da`에 포함되어 있고, HTTP/Kafka/DB E2E gate는 services 커밋 `b2fd84d`에 포함되어 있다.
+- 신규 실행 명령: `task payment-failure-idempotency`
 - 통과한 로컬 검증: order-service unit regression 21개 통과, payment-service focused replay unit 1개 통과, Python compile/import, bash syntax, YAML parse, diff check 통과.
-- 차단된 검증: 실제 PostgreSQL 검증과 Docker Kafka E2E는 Docker API escalation이 현재 환경 사용량 제한으로 거절되어 실행하지 못했다.
+- 검토 기록: review-work 5개 lane은 bounded wait 이후 deliverable을 반환하지 않아 `INCONCLUSIVE`로 기록한다. 승인이나 PASS로 해석하지 않는다.
+- 차단된 검증: 실제 Docker/PostgreSQL/Kafka 검증은 Docker API escalation이 현재 환경 사용량 제한으로 거절되어 실행하지 못했다.
 - ULW 상태: C001, C002, C003은 pending이며, 실제 PostgreSQL 또는 Docker Kafka E2E PASS 증거를 주장하지 않는다.
 - 범위 확인: coupon service는 이번 Task 2 진행에서 건드리지 않았다.
 - 남은 위험: payment-service의 DB commit 이후 Kafka publish 구간은 아직 outbox가 없어 원자성이 보장되지 않으며, 이번 범위 밖이다.
@@ -62,7 +64,7 @@ Task를 완료할 때마다 다음 형식으로 항목을 추가한다.
 | 항목 | 현재 판단 | 다음 행동 |
 | --- | --- | --- |
 | 쿠폰 서비스 병합 | 현재 시나리오 완성 전까지 보류 | Task 7 이후 별도 병합·연동 계획으로 진행한다. |
-| Task 2 실제 PostgreSQL/Kafka E2E | Docker API escalation이 현재 환경 사용량 제한으로 거절되어 실제 PostgreSQL 및 Docker Kafka E2E를 실행하지 못했다. | Docker API 사용이 가능한 환경에서 ULW C001/C002/C003을 다시 실행하고 PASS 증거를 별도 기록한다. |
+| Task 2 실제 Docker/PostgreSQL/Kafka 검증 | Docker API escalation이 현재 환경 사용량 제한으로 거절되어 실제 PostgreSQL 및 Docker Kafka E2E를 실행하지 못했다. | Docker API 사용이 가능한 환경에서 `task payment-failure-idempotency`와 ULW C001/C002/C003을 다시 실행하고 PASS 증거를 별도 기록한다. |
 | Gateway 종류 | 운영 문서는 Kong을 외부 Gateway로 설명하지만 JWT 계약은 Istio를 전제로 한다. | Task 5에서 실제 배포 경로를 먼저 확정한다. |
 | Kafka lag metric | 대시보드 후보만 있고 서비스 metric 계약이 없다. | Task 4에서 metric 이름과 측정 책임을 확정한다. |
 
