@@ -6,7 +6,7 @@ status: active
 tags: [web-application, frontend, nextjs, app-router, responsive]
 source: local
 created: 2026-07-10
-updated: 2026-07-10
+updated: 2026-07-13
 ---
 
 # 웹 애플리케이션 설계 인덱스
@@ -24,8 +24,9 @@ updated: 2026-07-10
 3. [WEB.A.01](WEB_A_01_frontend_architecture.md)에서 애플리케이션 구조와 렌더링 경계를 확인한다.
 4. [WEB.A.02](WEB_A_02_state_data_strategy.md)에서 상태 소유권, 조회, 캐시, 재시도 정책을 확인한다.
 5. [BFF.A.01](BFF_A_01_web_bff_module.md)에서 화면 DTO, 웹 세션, CSRF와 내부 API 호출 경계를 확인한다.
-6. [서비스 상세 설계](../50-service-design/README.md)와 [처리 시퀀스](../80-sequence/README.md)에서 API 계약과 여러 Context의 처리 순서를 확인한다.
-7. [WEB.A.03](WEB_A_03_deployment_observability_test.md)에서 배포, 관측성, 카나리·롤백과 테스트 기준을 확인한다.
+6. 액터별 구현을 시작할 때 [판매자 웹 애플리케이션 설계](A_03_seller/README.md)처럼 해당 클라이언트 상세 설계를 확인한다. 판매자 웹은 BFF를 사용하지 않고 Kubernetes Ingress를 통해 실제 소유 서비스를 호출한다.
+7. [서비스 상세 설계](../50-service-design/README.md)와 [처리 시퀀스](../80-sequence/README.md)에서 API 계약과 여러 Context의 처리 순서를 확인한다.
+8. [WEB.A.03](WEB_A_03_deployment_observability_test.md)에서 배포, 관측성, 카나리·롤백과 공통 테스트 기준을 확인한다.
 
 ## 기준 문서
 
@@ -51,6 +52,14 @@ updated: 2026-07-10
 | `WEB.A.02` | [상태와 데이터 전략](WEB_A_02_state_data_strategy.md) | 서버 상태, URL 상태, 폼 상태, 로컬 UI 상태, 조회 캐시와 재시도 기준 | draft |
 | `BFF.A.01` | [웹 BFF 애플리케이션 모듈](BFF_A_01_web_bff_module.md) | 화면 DTO, 웹 세션·CSRF, 내부 요청 변환과 제한된 호출 조정 | draft |
 | `WEB.A.03` | [배포·관측성·테스트 설계](WEB_A_03_deployment_observability_test.md) | image, Kubernetes, 관측성, SLO, 카나리·롤백, Playwright 검증 | draft |
+| `WEB.A.200` | [판매자 웹 포털](A_03_seller/WEB_A_200_seller_portal.md) | `PAGE.A.200~211` route, 셸, 권한, 상태, 반응형, 접근성, 검증 기준 | draft |
+| `BFF.A.200` | [현행 판매자 BFF 코드 기록](A_03_seller/BFF_A_200_seller_portal_profile.md) | 현재 seller Route Handler·fixture와 제거 조건. 목표 구조에서는 사용하지 않음 | retired-target |
+
+## 클라이언트별 상세 설계
+
+| 요구사항 기준 | 설계 | 배포 기준 |
+| --- | --- | --- |
+| `REQ.A.03` 판매자 | [A_03_seller](A_03_seller/README.md) | 구매자 웹과 같은 Next.js 애플리케이션·이미지를 사용하되 Seller BFF 없이 브라우저 → Kubernetes Ingress → 실제 MSA 서비스로 연결한다. |
 
 ## 템플릿
 
@@ -82,8 +91,8 @@ updated: 2026-07-10
 - 이미지, 색상, 타이포그래피와 컴포넌트 시안 제작
 - 도메인 규칙, API 요청/응답, 데이터베이스 스키마 재정의
 - BFF 전용 업무 원장, Aggregate, 장기 실행 작업 추가
-- Kubernetes, Ingress, 배포 전략과 관찰성 스택 구성
-- 브라우저 자동화와 E2E 시나리오의 상세 절차
+- 클라이언트 상세 문서에서 Kubernetes, Ingress, 배포 전략과 관측성 스택의 공통 기준 재정의. 공통 기준은 `WEB.A.03`이 소유한다.
+- 클라이언트 상세 문서에서 Playwright 실행 기반과 공통 브라우저 매트릭스 재정의. 상세 문서는 해당 클라이언트의 검증 시나리오만 추가한다.
 
 ## 작성 원칙
 
@@ -96,4 +105,4 @@ updated: 2026-07-10
 
 ## 연관 태그
 
-🏷️ 요구사항 참조: [REQ.A.01](../00-requirements/REQ_A_01_limited_drop_commerce.md), [REQ.A.03](../00-requirements/REQ_A_03_seller.md), [REQ.A.04](../00-requirements/REQ_A_04_platform_operator_admin.md), [REQ.A.05](../00-requirements/REQ_A_05_auth_member.md) | 페이지 참조: [사이트맵 인덱스](../10-sitemap/README.md) | UI 참조: [UI 인덱스](../20-ui/README.md) | UC 참조: [유스케이스 인덱스](../30-uc/INDEX.md) | 서비스 참조: [서비스 상세 설계](../50-service-design/README.md) | 시나리오 참조: [처리 시퀀스](../80-sequence/README.md)
+🏷️ 요구사항 참조: [REQ.A.01](../00-requirements/REQ_A_01_limited_drop_commerce.md), [REQ.A.03](../00-requirements/REQ_A_03_seller.md), [REQ.A.04](../00-requirements/REQ_A_04_platform_operator_admin.md), [REQ.A.05](../00-requirements/REQ_A_05_auth_member.md), [REQ.A.08](../00-requirements/REQ_A_08_web_application.md) | 페이지 참조: [사이트맵 인덱스](../10-sitemap/README.md) | UI 참조: [UI 인덱스](../20-ui/README.md) | UC 참조: [유스케이스 인덱스](../30-uc/INDEX.md) | 판매자 웹 참조: [WEB.A.200](A_03_seller/WEB_A_200_seller_portal.md), [현행 BFF 기록](A_03_seller/BFF_A_200_seller_portal_profile.md) | 서비스 참조: [서비스 상세 설계](../50-service-design/README.md) | 시나리오 참조: [처리 시퀀스](../80-sequence/README.md)
