@@ -40,7 +40,8 @@ service_design: SD.A.300
 sequenceDiagram
     autonumber
     participant Client
-    participant Auth as Auth API
+    participant Ingress as Istio Ingress Gateway
+    participant Auth as Auth 서비스
     participant Reset as PasswordReset
     participant Challenge as VerificationChallenge
     participant Relay as Outbox Relay
@@ -49,31 +50,40 @@ sequenceDiagram
     participant Session
     participant AuditOutbox as Audit Outbox
 
-    Client->>Auth: POST /password-resets
+    Client->>Ingress: POST /password-resets
+    Ingress->>Auth: 외부 헤더 제거 후 요청 전달
     Auth->>Reset: PasswordReset 생성 또는 가상 처리
-    Auth-->>Client: 202 Accepted
-    Client->>Auth: POST /password-resets/{id}/challenges
+    Auth-->>Ingress: 202 Accepted
+    Ingress-->>Client: 202 Accepted
+    Client->>Ingress: POST /password-resets/{id}/challenges
+    Ingress->>Auth: 요청 전달
     Auth->>Challenge: 연결된 경우에만 Challenge 생성
     opt 연결된 재설정 수단 존재
         Auth->>Relay: delivery outbox 저장
         Relay-->>Provider: 이메일·SMS 발송
     end
-    Auth-->>Client: 202 Accepted
-    Client->>Auth: POST /password-resets/{id}/challenges/{challengeId}/verify
+    Auth-->>Ingress: 202 Accepted
+    Ingress-->>Client: 202 Accepted
+    Client->>Ingress: POST /password-resets/{id}/challenges/{challengeId}/verify
+    Ingress->>Auth: 요청 전달
     Auth->>Challenge: code 검증·소비
     Challenge-->>Reset: 검증된 reset grant
-    Auth-->>Client: Session cookie에 바인딩한 reset 권한 또는 모바일 resetGrant
-    Client->>Auth: PUT /password-resets/{id}/password
+    Auth-->>Ingress: Session cookie에 바인딩한 reset 권한 또는 모바일 resetGrant
+    Ingress-->>Client: reset 권한 전달물
+    Client->>Ingress: PUT /password-resets/{id}/password
+    Ingress->>Auth: 요청 전달
     Auth->>Credential: password hash 교체
     Auth->>Session: 기존 Session과 refresh family 폐기
     Auth->>AuditOutbox: PasswordChanged + SessionsRevoked
-    Auth-->>Client: 204 No Content
+    Auth-->>Ingress: 204 No Content
+    Ingress-->>Client: 204 No Content
 ```
 
 ## 단계 설명
 
 | 단계 | 책임 주체 | 핵심 규칙 | 관련 API |
 | --- | --- | --- | --- |
+| 외부 요청 경계 | Ingress | TLS 종료, 라우팅, 요청 빈도 제한, 외부에서 들어온 내부용 헤더 제거 | 공통 |
 | 재설정 시작 | Auth | 계정 존재 여부와 관계없이 같은 `202` 응답을 사용한다. | `API.A.300-10` |
 | Challenge 발급 | Auth | 실제 연결 수단이 있을 때만 메시지를 발송한다. | `API.A.300-11` |
 | 소유 확인 | Auth | 웹은 Session cookie에 바인딩한 reset 권한, 모바일은 1회용 reset grant를 발급한다. | `API.A.300-12` |
@@ -92,6 +102,7 @@ sequenceDiagram
 - 비밀번호와 code 원문을 로그, trace, metric label, IdempotencyRecord에 저장하지 않는다.
 - reset grant는 PasswordReset, 채널, 목적과 만료 시각에 묶고 한 번만 소비한다.
 - MVP는 비밀번호 변경 후 자동 로그인하지 않는다.
+- Ingress는 계정 존재 여부를 판단하거나 reset grant를 검증하지 않는다.
 
 ## 예외 처리
 

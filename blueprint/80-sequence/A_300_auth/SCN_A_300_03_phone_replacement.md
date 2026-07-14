@@ -38,7 +38,8 @@ service_design: SD.A.300
 sequenceDiagram
     autonumber
     participant Client
-    participant Auth as Auth API
+    participant Ingress as Istio Ingress Gateway
+    participant Auth as Auth 서비스
     participant Session
     participant Proof as ReauthenticationProof
     participant Challenge as VerificationChallenge
@@ -46,31 +47,41 @@ sequenceDiagram
     participant Provider as Virtual SMS
     participant UserLink as IdentityLink
 
-    Client->>Auth: POST /reauthentications/email
+    Client->>Ingress: POST /reauthentications/email
+    Ingress->>Auth: 외부 헤더 제거 후 요청 전달
     Auth->>Session: 이메일 Link로 인증 근거 재바인딩
     Auth->>Session: credential과 CSRF token 회전
     Auth->>Proof: replace_phone 목적 proof 발급
-    Auth-->>Client: proof + 갱신된 Session 전달물
-    Client->>Auth: POST /phone-replacements
+    Auth-->>Ingress: proof + 갱신된 Session 전달물
+    Ingress-->>Client: proof + 갱신된 Session 전달물
+    Client->>Ingress: POST /phone-replacements
+    Ingress->>Auth: 요청 전달
     Auth->>Proof: 목적·Session·TTL 검증
     Auth->>UserLink: proof 소비 + requested 상태 Link 원자 저장
-    Auth-->>Client: replacementId
-    Client->>Auth: POST /phone-replacements/{id}/challenges
+    Auth-->>Ingress: replacementId
+    Ingress-->>Client: replacementId
+    Client->>Ingress: POST /phone-replacements/{id}/challenges
+    Ingress->>Auth: 요청 전달
     Auth->>Challenge: 새 번호 Challenge 생성
     Auth->>Relay: delivery outbox 저장
     Relay-->>Provider: SMS 발송
-    Client->>Auth: POST /phone-replacements/{id}/complete
+    Auth-->>Ingress: 202 Accepted
+    Ingress-->>Client: 202 Accepted
+    Client->>Ingress: POST /phone-replacements/{id}/complete
+    Ingress->>Auth: 요청 전달
     Auth->>Challenge: 새 번호 소유 확인·소비
     Auth->>UserLink: 기존 Link 닫기 + 새 Link 활성화
     Auth->>Session: 기존 휴대폰 기반 다른 Session 폐기
     Auth->>Session: 현재 credential 재회전
-    Auth-->>Client: 교체 결과 + 갱신된 Session 전달물
+    Auth-->>Ingress: 교체 결과 + 갱신된 Session 전달물
+    Ingress-->>Client: 교체 결과 + 갱신된 Session 전달물
 ```
 
 ## 단계 설명
 
 | 단계 | 책임 주체 | 핵심 규칙 | 관련 API |
 | --- | --- | --- | --- |
+| 외부 요청 경계 | Ingress | TLS 종료, 라우팅, 요청 빈도 제한, 외부에서 들어온 내부용 헤더 제거 | 공통 |
 | 이메일 재인증 | Auth | proof를 `user_id`, Session, 목적과 만료 시각에 바인딩한다. | `API.A.300-17` |
 | 교체 시작 | Auth | proof 소비와 `link_status=requested`인 IdentityLink 생성을 한 트랜잭션에서 처리한다. `replacementId`는 이 Link의 ID다. | `API.A.300-21` |
 | 새 번호 확인 | Auth | `requested` 상태 Link에 고정된 번호로 Challenge를 발급한다. | `API.A.300-22` |
@@ -89,6 +100,7 @@ sequenceDiagram
 - 새 번호가 다른 `user_id`에 `active` 상태로 연결되어 있으면 Link를 이전하거나 계정을 병합하지 않는다.
 - 현재 Session은 이메일 인증 근거로 유지하고, 기존 휴대폰 기반의 다른 Session만 폐기한다.
 - 기존 Link 종료와 새 Link 활성화 사이에 `active` 상태 Link의 공백이나 중복이 생기지 않아야 한다.
+- Ingress는 재인증 proof를 검증하거나 교체 단계를 조정하지 않는다.
 
 ## 예외 처리
 

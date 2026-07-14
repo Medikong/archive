@@ -1,44 +1,42 @@
 ---
 id: SD.A.0120
-title: Context 사용자 영속성 설계 인덱스
-type: service-design-persistence-index
+title: Context 사용자 영속성 설계
+type: service-design-persistence
 status: draft
-tags: [service-design, user, persistence, postgres, index]
+tags: [service-design, user, persistence, postgresql]
 source: local
 created: 2026-07-10
-updated: 2026-07-10
+updated: 2026-07-13
 service_design: SD.A.01
-bounded_context: BC.A.01
 domain_model: SD.A.0110
 ---
 
-# Context 사용자 영속성 설계 인덱스
+# Context 사용자 영속성 설계
 
-## 역할
+## 저장 모델
 
-Context 사용자의 PostgreSQL 쓰기 모델, 가입 연동 Inbox/Outbox와 멱등성, 프로필·계정 조회 모델과 인덱스를 안내한다.
+| 테이블 | 역할 |
+| --- | --- |
+| `users` | 계정 상태와 프로필의 단일 쓰기 원장 |
+| `user_agreement_acceptances` | 가입 시점의 필수 동의 이력 |
+| `user_status_history` | 계정 상태 변경 감사 이력 |
+| `user_idempotency_records` | 생성·변경 API의 멱등 결과 |
 
-## 원천
+가입 초안, Provisioning, Inbox, Outbox와 Media upload intent를 사용자 DB에 저장하지 않는다.
 
-- [BC.A.01](../../../40-event-storming-bounded-context/BC_A_01_limited_drop_commerce.md)
-- [SD.A.0110 도메인 모델](../A_01_10-domain-model/README.md)
-- [SD.A.30020 인증 영속성](../../A_300_auth/A_300_20-persistence/README.md)
-- [SD.A.01 서비스 상세 설계](../README.md)
+## 문서
 
-## 하위 문서
+- [쓰기 모델](write-models.md)
+- [조회 모델과 인덱스](read-models-and-indexes.md)
+- [멱등성과 실패 처리](reliability-and-events.md)
 
-| 문서 | 책임 | 상태 |
-| --- | --- | --- |
-| [쓰기 모델](write-models.md) | 가입 초안, Provisioning, UserAccount, UserProfile, 상태 이력 스키마와 Repository | draft |
-| [신뢰성과 이벤트](reliability-and-events.md) | Inbox/Outbox, 멱등성, 트랜잭션, 재처리와 보상 | draft |
-| [조회 모델과 인덱스](read-models-and-indexes.md) | 본인 프로필·마이 조각 조회, 인덱스, 캐시, 보존과 migration | draft |
+## 트랜잭션
 
-## 결정 경계
+| 작업 | 하나의 PostgreSQL 트랜잭션 |
+| --- | --- |
+| User 생성 | `users` + 필수 동의 이력 + 멱등 결과 |
+| 프로필 수정 | 조건부 `users` UPDATE + 멱등 결과 |
+| 이미지 연결 | 조건부 `users` UPDATE + 멱등 결과 |
+| 계정 상태 변경 | 조건부 `users` UPDATE + 상태 이력 + 멱등 결과 |
 
-- 사용자 서비스 전용 PostgreSQL이 계정·프로필·Provisioning의 최종 원장이다.
-- server와 worker는 DDL을 실행하지 않는다. 별도 migrate Job이 versioned migration을 적용한다.
-- Inbox와 업무 변경, Outbox 저장을 같은 로컬 트랜잭션으로 묶는다.
-- `user_id`, `auth_registration_id`, `link_request_id`, `profile_request_id` 유일성은 DB constraint로 보장한다.
-- private name은 암호화하고 검색용 평문·로그·event 복제본을 만들지 않는다.
-- 주문·쿠폰·포인트·등급·찜·알림 요약은 사용자 DB에 저장하지 않는다.
-- 닉네임 unique index는 중복 정책 확정 전 만들지 않는다.
+외부 서비스 호출은 User 트랜잭션에 포함하지 않는다. 프론트엔드는 Ingress를 통해 Auth와 Media를 별도로 호출하며 각 서비스 계약에 따라 재시도한다.

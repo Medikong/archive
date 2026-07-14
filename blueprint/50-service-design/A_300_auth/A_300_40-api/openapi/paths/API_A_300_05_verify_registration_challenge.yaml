@@ -88,6 +88,7 @@ post:
                         type: string
                         enum:
                           - pending_verification
+                          - verified
                       verifiedMethods:
                         type: array
                         minItems: 1
@@ -108,6 +109,11 @@ post:
                           enum:
                             - email
                             - phone
+                      registrationCompletionProof:
+                        type: string
+                        minLength: 1
+                        x-sensitive: true
+                        description: 두 필수 수단이 모두 verified일 때만 반환하는 짧은 수명의 서명 proof다.
               meta:
                 $ref: ../components/schemas.yaml#/ResponseMeta
           example:

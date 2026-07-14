@@ -17,7 +17,7 @@ bounded_context: BC.A.300
 - Service Design ID: `SD.A.300`
 - Context: Context 인증
 - 상태: draft
-- 책임: 인증 식별자와 credential, 소유 확인, 회원가입 인증 완료 통지와 Context 사용자의 연결 요청 반영, 비밀번호 재설정, IdentityLink, Session, role/permission grant, 인증 정책, 감사 이벤트 전송을 구현 관점에서 상세화한다.
+- 책임: 인증 식별자와 credential, 소유 확인, 가입 검증 증거와 동기 회원가입 완료, 비밀번호 재설정, IdentityLink, Session, role/permission grant, 인증 정책, 감사 이벤트 전송을 구현 관점에서 상세화한다.
 
 ## 기준 결정
 

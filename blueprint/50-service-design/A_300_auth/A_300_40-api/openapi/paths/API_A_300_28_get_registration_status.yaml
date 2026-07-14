@@ -78,9 +78,7 @@ get:
                     type: string
                     enum:
                       - pending_verification
-                      - awaiting_user_link
-                      - linked
-                      - issuing_session
+                      - verified
                       - completed
                       - failed
                       - expired
@@ -101,12 +99,12 @@ get:
               meta:
                 $ref: ../components/schemas.yaml#/ResponseMeta
           examples:
-            linked:
-              summary: 사용자 계정 연결 완료, Session 발급 재개 가능
+            verified:
+              summary: 필수 인증 완료, 프론트엔드의 User 생성 가능
               value:
                 data:
                   registrationId: reg_01JXYZ1234567890ABCDEFGHJK
-                  status: linked
+                  status: verified
                   verifiedMethods:
                     - email
                     - phone

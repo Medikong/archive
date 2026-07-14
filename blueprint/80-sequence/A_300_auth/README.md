@@ -6,7 +6,7 @@ status: draft
 tags: [sequence, scenario, auth, identity, session]
 source: local
 created: 2026-07-10
-updated: 2026-07-10
+updated: 2026-07-13
 use_case: UC.A.300
 service_design: SD.A.300
 ---
@@ -16,6 +16,8 @@ service_design: SD.A.300
 ## 역할
 
 Context 인증의 여러 API와 외부 Context가 함께 참여하는 처리 과정을 시나리오 단위로 관리한다. 개별 Endpoint의 요청·응답은 API 문서가, Handler와 트랜잭션 책임은 서비스 문서가 기준이며, 이 폴더는 참여자 사이의 호출 순서와 성공·실패 조건을 연결한다.
+
+외부 클라이언트의 Auth·User 서비스 호출은 Istio Ingress Gateway를 거친다. Ingress는 TLS 종료, 라우팅, 요청 빈도 제한, 외부에서 들어온 내부용 헤더 제거를 담당하며 인증 정책 판단과 여러 서비스 호출 조정은 맡지 않는다.
 
 ## 문서 목록
 
@@ -41,6 +43,9 @@ Context 인증의 여러 API와 외부 Context가 함께 참여하는 처리 과
 - [SD.A.300 인증 서비스 상세 설계](../../50-service-design/A_300_auth/README.md)
 - [SD.A.30030 서비스 설계](../../50-service-design/A_300_auth/A_300_30-service/README.md)
 - [SD.A.30040 API 공통 계약](../../50-service-design/A_300_auth/A_300_40-api/README.md)
+- [SCN.A.01 사용자 서비스 처리 시퀀스](../../50-service-design/A_01_user/A_01_50-sequence/README.md)
+
+가입 완료는 프론트엔드가 Auth와 User의 공개 API를 차례로 호출해 처리한다. Event 기반 사용자 연결과 상태 polling은 사용하지 않는다.
 
 ## 확인 필요
 

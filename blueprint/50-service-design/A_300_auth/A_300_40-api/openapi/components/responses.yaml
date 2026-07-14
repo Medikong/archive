@@ -64,7 +64,7 @@ RegistrationNotFound:
         requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
 
 CompleteRegistrationForbidden:
-  description: 웹 CSRF 검증에 실패했거나 연결된 사용자의 인증이 제한됐다.
+  description: 웹 CSRF 또는 User 생성 증거 검증에 실패했거나 사용자의 인증이 제한됐다.
   headers:
     X-Request-Id:
       $ref: ./headers.yaml#/XRequestId
@@ -85,6 +85,7 @@ CompleteRegistrationForbidden:
                 type: string
                 enum:
                   - AUTH_CSRF_INVALID
+                  - AUTH_USER_CREATION_PROOF_INVALID
                   - AUTH_USER_RESTRICTED
       examples:
         csrfInvalid:
@@ -109,7 +110,7 @@ CompleteRegistrationForbidden:
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
 
 CompleteRegistrationConflict:
-  description: 필수 소유 확인이 끝나지 않았거나 완료 실행의 멱등 키가 충돌했거나 Context 사용자가 계정 연동을 거부했다.
+  description: 필수 소유 확인이 끝나지 않았거나 완료 실행의 멱등 키가 충돌했다.
   headers:
     X-Request-Id:
       $ref: ./headers.yaml#/XRequestId
@@ -130,7 +131,6 @@ CompleteRegistrationConflict:
                 type: string
                 enum:
                   - AUTH_IDEMPOTENCY_CONFLICT
-                  - AUTH_USER_LINK_REJECTED
                   - AUTH_VERIFICATION_REQUIRED
       examples:
         idempotencyConflict:
@@ -141,16 +141,6 @@ CompleteRegistrationConflict:
             status: 409
             code: AUTH_IDEMPOTENCY_CONFLICT
             detail: 최초 요청에 사용한 Idempotency-Key로 다시 시도해주세요.
-            retryable: false
-            requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
-        userLinkRejected:
-          summary: Context 사용자 계정 연동 거부
-          value:
-            type: https://api.dropmong.example/problems/auth-user-link-rejected
-            title: 회원가입을 완료할 수 없습니다.
-            status: 409
-            code: AUTH_USER_LINK_REJECTED
-            detail: 회원가입을 다시 시작하거나 지원 절차를 확인해주세요.
             retryable: false
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
         verificationRequired:
@@ -165,7 +155,7 @@ CompleteRegistrationConflict:
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
 
 CompleteRegistrationGone:
-  description: 계정 연동 또는 Session credential 전달 기한이 끝났다.
+  description: Registration 또는 Session credential 전달 기한이 끝났다.
   headers:
     X-Request-Id:
       $ref: ./headers.yaml#/XRequestId
@@ -185,16 +175,16 @@ CompleteRegistrationGone:
               code:
                 type: string
                 enum:
-                  - AUTH_USER_LINK_TIMEOUT
+                  - AUTH_REGISTRATION_EXPIRED
                   - AUTH_SESSION_DELIVERY_EXPIRED
       examples:
-        userLinkTimeout:
-          summary: Context 사용자 계정 연동 기한 만료
+        registrationExpired:
+          summary: Registration 기한 만료
           value:
-            type: https://api.dropmong.example/problems/auth-user-link-timeout
+            type: https://api.dropmong.example/problems/auth-registration-expired
             title: 회원가입 처리 시간이 만료되었습니다.
             status: 410
-            code: AUTH_USER_LINK_TIMEOUT
+            code: AUTH_REGISTRATION_EXPIRED
             detail: 회원가입을 처음부터 다시 진행해주세요.
             retryable: false
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
@@ -1458,7 +1448,7 @@ AuthProblem409IdempotencyConflictOrPhoneIdentityNotLinked:
             retryable: false
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
 
-AuthProblem409IdempotencyConflictOrUserLinkRejectedOrVerificationRequired:
+AuthProblem409IdempotencyConflictOrVerificationRequired:
   description: 이 operation에서 HTTP 409로 반환할 수 있는 인증 도메인 오류다.
   headers:
     X-Request-Id:
@@ -1480,7 +1470,6 @@ AuthProblem409IdempotencyConflictOrUserLinkRejectedOrVerificationRequired:
                 type: string
                 enum:
                   - AUTH_IDEMPOTENCY_CONFLICT
-                  - AUTH_USER_LINK_REJECTED
                   - AUTH_VERIFICATION_REQUIRED
       examples:
         idempotencyConflict:
@@ -1490,16 +1479,6 @@ AuthProblem409IdempotencyConflictOrUserLinkRejectedOrVerificationRequired:
             title: 요청을 처리할 수 없습니다.
             status: 409
             code: AUTH_IDEMPOTENCY_CONFLICT
-            detail: 요청 조건과 현재 인증 상태를 확인해주세요.
-            retryable: false
-            requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
-        userLinkRejected:
-          summary: AUTH_USER_LINK_REJECTED
-          value:
-            type: https://api.dropmong.example/problems/auth-user-link-rejected
-            title: 요청을 처리할 수 없습니다.
-            status: 409
-            code: AUTH_USER_LINK_REJECTED
             detail: 요청 조건과 현재 인증 상태를 확인해주세요.
             retryable: false
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
@@ -1797,7 +1776,7 @@ AuthProblem410RegistrationExpired:
             retryable: false
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
 
-AuthProblem410SessionDeliveryExpiredOrUserLinkTimeout:
+AuthProblem410SessionDeliveryExpiredOrRegistrationExpired:
   description: 이 operation에서 HTTP 410로 반환할 수 있는 인증 도메인 오류다.
   headers:
     X-Request-Id:
@@ -1819,7 +1798,7 @@ AuthProblem410SessionDeliveryExpiredOrUserLinkTimeout:
                 type: string
                 enum:
                   - AUTH_SESSION_DELIVERY_EXPIRED
-                  - AUTH_USER_LINK_TIMEOUT
+                  - AUTH_REGISTRATION_EXPIRED
       examples:
         sessionDeliveryExpired:
           summary: AUTH_SESSION_DELIVERY_EXPIRED
@@ -1831,13 +1810,13 @@ AuthProblem410SessionDeliveryExpiredOrUserLinkTimeout:
             detail: 요청 조건과 현재 인증 상태를 확인해주세요.
             retryable: false
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
-        userLinkTimeout:
-          summary: AUTH_USER_LINK_TIMEOUT
+        registrationExpired:
+          summary: AUTH_REGISTRATION_EXPIRED
           value:
-            type: https://api.dropmong.example/problems/auth-user-link-timeout
+            type: https://api.dropmong.example/problems/auth-registration-expired
             title: 요청을 처리할 수 없습니다.
             status: 410
-            code: AUTH_USER_LINK_TIMEOUT
+            code: AUTH_REGISTRATION_EXPIRED
             detail: 요청 조건과 현재 인증 상태를 확인해주세요.
             retryable: false
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8

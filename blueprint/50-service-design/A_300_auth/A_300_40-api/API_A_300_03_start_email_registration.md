@@ -55,11 +55,11 @@ service: SD.A.30030
 
 - 보장하는 업무 결과: 가입 작업, 두 Identity 예약과 PasswordCredential을 생성하고 상태 조회 전용 proof를 발급한다.
 - 요청 안에서 하지 않는 일: Challenge를 발급·발송하거나 `user_id`와 Session을 만들지 않는다.
-- 다른 Context 또는 외부 시스템의 책임: BFF는 프로필·추천인과 필수 동의를 먼저 처리하고 opaque reference만 전달한다.
+- 다른 Context 또는 외부 시스템의 책임: 프론트엔드는 Auth 검증을 마친 뒤 별도 가입 UI에서 프로필과 필수 동의를 받아 User 생성 API에 직접 전달한다.
 
 ## 보안과 개인정보
 
-- `profileRequestId`, `agreementReceiptId`, `rememberMe`를 포함한 필수 입력을 검증한다.
+- 이메일, 비밀번호, 휴대폰과 `rememberMe`를 포함한 Auth 입력만 검증한다.
 - 비밀번호는 즉시 memory-hard hash로 바꾸고 평문·복호화 가능 값·단순 hash를 저장하지 않는다.
 - 이메일과 휴대폰은 정규화 조회 키와 암호화 표시값을 분리한다.
 - `registrationStatusToken`은 API 28 조회만 허용하며 hash와 별도 만료 시각만 저장한다. 가입 완료나 Session 발급 권한으로 사용할 수 없다.
@@ -68,7 +68,7 @@ service: SD.A.30030
 ## 처리 규칙
 
 1. auth flow proof와 `authIntentId`의 channel·소유 binding을 확인한다.
-2. Context reference 유효성, 이메일, 비밀번호 정책과 휴대폰 E.164 변환 가능 여부를 검증한다.
+2. 이메일, 비밀번호 정책과 휴대폰 E.164 변환 가능 여부를 검증한다.
 3. 기존 미귀속 예약을 잠금 재사용할 수 있는지 확인한다.
 4. `childExpiresAt = min(now + Registration TTL, Intent 생성 시각 + auth-flow 최대 수명)`으로 계산한다.
 5. Registration, 두 Identity와 PasswordCredential을 만들고 AuthenticationIntent와 active owner proof의 만료 시각을 `childExpiresAt`으로 맞춘다.
@@ -81,7 +81,7 @@ service: SD.A.30030
 - 실패·만료 상태: 검증 실패 시 아무 Aggregate도 만들지 않는다.
 - Registration, Identity, PasswordCredential, status proof hash, IdempotencyRecord와 OutboxEvent를 저장하고 parent Intent·proof 만료를 같은 트랜잭션에서 연장한다.
 - Registration과 parent Intent·proof는 같은 `childExpiresAt`을 사용하며 auth-flow 최대 수명을 넘지 않는다.
-- 프로필·동의 Context와 이메일/SMS Provider를 트랜잭션 안에서 호출하지 않는다.
+- User와 이메일/SMS Provider를 트랜잭션 안에서 호출하지 않는다.
 
 ## 멱등성과 동시성
 
@@ -98,7 +98,7 @@ service: SD.A.30030
 
 | 업무 조건 | 공개 원칙 | 클라이언트 복구 |
 | --- | --- | --- |
-| 입력·reference·비밀번호 정책 오류 | 입력 원문과 내부 reference 상태를 노출하지 않는다. | 입력과 선행 Context 처리를 확인한다. |
+| 입력·비밀번호 정책 오류 | 입력 원문과 내부 정책 상태를 노출하지 않는다. | 입력을 확인한다. |
 | 식별자 사용 불가 | 중복, 예약과 위험 판정을 구분하지 않는다. | 다른 식별자를 사용하거나 지원 절차를 확인한다. |
 | Intent 부재·만료 또는 서비스 장애 | 부분 Registration을 만들지 않는다. | 새 Intent 또는 공개된 재시도 기준으로 다시 시작한다. |
 

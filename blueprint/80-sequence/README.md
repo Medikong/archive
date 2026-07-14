@@ -6,7 +6,7 @@ status: draft
 tags: [scenario, sequence, index]
 source: local
 created: 2026-07-06
-updated: 2026-07-10
+updated: 2026-07-13
 ---
 
 # 처리 시퀀스 인덱스
@@ -21,6 +21,7 @@ updated: 2026-07-10
 
 ## 실제 문서
 
+- [SCN.A.01 Context 사용자 처리 시퀀스](../50-service-design/A_01_user/A_01_50-sequence/README.md)
 - [SCN.A.300 인증 처리 시퀀스](A_300_auth/README.md)
 
 ## 예시 문서
