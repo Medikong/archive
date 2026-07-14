@@ -51,29 +51,29 @@ updated: 2026-07-10
 - terminal 상태도 정상 상태 조회 결과로 반환해 클라이언트가 한 계약으로 처리하게 한다.
 - API.A.300-03이 발급한 상태 조회 전용 token으로 사전 인증 credential 정리 뒤에도 짧은 보존 기간 동안 terminal 상태를 확인할 수 있게 한다.
 - Session, cookie, access token이나 refresh token을 발급하지 않는다.
-- Context 사용자의 계정 생성 상세와 내부 실패 사유를 공개하지 않는다.
+- User 생성 상세와 내부 실패 사유를 공개하지 않는다.
 
 ## 보안과 개인정보
 
 - 웹 사전 인증 cookie, 모바일 flow token 또는 상태 조회 전용 token과 Registration binding을 검증한다.
 - 상태 조회 token은 hash만 저장하고 `registration_status_read` 용도로만 사용하며 회원가입 완료나 Session 발급에는 사용할 수 없다.
 - 소유 증명이 없거나 다르면 Registration 부재와 같은 공개 결과를 사용한다.
-- 진행 중에는 `user_id`, Identity 원문, 내부 event·failure 상세를 반환하지 않는다.
+- 진행 중에는 `user_id`, Identity 원문과 내부 실패 상세를 반환하지 않는다.
 - 상태 응답과 소유 proof를 로그·trace·metric label에 넣지 않는다.
 
 ## 처리 규칙
 
 1. Registration ID와 허용된 소유 proof 하나를 검증한다.
-2. Registration과 verification binding의 현재 상태를 읽는다.
+2. Registration과 필수 Challenge의 현재 상태를 읽는다.
 3. 공개 가능한 검증 수단, 재시도 가능 여부와 만료 시각을 계산한다.
 4. 진행 상태와 terminal 상태를 모두 같은 성공 envelope로 반환한다.
-5. `linked`이면 클라이언트가 최초 key로 회원가입 완료 요청을 재개한다.
+5. `verified`이면 프론트엔드가 User 생성 API를 호출할 수 있음을 표시한다.
 
 ## 상태 변경과 트랜잭션
 
 - 상태를 바꾸지 않는 Query다.
 - 조회 중 Registration을 다음 단계로 진행하거나 Session을 발급하지 않는다.
-- 비동기 consumer와 완료 Command만 Registration 상태를 변경한다.
+- Challenge 검증과 완료 Command만 Registration 상태를 변경한다.
 - 만료 worker의 결과도 terminal 상태로 읽을 뿐 조회가 만료를 직접 수행하지 않는다.
 - 상태 조회 token hash와 만료 시각은 Registration에 귀속되며 terminal 전환 뒤 짧은 조회 보존 기간까지만 유지한다.
 
@@ -83,7 +83,7 @@ updated: 2026-07-10
 - 같은 시점의 같은 상태는 같은 공개 필드로 표현한다.
 - 상태가 바뀌어도 조회 자체가 중복 부수 효과를 만들지 않는다.
 - 사전 인증 credential이 정리된 뒤에는 같은 Registration의 유효한 상태 조회 token만 terminal 조회를 이어 갈 수 있다.
-- `linked` 뒤 완료 재개는 이 Query가 아니라 최초 완료 요청의 같은 key를 사용한다.
+- 가입 완료는 이 Query가 아니라 프론트엔드의 User 생성과 Auth 완료 요청으로 실행한다.
 
 ## 예외와 복구 규칙
 
@@ -98,7 +98,7 @@ updated: 2026-07-10
 | 계층 | 매핑 |
 | --- | --- |
 | Query Handler | `GetRegistrationStatusHandler` |
-| Aggregate / Entity | `Registration`, `RegistrationVerificationBinding`, 상태 조회 token hash, `IdentityLink` |
+| Aggregate / Entity | `Registration`, `VerificationChallenge`, 상태 조회 token hash |
 | Read Model | `RM.A.300-05 회원가입 상태` |
 | Repository | `RegistrationRepository` |
 | Event | Query 자체는 Domain Event를 만들지 않는다. |
@@ -108,7 +108,7 @@ updated: 2026-07-10
 - 공개 상태, 결과와 처리 지연만 집계한다.
 - `auth_registration_status_query_total{status,result}`를 관측한다.
 - Registration ID, proof, `user_id`와 Identity 참조는 metric label에 넣지 않는다.
-- polling 빈도는 client와 Registration 단위 rate limit으로 제어한다.
+- 조회 빈도는 client와 Registration 단위 rate limit으로 제어한다.
 
 ## 검증 항목
 
@@ -117,7 +117,7 @@ updated: 2026-07-10
 - 사전 인증 credential 정리 뒤에도 유효한 상태 조회 token으로 terminal 상태를 읽고, 보존 기간이 끝나면 읽지 못한다.
 - Query가 Registration 상태나 Session artifact를 만들지 않는다.
 - 모든 진행·terminal 상태가 같은 성공 schema를 통과한다.
-- `linked` 응답 뒤 같은 완료 key로만 Session 단계를 재개한다.
+- `verified` 응답 뒤 프론트엔드가 User 생성과 Auth 완료를 차례로 실행한다.
 - 내부 실패 사유와 `user_id`가 진행 중 응답에 노출되지 않는다.
 
 ## 연관 시퀀스

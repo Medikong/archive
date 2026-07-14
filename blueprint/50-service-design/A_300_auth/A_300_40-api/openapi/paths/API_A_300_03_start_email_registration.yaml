@@ -47,8 +47,6 @@ post:
             - email
             - password
             - phone
-            - profileRequestId
-            - agreementReceiptId
             - rememberMe
           additionalProperties: false
           properties:
@@ -69,14 +67,6 @@ post:
               description: 세부 강도는 현재 PasswordPolicy로 검증한다.
             phone:
               $ref: ../components/schemas.yaml#/PhoneNumber
-            profileRequestId:
-              type: string
-              minLength: 1
-              maxLength: 128
-            agreementReceiptId:
-              type: string
-              minLength: 1
-              maxLength: 128
             rememberMe:
               type: boolean
         example:
@@ -86,8 +76,6 @@ post:
           phone:
             countryCode: '+82'
             nationalNumber: '01012345678'
-          profileRequestId: profile_req_01JXYZ1234567890ABC
-          agreementReceiptId: agreement_receipt_01JXYZ1234567890ABC
           rememberMe: true
   responses:
     '201':

@@ -53,8 +53,8 @@ code schema, 성공 상태, 오류와 wire 예시는 OpenAPI를 기준으로 한
 
 ## 책임과 경계
 
-- 보장하는 업무 결과: Challenge를 한 번 소비하고 해당 email 또는 phone Identity를 verified로 바꾼다.
-- 요청 안에서 하지 않는 일: 가입 완료 Event, `user_id`, IdentityLink와 Session을 만들지 않는다.
+- 보장하는 업무 결과: Challenge를 한 번 소비하고 해당 email 또는 phone Identity를 verified로 바꾼다. 두 필수 Challenge가 모두 완료되면 짧은 수명의 `registrationCompletionProof`를 반환한다.
+- 요청 안에서 하지 않는 일: `user_id`, IdentityLink와 Session을 만들지 않는다.
 - 다른 Context 또는 외부 시스템의 책임: 가상 Adapter는 개발 환경에서 code 전달만 담당한다.
 
 ## 보안과 개인정보
@@ -70,14 +70,15 @@ code schema, 성공 상태, 오류와 wire 예시는 OpenAPI를 기준으로 한
 2. Challenge가 issued이고 만료 전인지 확인한다.
 3. code를 constant-time으로 검증한다.
 4. 성공하면 Challenge를 verified로 소비하고 대상 Identity와 Registration의 검증 상태를 갱신한다.
-5. 실패하면 허용 범위에서 attempt count와 감사 OutboxEvent를 함께 저장한다.
+5. 두 필수 Identity가 모두 verified이면 registration ID, 검증 완료 시각과 만료를 묶은 서명 proof를 반환한다.
+6. 실패하면 허용 범위에서 attempt count를 저장한다.
 
 ## 상태 변경과 트랜잭션
 
 - 시작 상태: `issued` Challenge와 `pending_verification` Registration.
-- 성공 종료 상태: `verified` Challenge와 verified Identity.
+- 성공 종료 상태: `verified` Challenge와 verified Identity. 두 필수 수단이 완료되면 Registration은 `verified`다.
 - 실패·만료 상태: 실패 횟수 초과 시 `failed`, TTL 경과 시 `expired`.
-- Challenge, Identity, Registration, IdempotencyRecord와 감사 OutboxEvent를 같은 트랜잭션에 저장한다.
+- Challenge, Identity, Registration과 IdempotencyRecord를 같은 트랜잭션에 저장한다.
 - 외부 Provider 호출은 없다.
 
 ## 멱등성과 동시성
@@ -121,7 +122,7 @@ code schema, 성공 상태, 오류와 wire 예시는 OpenAPI를 기준으로 한
 - 6자리 이외 code와 추가 속성을 거부한다.
 - 같은 key 실패 replay가 attempt count를 다시 증가시키지 않는다.
 - 동시 성공 요청 중 하나만 Challenge를 소비한다.
-- 이메일과 휴대폰 모두 verified 상태를 만들지만 가입 완료는 별도 API가 담당한다.
+- 이메일과 휴대폰 모두 verified이면 프론트엔드가 User를 생성할 수 있는 `registrationCompletionProof`를 반환한다.
 - code 원문과 digest가 관측 데이터에 남지 않는다.
 
 ## 연관 시퀀스

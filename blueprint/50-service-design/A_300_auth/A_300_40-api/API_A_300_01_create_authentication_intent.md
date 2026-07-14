@@ -55,7 +55,7 @@ Method/Path, parameter, request/response schema, required 여부, 응답 header,
 
 - 보장하는 업무 결과: 검증된 내부 복귀 위치와 `navigation` 또는 `purchase` 행동을 소유 proof에 묶어 보존한다.
 - 요청 안에서 하지 않는 일: 로그인, Session 발급, 구매 실행을 하지 않는다.
-- 다른 Context 또는 외부 시스템의 책임: BFF가 행동별 최소 입력을 만들고 Gateway가 채널·Origin·attestation을 검증한다.
+- 다른 Context 또는 외부 시스템의 책임: 프론트엔드가 행동별 최소 입력을 만들고 Ingress가 채널·Origin·attestation 경계 정책을 적용한다.
 
 ## 보안과 개인정보
 

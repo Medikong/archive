@@ -38,7 +38,8 @@ service_design: SD.A.300
 sequenceDiagram
     autonumber
     participant App
-    participant Auth as Auth API
+    participant Ingress as Istio Ingress Gateway
+    participant Auth as Auth 서비스
     participant Challenge as VerificationChallenge
     participant Relay as Outbox Relay
     participant Provider as Virtual SMS
@@ -46,14 +47,17 @@ sequenceDiagram
     participant Authz as Authorization Source
     participant Session
 
-    App->>Auth: POST /signins/phone/challenges
+    App->>Ingress: POST /signins/phone/challenges
+    Ingress->>Auth: 외부 헤더 제거 후 요청 전달
     Auth->>Challenge: 로그인 Challenge 생성
     opt 발송 가능한 active IdentityLink 존재
         Auth->>Relay: delivery outbox 저장
         Relay-->>Provider: SMS 발송
     end
-    Auth-->>App: 202 Accepted
-    App->>Auth: POST /signins/phone/challenges/{id}/verify + Idempotency-Key
+    Auth-->>Ingress: 202 Accepted
+    Ingress-->>App: 202 Accepted
+    App->>Ingress: POST /signins/phone/challenges/{id}/verify + Idempotency-Key
+    Ingress->>Auth: 요청 전달
     Auth->>Challenge: code 검증·소비
     Challenge-->>Auth: verified Identity
     Auth->>UserLink: active user_id 조회
@@ -61,19 +65,23 @@ sequenceDiagram
     Auth->>Authz: 최신 AccessGrant 조회
     Authz-->>Auth: roles + permissions + version
     Auth->>Session: Session + refresh family 생성
-    Auth-->>App: access JWT + opaque refresh token
-    App->>Auth: POST /sessions/refresh + Idempotency-Key
+    Auth-->>Ingress: access JWT + opaque refresh token
+    Ingress-->>App: access JWT + opaque refresh token
+    App->>Ingress: POST /sessions/refresh + Idempotency-Key
+    Ingress->>Auth: 요청 전달
     Auth->>Authz: 최신 AccessGrant 조회
     Authz-->>Auth: roles + permissions + version
     Auth->>Session: credential row lock + 이전 credential을 rotated 상태로 전환
     Session-->>Auth: 새 access JWT + 새 refresh token
-    Auth-->>App: 회전된 token 묶음
+    Auth-->>Ingress: 회전된 token 묶음
+    Ingress-->>App: 회전된 token 묶음
 ```
 
 ## 단계 설명
 
 | 단계 | 책임 주체 | 핵심 규칙 | 관련 API |
 | --- | --- | --- | --- |
+| 외부 요청 경계 | Ingress | TLS 종료, 라우팅, 요청 빈도 제한, 외부에서 들어온 내부용 헤더 제거 | 공통 |
 | Challenge 시작 | Auth | IdentityLink 존재 여부와 관계없이 같은 `202` 응답을 사용한다. | `API.A.300-08` |
 | 소유 확인 | Auth | code 검증 성공 뒤에만 Link의 `user_id`를 확인하고 로그인 결과를 결정한다. | `API.A.300-09` |
 | Session 발급 | Auth | Link의 `user_id`와 UserAuthState를 확인하고 모바일 credential을 발급한다. | `API.A.300-09` |
@@ -94,6 +102,7 @@ sequenceDiagram
 - 같은 key의 검증 재시도는 Challenge 실패 횟수를 다시 늘리지 않는다.
 - 같은 `Idempotency-Key`로 refresh를 재시도한 경우에만 짧은 복구 TTL 동안 이전 성공 응답을 재생한다.
 - 동시에 들어온 refresh 요청은 credential row lock으로 직렬화하며 최초 한 요청만 회전에 성공한다.
+- Ingress는 인증 결과를 판단하거나 token을 저장하지 않는다.
 - 같은 refresh token을 다른 `Idempotency-Key`로 다시 보내면 재시도가 아니라 재사용 탐지로 처리한다.
 
 ## 예외 처리

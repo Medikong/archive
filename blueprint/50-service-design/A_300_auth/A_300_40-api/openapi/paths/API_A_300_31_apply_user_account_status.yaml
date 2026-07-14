@@ -1,0 +1,115 @@
+put:
+  tags:
+    - OperatorAuth
+  summary: 사용자 계정 상태 반영
+  description: |
+    운영 프론트엔드가 User 서비스에서 받은 서명 proof를 Auth에 동기 반영한다.
+    Auth는 proof의 서명, audience, 만료와 path userId 일치를 검증한다.
+    제한 또는 비활성 상태에서는 같은 트랜잭션으로 활성 Session을 폐기한다.
+  operationId: applyUserAccountStatus
+  x-api-id: API.A.300-31
+  x-use-case: UC.A.300
+  x-service-design: SD.A.30040
+  x-command-ids:
+    - CMD.A.300-26
+  x-design-doc: ../../API_A_300_31_apply_user_account_status.md
+  x-required-permissions:
+    - user.account_status.change
+  x-required-assurance: strong
+  x-error-codes:
+    AUTH_INPUT_INVALID: 400
+    AUTH_SESSION_REQUIRED: 401
+    AUTH_CSRF_INVALID: 403
+    AUTH_FORBIDDEN: 403
+    AUTH_REAUTH_REQUIRED: 403
+    AUTH_USER_STATUS_PROOF_INVALID: 403
+    AUTH_OPERATOR_TARGET_NOT_FOUND: 404
+    AUTH_RESOURCE_PRECONDITION_FAILED: 412
+    AUTH_SERVICE_UNAVAILABLE: 503
+  security:
+    - WebSessionCookie: []
+      WebCsrfToken: []
+      WebOrigin: []
+  parameters:
+    - $ref: ../components/parameters.yaml#/UserId
+    - $ref: ../components/parameters.yaml#/XRequestId
+    - $ref: ../components/parameters.yaml#/Traceparent
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          additionalProperties: false
+          required:
+            - userStatusChangeProof
+          properties:
+            userStatusChangeProof:
+              type: string
+              minLength: 32
+              maxLength: 8192
+              description: User 서비스가 auth-service audience로 발급한 단기 서명 proof
+        example:
+          userStatusChangeProof: eyJhbGciOiJFZERTQSIsImtpZCI6InVzZXItMjAyNi0wNyJ9...
+  responses:
+    '200':
+      description: 최신 상태를 반영했거나 이미 더 최신인 상태를 유지했다.
+      headers:
+        X-Request-Id:
+          $ref: ../components/headers.yaml#/XRequestId
+        Cache-Control:
+          $ref: ../components/headers.yaml#/CacheControlNoStore
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required:
+              - data
+              - meta
+            properties:
+              data:
+                type: object
+                additionalProperties: false
+                required:
+                  - userId
+                  - accountStatus
+                  - userVersion
+                  - applied
+                properties:
+                  userId:
+                    $ref: ../components/schemas.yaml#/UserId
+                  accountStatus:
+                    type: string
+                    enum:
+                      - active
+                      - restricted
+                      - deactivated
+                  userVersion:
+                    type: integer
+                    format: int64
+                    minimum: 1
+                  applied:
+                    type: boolean
+              meta:
+                $ref: ../components/schemas.yaml#/ResponseMeta
+          example:
+            data:
+              userId: usr_01JXYZ1234567890ABCDEFGHJK
+              accountStatus: restricted
+              userVersion: 4
+              applied: true
+            meta:
+              requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
+    '400':
+      $ref: ../components/responses.yaml#/InputInvalid
+    '401':
+      $ref: ../components/responses.yaml#/AuthenticationRequired
+    '403':
+      $ref: ../components/responses.yaml#/AuthProblem403CsrfInvalidOrForbiddenOrReauthRequired
+    '404':
+      $ref: ../components/responses.yaml#/AuthProblem404OperatorTargetNotFound
+    '412':
+      $ref: ../components/responses.yaml#/AuthProblem412ResourcePreconditionFailed
+    '503':
+      $ref: ../components/responses.yaml#/AuthServiceUnavailable

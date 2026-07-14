@@ -3,93 +3,69 @@ id: SD.A.01
 title: Context 사용자 서비스 상세 설계
 type: service-design
 status: draft
-tags: [service-design, user, account, profile, registration, my]
+tags: [service-design, user, profile, account, registration]
 source: local
 created: 2026-07-10
-updated: 2026-07-10
+updated: 2026-07-13
 bounded_context: BC.A.01
 ---
 
 # Context 사용자 서비스 상세 설계
 
-## 기본 정보
+## 역할
 
-- Service Design ID: `SD.A.01`
-- Context: Context 사용자
-- 물리 서비스 후보: `user-service`
-- 상태: draft
-- 책임: `user_id` 발급, 사용자 계정 생명주기, 가입 프로필 초안, 회원가입 비동기 연동, 사용자 표시 프로필, 계정 상태 조회를 구현 관점에서 상세화한다.
+사용자 서비스는 사용자 ID, 계정 상태, 프로필과 가입 시점의 필수 동의 이력을 소유한다. 이메일·휴대폰·credential·IdentityLink·Session·role/permission은 Context 인증이 소유한다.
 
-## ID 결정
+## 서비스 패키지 아키텍처
 
-- `BC.A.01`은 전체 드롭 커머스를 다루지만, 이 폴더는 그 안에서 식별한 `Context 사용자`만 설계한다.
-- `BC.A.01`의 후속 설계 메모가 `SD.A.0110`, `SD.A.0120`, `SD.A.0130`, `SD.A.0140`을 지정하므로 루트 ID는 `SD.A.01`, 폴더는 `A_01_user`를 사용한다.
-- 향후 주문·결제 등 다른 `BC.A.01` 후보를 상세 설계할 때는 `SD.A.01`을 재사용하지 않고 별도 업무 번호를 먼저 배정한다.
+![User 서비스 패키지 아키텍처](assets/user-service-package-architecture.png)
 
-## 기준 결정
+런타임 엔트리, HTTP 전달 계층, Application Service, 도메인·영속성, 공통 Go 패키지와 관측성 의존성을 한 장에 정리한다.
 
-- Context 사용자가 `user_id`를 발급한다. Context 인증이 발급하거나 전달한 식별자로 사용자를 지연 생성하지 않는다.
-- 회원가입은 동기 Auth 호출이 아니라 `Auth.RegistrationVerificationCompleted` version 1을 소비하고 `User.AuthLinkRequested` version 1을 발행하는 비동기 계약으로 처리한다.
-- `Auth.RegistrationUserLinked` version 1을 받기 전 계정은 `provisioning`이며 일반 사용자 계정으로 노출하지 않는다.
-- 이름·닉네임·프로필 이미지 자산 참조·인사말은 Context 사용자가 소유한다. 이메일·휴대폰·비밀번호·Session·role/permission grant는 Context 인증에 남긴다.
-- 마이 화면 전체 조합은 BFF 책임으로 둔다. 사용자 서비스는 계정·프로필 조각만 제공하며 주문·쿠폰·포인트·등급·찜·알림 원장을 복제하지 않는다.
-- 회원 등급, 배송지, 동의 원문·버전, 추천인 보상, 탈퇴 보존 정책은 아직 다른 Context와의 소유권 합의가 필요하므로 사용자 원장에 임의로 추가하지 않는다.
-- 신규 구현은 현재 `service/main`의 Go Reference Service를 기준으로 Go/Chi, pgx/PostgreSQL, 별도 `server`·`worker`·`migrate` 프로세스를 사용한다. 삭제된 레거시 `user-service`의 lazy ensure 동작은 복원하지 않는다.
+## 핵심 결정
 
-## 연관 태그
+- `AGG.A.01-08 User` 하나가 계정 상태와 프로필을 소유한다.
+- 쓰기 원장은 `users`, 동시성 기준은 `user_version` 하나다.
+- 계정 상태는 `active`, `restricted`, `deactivated`만 사용하며 상태 전용 version을 따로 두지 않는다.
+- 가입 UI는 인증과 User 생성을 분리하고 프론트엔드가 Auth와 User의 공개 API를 차례로 호출한다.
+- User 생성은 Auth가 발급한 가입 검증 완료 증거를 요구하고 `registration_id`로 멱등 처리한다.
+- 필수 동의는 별도 Agreement 서비스 없이 User 생성 트랜잭션에서 이력으로 저장한다.
+- 가입 처리용 Aggregate, 가입용 Inbox/Outbox와 Auth 연동 Event를 두지 않는다.
+- 프로필 이미지 업로드는 프론트엔드가 Ingress를 통해 Media에 요청한다. User는 검증된 자산 ID만 저장한다.
+- 마이 화면은 컴포넌트별로 소유 서비스를 호출한다. User는 기존 본인 프로필 API만 제공한다.
+- 구체적인 소비자가 없는 Event와 복구 Worker는 만들지 않는다.
 
-- BC 참조: [BC.A.01](../../40-event-storming-bounded-context/BC_A_01_limited_drop_commerce.md), [BC.A.300](../../40-event-storming-bounded-context/BC_A_300_auth_member.md)
-- 요구사항 참조: [REQ.A.01](../../00-requirements/REQ_A_01_limited_drop_commerce.md), [REQ.A.05](../../00-requirements/REQ_A_05_auth_member.md)
-- PAGE/UI 참조: [PAGE.A.10](../../10-sitemap/buyer-mobile-web/PAGE_A_10_my.md), [UI.A.10](../../20-ui/buyer-mobile-web/UI_A_10_my.md)
-- UC 참조: [UC.A.300](../../30-uc/UC_A_300_auth_member.md)
-- 인증 설계 참조: [SD.A.300](../A_300_auth/README.md), [가입 시퀀스](../../80-sequence/A_300_auth/SCN_A_300_01_email_registration.md)
+## 설계 문서
 
-## 설계 영역
-
-| 영역 | 식별자 | 폴더 | 상태 |
-| --- | --- | --- | --- |
-| 도메인 모델 | `SD.A.0110` | [A_01_10-domain-model](A_01_10-domain-model/README.md) | draft |
-| 영속성 | `SD.A.0120` | [A_01_20-persistence](A_01_20-persistence/README.md) | draft |
-| 서비스 | `SD.A.0130` | [A_01_30-service](A_01_30-service/README.md) | draft |
-| API | `SD.A.0140` | [A_01_40-api](A_01_40-api/README.md) | draft |
-
-## 설계 문서 지도
-
-| 영역 | 하위 문서 |
+| 영역 | 문서 |
 | --- | --- |
-| 도메인 모델 | [가입과 계정](A_01_10-domain-model/registration-account.md), [프로필](A_01_10-domain-model/profile.md), [공통 계약](A_01_10-domain-model/shared-contracts.md) |
-| 영속성 | [쓰기 모델](A_01_20-persistence/write-models.md), [신뢰성과 이벤트](A_01_20-persistence/reliability-and-events.md), [조회 모델과 인덱스](A_01_20-persistence/read-models-and-indexes.md) |
-| 서비스 | [가입·계정 Handler](A_01_30-service/registration-account-handlers.md), [프로필 Handler](A_01_30-service/profile-handlers.md), [마이 조회 경계](A_01_30-service/my-query.md), [이벤트 처리](A_01_30-service/event-processing.md) |
-| API | [API 공통 계약과 엔드포인트 인덱스](A_01_40-api/README.md) |
+| 도메인 | [통합 User 모델](A_01_10-domain-model/README.md) |
+| 영속성 | [저장 설계](A_01_20-persistence/README.md) |
+| 쓰기 모델 | [쓰기 모델](A_01_20-persistence/write-models.md) |
+| 조회 모델 | [조회 모델과 인덱스](A_01_20-persistence/read-models-and-indexes.md) |
+| 신뢰성 | [멱등성과 실패 처리](A_01_20-persistence/reliability-and-events.md) |
+| 서비스 | [Application Service](A_01_30-service/README.md) |
+| 가입·계정 | [가입과 계정 Handler](A_01_30-service/registration-account-handlers.md) |
+| 프로필 | [프로필 Handler](A_01_30-service/profile-handlers.md) |
+| 마이 조회 | [마이 화면의 본인 프로필 조회](A_01_30-service/my-query.md) |
+| API | [API 설계](A_01_40-api/README.md) |
+| 시퀀스 | [사용자 처리 시퀀스](A_01_50-sequence/README.md) |
+| 배포 | [사용자 서비스 배포 설계](A_01_60-deployment/README.md) |
 
 ## 책임 경계
 
-| 사용자 서비스가 소유 | 다른 Context가 소유 |
+| 사용자 서비스 | 다른 주체 |
 | --- | --- |
-| `user_id`, 계정 생명주기와 `restriction_version` | 이메일·휴대폰·credential·Session·role/permission: Context 인증 |
-| 가입 프로필 초안과 `profile_request_id` | 동의 원문·버전·철회: 동의 담당 Context |
-| 이름, 닉네임, 인사말, 프로필 이미지 자산 참조 | 이미지 파일 검사·변환·보관: 프로필 미디어 시스템 |
-| Auth 연동 Process Manager와 Inbox/Outbox | 인증 식별자와 `user_id` 연결: Context 인증 |
-| 사용자 계정 상태와 변경 이력 | 주문·배송·쿠폰·포인트·등급·찜·알림 원장: 각 업무 Context |
-| BFF에 제공할 사용자 계정·프로필 조각 | 마이 전체 조합, 메뉴와 프로모션 표시: BFF·화면 정책·프로모션 Context |
+| `user_id`, `account_status`, 프로필, 필수 동의 이력 | 이메일·휴대폰·credential·IdentityLink·Session: Auth |
+| User 생성과 프로필·상태 변경 | 가입 화면 상태와 서비스 호출 순서: 프론트엔드 |
+| 현재 프로필 이미지 자산 ID | 업로드·검사·변환·signed URL·미참조 자산 정리: Media |
+| 본인 프로필 | 주문·쿠폰·포인트 조회와 화면 상태 조합: 각 프론트엔드 컴포넌트 |
 
 ## 구현 기준
 
-- 코드 위치 후보: `service/services/user-service`
-- 구조: `cmd/server`, `cmd/worker`, `cmd/migrate`, `internal/app`, `internal/domain`, `internal/platform`, `internal/transport/http`
-- 공통 패키지: `go-platform`, `go-audit`, `go-authz`, `go-contracts`
-- 원장 저장소: 사용자 서비스 전용 PostgreSQL
-- 비동기 계약: Kafka 호환 broker + transactional outbox/inbox
-- 운영 엔드포인트: `/healthz`, `/readyz`, `/metrics`; server가 자동 migration을 실행하지 않는다.
-- 목표 Principal 계약은 `SD.A.30040`의 `X-User-Id`, `X-User-Roles`, `X-Permission-Version`, `X-Token-Id`다. `X-User-Email`을 받거나 전달하지 않는다.
-- 오류 응답은 `application/problem+json`으로 통일한다. 기존 `ErrorResponse`와 `X-Principal` 사용처는 별도 이행 어댑터로 다룬다.
-
-## 현재 확인 필요
-
-- 가입 프로필 초안 TTL과 `linkAcceptUntil` 이전 처리 여유 시간
-- 닉네임 길이·금칙어·중복 허용·변경 주기와 프로필 이미지 규격
-- `User.AccountAuthStateChanged` 소비 지연 시 Session 폐기 SLO와 운영 escalation 기준
-- Auth 연동 거부·기한 만료 뒤 임시 계정과 프로필의 보존 기간
-- 탈퇴 유예, 재가입, 개인정보 삭제와 주문·감사 기록 보존 정책
-- 동의 담당 Context, 포인트·멤버십 Context, 배송지 Context의 최종 소유권
-- BFF 마이 조합의 section별 timeout, cache TTL, `asOf`와 부분 실패 표현
+- 모든 변경 API는 `Idempotency-Key`와 `expectedUserVersion`을 명시적으로 사용한다. User 생성은 `registrationId`가 업무 멱등 키다.
+- User 변경은 `UPDATE ... WHERE user_id = ? AND user_version = ?` 형태의 조건부 UPDATE 한 번으로 처리한다.
+- 공개 가입 API는 Auth의 `create_user` 전용 proof를 요구한다. 외부 호출은 모두 Ingress를 거치며 각 서비스가 Principal·권한과 업무 proof를 검증한다.
+- 증거와 로그에는 이메일, 휴대폰, credential, Session 원문을 넣지 않는다.
+- 가입의 후속 Auth 호출은 프론트엔드가 같은 업무 키로 재시도한다.
+- 계정 상태 반영은 운영 프론트엔드가 User의 단기 서명 proof로 Auth 요청만 재시도한다.

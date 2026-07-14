@@ -48,7 +48,7 @@ updated: 2026-07-10
 
 - 소비된 AuthenticationIntent의 allowlist action payload를 같은 Session에 한 번 전달한다.
 - 현재 지원하는 action은 구매 재개이며 업무 명령 자체는 실행하지 않는다.
-- BFF는 반환값을 검증한 뒤 주문·드롭 API에 별도 멱등 key로 요청한다.
+- 프론트엔드는 반환값을 검증한 뒤 Ingress를 통해 주문·드롭 API에 별도 멱등 key로 요청한다.
 - 임의 URL, script, 결제 비밀정보와 개인정보를 저장하거나 전달하지 않는다.
 
 ## 보안과 개인정보
@@ -119,7 +119,7 @@ updated: 2026-07-10
 
 - 현재 독립 시퀀스 문서는 없다.
 - 선행 API: `API.A.300-01`과 로그인 또는 회원가입 완료 API
-- BFF와 업무 Context까지 연결하는 인증 후 행동 재개 시퀀스는 후속으로 `80-sequence`에 추가한다.
+- 프론트엔드와 업무 Context까지 연결하는 인증 후 행동 재개 시퀀스는 후속으로 `80-sequence`에 추가한다.
 
 ## 호환성과 변경 정책
 

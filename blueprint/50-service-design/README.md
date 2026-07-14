@@ -25,6 +25,8 @@ updated: 2026-07-11
     <context_id>_20-persistence/
     <context_id>_30-service/
     <context_id>_40-api/
+    <context_id>_50-sequence/
+    <context_id>_60-deployment/
 ```
 
 ## 하위 설계 번호
@@ -35,6 +37,8 @@ updated: 2026-07-11
 | `20` | persistence | Repository, Database Schema, Index, Migration, 저장 경계 설계 |
 | `30` | service | Application Service, Domain Service, Command Handler, Transaction Boundary 설계 |
 | `40` | api | REST API, 이벤트 계약, 요청/응답, 오류 계약 설계 |
+| `50` | sequence | 서비스 경계를 포함한 주요 처리 순서와 실패 처리 설계 |
+| `60` | deployment | 배포 전략, migration, 가용성, 롤백과 운영 검증 설계 |
 
 ## 작성 단위
 
@@ -46,7 +50,7 @@ updated: 2026-07-11
 
 ## 식별자 규칙
 
-서비스 상세 설계는 `SD` prefix를 사용한다. 컨텍스트 루트 문서는 기존 업무 번호를 그대로 쓰고, 하위 설계 영역은 업무 번호 뒤에 `10`, `20`, `30`, `40`을 붙인다.
+서비스 상세 설계는 `SD` prefix를 사용한다. 컨텍스트 루트 문서는 기존 업무 번호를 그대로 쓰고, 하위 설계 영역은 업무 번호 뒤에 `10`, `20`, `30`, `40`, `50`, `60`을 붙인다.
 
 | 대상 | 예시 | 설명 |
 | --- | --- | --- |
@@ -55,6 +59,7 @@ updated: 2026-07-11
 | Context 인증 영속성 | `SD.A.30020` | `A_300_auth/A_300_20-persistence/README.md` |
 | Context 인증 서비스 | `SD.A.30030` | `A_300_auth/A_300_30-service/README.md` |
 | Context 인증 API | `SD.A.30040` | `A_300_auth/A_300_40-api/README.md` |
+| Context 사용자 배포 | `SD.A.0160` | `A_01_user/A_01_60-deployment/README.md` |
 
 폴더명은 컨텍스트 식별자와 하위 설계 번호를 함께 드러낸다. 예를 들어 Context 인증 도메인 모델 영역은 `A_300_10-domain-model/`이고, 문서 식별자는 `SD.A.30010`이다.
 
@@ -62,7 +67,7 @@ updated: 2026-07-11
 
 | 컨텍스트 폴더 | 바운디드 컨텍스트 | 상태 | 주요 근거 |
 | --- | --- | --- | --- |
-| [A_01_user](A_01_user/README.md) | Context 사용자 | draft | [BC.A.01](../40-event-storming-bounded-context/BC_A_01_limited_drop_commerce.md), [REQ.A.05](../00-requirements/REQ_A_05_auth_member.md), [도메인 모델](A_01_user/A_01_10-domain-model/README.md), [영속성](A_01_user/A_01_20-persistence/README.md), [서비스](A_01_user/A_01_30-service/README.md), [API](A_01_user/A_01_40-api/README.md) |
+| [A_01_user](A_01_user/README.md) | Context 사용자 | draft | [BC.A.01](../40-event-storming-bounded-context/BC_A_01_limited_drop_commerce.md), [REQ.A.05](../00-requirements/REQ_A_05_auth_member.md), [도메인 모델](A_01_user/A_01_10-domain-model/README.md), [영속성](A_01_user/A_01_20-persistence/README.md), [서비스](A_01_user/A_01_30-service/README.md), [API](A_01_user/A_01_40-api/README.md), [배포](A_01_user/A_01_60-deployment/README.md) |
 | [A_300_auth](A_300_auth/README.md) | Context 인증 | draft | [BC.A.300](../40-event-storming-bounded-context/BC_A_300_auth_member.md), [BC.A.01](../40-event-storming-bounded-context/BC_A_01_limited_drop_commerce.md) |
 | [A_19_coupon](A_19_coupon/README.md) | Context 쿠폰 | draft | [BC.A.19](../40-event-storming-bounded-context/BC_A_19_coupon.md), [REQ.A.02](../00-requirements/REQ_A_02_coupon_benefit.md), [도메인 모델](A_19_coupon/A_19_10-domain-model/README.md), [영속성](A_19_coupon/A_19_20-persistence/README.md), [서비스](A_19_coupon/A_19_30-service/README.md), [API](A_19_coupon/A_19_40-api/README.md) |
 | [A_07_interest_ranking](A_07_interest_ranking/README.md) | Context 찜 / Context 랭킹 집계 | draft | [BC.A.07](../40-event-storming-bounded-context/BC_A_07_interest_ranking.md), [REQ.A.07](../00-requirements/REQ_A_07_interest_ranking.md), [도메인 모델](A_07_interest_ranking/A_07_10-domain-model/SD_A_0710_interest_domain_model.md), [영속성](A_07_interest_ranking/A_07_20-persistence/persistence-design.md), [서비스](A_07_interest_ranking/A_07_30-service/service-design.md), [API](A_07_interest_ranking/A_07_40-api/README.md) |
