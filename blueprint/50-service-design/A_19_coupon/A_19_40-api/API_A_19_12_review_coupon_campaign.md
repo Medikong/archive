@@ -103,6 +103,10 @@ service: SD.A.1930
 
 - 운영 작업 관리의 승인 시퀀스는 외부 Context에서 관리한다.
 
+## Context 판매자 연동 상태
+
+- 이 Endpoint의 seller 사용 범위와 현재 구현 차이는 [Coupon 판매자 연동 계약 gap](seller-contract-gaps.md)을 따른다. signed seller scope는 현재 membership·permission 재검증을 대신하지 않는다.
+
 ## 호환성과 변경 정책
 
 - 새 review result는 기존 클라이언트의 unknown 처리 확인 뒤 추가한다.

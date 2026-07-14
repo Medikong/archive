@@ -1,0 +1,146 @@
+SellerId:
+  type: string
+  pattern: '^sel_[A-Za-z0-9_-]{8,120}$'
+
+MembershipId:
+  type: string
+  pattern: '^smem_[A-Za-z0-9_-]{8,120}$'
+
+ProductId:
+  type: string
+  pattern: '^sprod_[A-Za-z0-9_-]{8,120}$'
+
+ProposalId:
+  type: string
+  pattern: '^dprop_[A-Za-z0-9_-]{8,120}$'
+
+ExportId:
+  type: string
+  pattern: '^sexp_[A-Za-z0-9_-]{8,120}$'
+
+IssueId:
+  type: string
+  pattern: '^siss_[A-Za-z0-9_-]{8,120}$'
+
+OpaqueRef:
+  type: string
+  minLength: 1
+  maxLength: 200
+  pattern: '^[A-Za-z0-9._:/-]+$'
+
+ResponseMeta:
+  type: object
+  required: [requestId, asOf, stale, partial, unavailableSections, sourceWatermarks]
+  additionalProperties: false
+  properties:
+    requestId:
+      type: string
+      format: uuid
+    asOf:
+      type: string
+      format: date-time
+    stale:
+      type: boolean
+    partial:
+      type: boolean
+    unavailableSections:
+      type: array
+      items:
+        type: string
+        maxLength: 80
+    sourceWatermarks:
+      type: object
+      additionalProperties:
+        type: string
+        maxLength: 160
+
+CommandMeta:
+  type: object
+  required: [requestId]
+  additionalProperties: false
+  properties:
+    requestId:
+      type: string
+      format: uuid
+
+SellerReadResponse:
+  type: object
+  required: [data, meta]
+  additionalProperties: false
+  properties:
+    data:
+      type: object
+      description: operation catalog에서 정의한 seller 범위 Read Model payload다.
+      additionalProperties: true
+    meta:
+      $ref: '#/ResponseMeta'
+
+SellerCommandRequest:
+  type: object
+  required: [data]
+  additionalProperties: false
+  properties:
+    data:
+      type: object
+      description: operation catalog에서 정의한 Command별 canonical payload다.
+      minProperties: 1
+      additionalProperties: true
+
+SellerCommandResponse:
+  type: object
+  required: [data, meta]
+  additionalProperties: false
+  properties:
+    data:
+      type: object
+      required: [operationId, resourceId, status, version]
+      additionalProperties: false
+      properties:
+        operationId:
+          type: string
+          minLength: 1
+          maxLength: 128
+        resourceId:
+          $ref: '#/OpaqueRef'
+        status:
+          type: string
+          enum: [accepted, completed]
+        version:
+          type: string
+          minLength: 1
+          maxLength: 128
+    meta:
+      $ref: '#/CommandMeta'
+
+ProblemDetails:
+  type: object
+  required: [type, title, status, code, retryable, requestId]
+  additionalProperties: false
+  properties:
+    type:
+      type: string
+      format: uri
+    title:
+      type: string
+      maxLength: 160
+    status:
+      type: integer
+      minimum: 400
+      maximum: 599
+    code:
+      type: string
+      pattern: '^SELLER_[A-Z0-9_]+$'
+    detail:
+      type: string
+      maxLength: 500
+    retryable:
+      type: boolean
+    requestId:
+      type: string
+      format: uuid
+    dependency:
+      type: string
+      maxLength: 80
+    lastSuccessfulAsOf:
+      type: string
+      format: date-time

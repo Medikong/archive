@@ -72,6 +72,10 @@ post:
                     type: string
                     enum:
                       - purchase
+                      - seller_order_export
+                      - seller_member_manage
+                      - seller_account_update
+                      - seller_partnership_respond
                   actionContext:
                     oneOf:
                       - title: PurchaseActionContext
@@ -93,6 +97,21 @@ post:
                           quantity:
                             type: integer
                             minimum: 1
+                      - title: SellerActionContext
+                        type: object
+                        additionalProperties: false
+                        required:
+                          - sellerId
+                        properties:
+                          sellerId:
+                            type: string
+                            minLength: 1
+                            maxLength: 128
+                          resourceId:
+                            type: string
+                            minLength: 1
+                            maxLength: 128
+                            description: allowlist action에 필요한 경우에만 전달하는 opaque seller resource ID다.
                   returnPath:
                     type: string
                     minLength: 1

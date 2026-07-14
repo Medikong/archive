@@ -1,0 +1,30 @@
+XRequestId:
+  description: 응답 body meta.requestId와 같은 요청 식별자다.
+  schema:
+    type: string
+    format: uuid
+
+CacheControlNoStore:
+  description: 개인·seller 범위 응답을 저장하지 못하게 한다.
+  schema:
+    type: string
+    enum: ['private, no-store']
+
+ETag:
+  description: Aggregate 또는 Read Model snapshot의 불투명 version tag다.
+  schema:
+    type: string
+    pattern: '^"[A-Za-z0-9._:-]+"$'
+
+Location:
+  description: 생성 resource 또는 비동기 상태 조회 상대 경로다.
+  schema:
+    type: string
+    format: uri-reference
+
+RetryAfter:
+  description: 다음 상태 조회 또는 재시도 전에 기다릴 최소 초다.
+  schema:
+    type: integer
+    minimum: 1
+

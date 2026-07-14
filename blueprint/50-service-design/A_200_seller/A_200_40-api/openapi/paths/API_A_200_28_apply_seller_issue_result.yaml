@@ -1,0 +1,40 @@
+post:
+  tags: [SellerIssue]
+  summary: 판매자 운영 이슈 결과 반영
+  description: 플랫폼 운영 workload가 외부 case result ref와 seller 공개 상태를 반영한다.
+  operationId: applySellerIssueResult
+  x-api-id: API.A.200-28
+  x-command: CMD.A.200-17
+  x-service-design: SD.A.20040
+  security:
+    - WorkloadBearerAuth: []
+  parameters:
+    - $ref: ../components/parameters.yaml#/SellerId
+    - $ref: ../components/parameters.yaml#/XRequestId
+    - $ref: ../components/parameters.yaml#/Traceparent
+    - $ref: ../components/parameters.yaml#/IdempotencyKey
+    - $ref: ../components/parameters.yaml#/VersionPrecondition
+    - $ref: ../components/parameters.yaml#/IssueId
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema: {$ref: ../components/schemas.yaml#/SellerCommandRequest}
+  responses:
+    '200':
+      description: 판매자 운영 이슈 결과를 반영했다.
+      headers:
+        X-Request-Id: {$ref: ../components/headers.yaml#/XRequestId}
+        Cache-Control: {$ref: ../components/headers.yaml#/CacheControlNoStore}
+        ETag: {$ref: ../components/headers.yaml#/ETag}
+      content:
+        application/json:
+          schema: {$ref: ../components/schemas.yaml#/SellerCommandResponse}
+    '400': {$ref: ../components/responses.yaml#/BadRequest}
+    '401': {$ref: ../components/responses.yaml#/AuthenticationRequired}
+    '403': {$ref: ../components/responses.yaml#/Forbidden}
+    '404': {$ref: ../components/responses.yaml#/NotFound}
+    '409': {$ref: ../components/responses.yaml#/Conflict}
+    '422': {$ref: ../components/responses.yaml#/BusinessRejected}
+    '503': {$ref: ../components/responses.yaml#/Unavailable}
+

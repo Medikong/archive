@@ -58,6 +58,10 @@ post:
               enum:
                 - replace_phone
                 - link_identity
+                - seller_order_export
+                - seller_member_manage
+                - seller_account_update
+                - seller_partnership_respond
             password:
               type: string
               format: password
@@ -108,6 +112,10 @@ post:
                         enum:
                           - replace_phone
                           - link_identity
+                          - seller_order_export
+                          - seller_member_manage
+                          - seller_account_update
+                          - seller_partnership_respond
                       expiresAt:
                         type: string
                         format: date-time
@@ -141,6 +149,10 @@ post:
                         enum:
                           - replace_phone
                           - link_identity
+                          - seller_order_export
+                          - seller_member_manage
+                          - seller_account_update
+                          - seller_partnership_respond
                       expiresAt:
                         type: string
                         format: date-time

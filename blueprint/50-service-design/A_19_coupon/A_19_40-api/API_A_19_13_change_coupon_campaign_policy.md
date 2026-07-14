@@ -103,6 +103,10 @@ service: SD.A.1930
 
 - 정책 적용 전 영향 분석·승인은 외부 운영 시퀀스가 담당한다.
 
+## Context 판매자 연동 상태
+
+- 이 Endpoint의 seller 사용 범위와 현재 구현 차이는 [Coupon 판매자 연동 계약 gap](seller-contract-gaps.md)을 따른다. signed seller scope는 현재 membership·permission 재검증을 대신하지 않는다.
+
 ## 호환성과 변경 정책
 
 - 기존 version은 불변이고 새 의미는 새 version으로만 추가한다.

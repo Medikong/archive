@@ -1,0 +1,83 @@
+openapi: 3.0.4
+info:
+  title: Context 판매자 논리 API 배치 초안
+  version: 0.1.0
+  description: API.A.200 operation의 wire 검토용 초안이다. 단일 seller-service 또는 BFF를 전제한 배포 계약이 아니며, 소유 서비스와 Ingress-facing 인증·path를 확정한 뒤 각 서비스 OpenAPI로 옮겨야 한다.
+  license:
+    name: Proprietary
+x-contract-status: allocation-pending
+servers:
+  - url: https://api.dropmong.example
+    description: 검증용 예시 주소. 실제 Ingress route가 아니다.
+tags:
+  - name: SellerAccess
+    description: seller membership과 현재 업무 권한 해석
+  - name: SellerManagement
+    description: 판매자 계정·스토어·팀·역할 관리
+  - name: SellerProposal
+    description: 판매자 상품·드롭 제안·검수·변경
+  - name: SellerOperations
+    description: 대시보드·드롭·주문·분석·정산 조회
+  - name: SellerExport
+    description: 주문 자료 요청·완료·만료
+  - name: SellerIssue
+    description: 판매자 운영 이슈·추가 정보·외부 결과
+paths:
+  /api/v1/internal/sellers/{sellerId}/access-context:
+    $ref: ./paths/API_A_200_01_get_seller_access_context.yaml
+  /api/v1/internal/sellers/{sellerId}/settings:
+    $ref: ./paths/API_A_200_02_get_seller_settings.yaml
+  /api/v1/internal/sellers/{sellerId}/account:
+    $ref: ./paths/API_A_200_03_update_seller_account.yaml
+  /api/v1/internal/sellers/{sellerId}/store-profile:
+    $ref: ./paths/API_A_200_04_update_store_profile.yaml
+  /api/v1/internal/sellers/{sellerId}/members:
+    $ref: ./paths/API_A_200_05_list_seller_members.yaml
+  /api/v1/internal/sellers/{sellerId}/member-invitations:
+    $ref: ./paths/API_A_200_06_invite_seller_member.yaml
+  /api/v1/internal/sellers/{sellerId}/members/{membershipId}/role:
+    $ref: ./paths/API_A_200_07_change_seller_member_role.yaml
+  /api/v1/internal/sellers/{sellerId}/members/{membershipId}/deactivation:
+    $ref: ./paths/API_A_200_08_deactivate_seller_member.yaml
+  /api/v1/internal/sellers/{sellerId}/products:
+    $ref: ./paths/API_A_200_09_list_seller_products.yaml
+  /api/v1/internal/sellers/{sellerId}/products/{productId}:
+    $ref: ./paths/API_A_200_10_save_seller_product.yaml
+  /api/v1/internal/sellers/{sellerId}/drop-proposals/{proposalId}:
+    $ref: ./paths/API_A_200_11_12_drop_proposal.yaml
+  /api/v1/internal/sellers/{sellerId}/drop-proposals/{proposalId}/review-submissions:
+    $ref: ./paths/API_A_200_13_submit_drop_review.yaml
+  /api/v1/internal/sellers/{sellerId}/drop-proposals/{proposalId}/review-results:
+    $ref: ./paths/API_A_200_14_apply_drop_review_result.yaml
+  /api/v1/internal/sellers/{sellerId}/drop-proposals/{proposalId}/change-requests:
+    $ref: ./paths/API_A_200_15_request_proposal_change.yaml
+  /api/v1/internal/sellers/{sellerId}/drop-proposals/{proposalId}/handoffs:
+    $ref: ./paths/API_A_200_16_handoff_approved_proposal.yaml
+  /api/v1/internal/sellers/{sellerId}/dashboard:
+    $ref: ./paths/API_A_200_17_get_seller_dashboard.yaml
+  /api/v1/internal/sellers/{sellerId}/drops:
+    $ref: ./paths/API_A_200_18_list_seller_drops.yaml
+  /api/v1/internal/sellers/{sellerId}/orders:
+    $ref: ./paths/API_A_200_19_list_seller_orders.yaml
+  /api/v1/internal/sellers/{sellerId}/order-exports:
+    $ref: ./paths/API_A_200_20_request_order_export.yaml
+  /api/v1/internal/sellers/{sellerId}/order-exports/{exportId}/completion:
+    $ref: ./paths/API_A_200_21_complete_order_export.yaml
+  /api/v1/internal/sellers/{sellerId}/order-exports/{exportId}/expiration:
+    $ref: ./paths/API_A_200_22_expire_order_export.yaml
+  /api/v1/internal/sellers/{sellerId}/analytics:
+    $ref: ./paths/API_A_200_23_get_seller_analytics.yaml
+  /api/v1/internal/sellers/{sellerId}/settlements:
+    $ref: ./paths/API_A_200_24_get_seller_settlements.yaml
+  /api/v1/internal/sellers/{sellerId}/issues:
+    $ref: ./paths/API_A_200_25_26_seller_issues.yaml
+  /api/v1/internal/sellers/{sellerId}/issues/{issueId}/information:
+    $ref: ./paths/API_A_200_27_add_seller_issue_information.yaml
+  /api/v1/internal/sellers/{sellerId}/issues/{issueId}/results:
+    $ref: ./paths/API_A_200_28_apply_seller_issue_result.yaml
+components:
+  securitySchemes:
+    WorkloadBearerAuth:
+      $ref: ./components/security-schemes.yaml#/WorkloadBearerAuth
+    SellerScopeHeader:
+      $ref: ./components/security-schemes.yaml#/SellerScopeHeader

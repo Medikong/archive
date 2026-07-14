@@ -1,0 +1,11 @@
+WorkloadBearerAuth:
+  type: http
+  scheme: bearer
+  bearerFormat: JWT
+  description: worker callback 검토용 내부 credential 초안이다. 브라우저용 Ingress 인증 계약이 아니다.
+
+SellerScopeHeader:
+  type: apiKey
+  in: header
+  name: X-Seller-Scope
+  description: 기존 BFF 전제에서 작성된 내부 초안이다. 목표 브라우저 계약에는 사용하지 않으며 수신 측의 현재 membership 재검증을 대신하지 않는다.

@@ -6,7 +6,7 @@ status: active
 tags: [service-design, bounded-context, domain-model, persistence, service, api]
 source: local
 created: 2026-07-06
-updated: 2026-07-11
+updated: 2026-07-13
 ---
 
 # 서비스 상세 설계 인덱스
@@ -71,6 +71,7 @@ updated: 2026-07-11
 | [A_300_auth](A_300_auth/README.md) | Context 인증 | draft | [BC.A.300](../40-event-storming-bounded-context/BC_A_300_auth_member.md), [BC.A.01](../40-event-storming-bounded-context/BC_A_01_limited_drop_commerce.md) |
 | [A_19_coupon](A_19_coupon/README.md) | Context 쿠폰 | draft | [BC.A.19](../40-event-storming-bounded-context/BC_A_19_coupon.md), [REQ.A.02](../00-requirements/REQ_A_02_coupon_benefit.md), [도메인 모델](A_19_coupon/A_19_10-domain-model/README.md), [영속성](A_19_coupon/A_19_20-persistence/README.md), [서비스](A_19_coupon/A_19_30-service/README.md), [API](A_19_coupon/A_19_40-api/README.md) |
 | [A_07_interest_ranking](A_07_interest_ranking/README.md) | Context 찜 / Context 랭킹 집계 | draft | [BC.A.07](../40-event-storming-bounded-context/BC_A_07_interest_ranking.md), [REQ.A.07](../00-requirements/REQ_A_07_interest_ranking.md), [도메인 모델](A_07_interest_ranking/A_07_10-domain-model/SD_A_0710_interest_domain_model.md), [영속성](A_07_interest_ranking/A_07_20-persistence/persistence-design.md), [서비스](A_07_interest_ranking/A_07_30-service/service-design.md), [API](A_07_interest_ranking/A_07_40-api/README.md) |
+| [A_200_seller](A_200_seller/README.md) | Context 판매자 | draft | [REQ.A.03](../00-requirements/REQ_A_03_seller.md), [BC.A.200](../40-event-storming-bounded-context/BC_A_200_seller.md), [도메인 모델](A_200_seller/A_200_10-domain-model/README.md), [영속성](A_200_seller/A_200_20-persistence/README.md), [서비스](A_200_seller/A_200_30-service/README.md), [API](A_200_seller/A_200_40-api/README.md) |
 
 ## 템플릿
 

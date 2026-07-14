@@ -1,0 +1,64 @@
+BadRequest:
+  description: 요청 schema, header 또는 cursor가 유효하지 않다.
+  headers:
+    X-Request-Id: {$ref: ./headers.yaml#/XRequestId}
+    Cache-Control: {$ref: ./headers.yaml#/CacheControlNoStore}
+  content:
+    application/problem+json:
+      schema: {$ref: ./schemas.yaml#/ProblemDetails}
+
+AuthenticationRequired:
+  description: 검증된 workload 또는 Auth credential이 없다.
+  headers:
+    X-Request-Id: {$ref: ./headers.yaml#/XRequestId}
+    Cache-Control: {$ref: ./headers.yaml#/CacheControlNoStore}
+  content:
+    application/problem+json:
+      schema: {$ref: ./schemas.yaml#/ProblemDetails}
+
+Forbidden:
+  description: 현재 membership, permission, workload scope 또는 강한 재인증을 충족하지 않는다.
+  headers:
+    X-Request-Id: {$ref: ./headers.yaml#/XRequestId}
+    Cache-Control: {$ref: ./headers.yaml#/CacheControlNoStore}
+  content:
+    application/problem+json:
+      schema: {$ref: ./schemas.yaml#/ProblemDetails}
+
+NotFound:
+  description: 대상이 없거나 현재 seller 범위에 속하지 않는다. 두 경우를 구분하지 않는다.
+  headers:
+    X-Request-Id: {$ref: ./headers.yaml#/XRequestId}
+    Cache-Control: {$ref: ./headers.yaml#/CacheControlNoStore}
+  content:
+    application/problem+json:
+      schema: {$ref: ./schemas.yaml#/ProblemDetails}
+
+Conflict:
+  description: 멱등 key, ETag/version, permission version 또는 현재 상태와 충돌한다.
+  headers:
+    X-Request-Id: {$ref: ./headers.yaml#/XRequestId}
+    Cache-Control: {$ref: ./headers.yaml#/CacheControlNoStore}
+  content:
+    application/problem+json:
+      schema: {$ref: ./schemas.yaml#/ProblemDetails}
+
+BusinessRejected:
+  description: 완결성, 수량, 검수, 마스킹 또는 판매자 정책 규칙을 충족하지 않는다.
+  headers:
+    X-Request-Id: {$ref: ./headers.yaml#/XRequestId}
+    Cache-Control: {$ref: ./headers.yaml#/CacheControlNoStore}
+  content:
+    application/problem+json:
+      schema: {$ref: ./schemas.yaml#/ProblemDetails}
+
+Unavailable:
+  description: 필수 외부 계약, 저장소 또는 Read Model projection을 사용할 수 없다.
+  headers:
+    X-Request-Id: {$ref: ./headers.yaml#/XRequestId}
+    Cache-Control: {$ref: ./headers.yaml#/CacheControlNoStore}
+    Retry-After: {$ref: ./headers.yaml#/RetryAfter}
+  content:
+    application/problem+json:
+      schema: {$ref: ./schemas.yaml#/ProblemDetails}
+

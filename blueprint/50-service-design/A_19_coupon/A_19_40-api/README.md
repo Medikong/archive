@@ -32,6 +32,8 @@ Context 쿠폰의 공개 REST API, 내부 workload API, 공통 HTTP 계약과 MQ
 
 ## 계약 원장
 
+- [Coupon 판매자 연동 계약 gap](seller-contract-gaps.md)
+
 | 문서 | 책임 |
 | --- | --- |
 | [OpenAPI 진입 문서](openapi/openapi.yaml) | `/api/v1` Path, tag, security scheme 등록 |

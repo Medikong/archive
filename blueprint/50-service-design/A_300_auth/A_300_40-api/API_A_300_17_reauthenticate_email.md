@@ -8,7 +8,7 @@ api_design: SD.A.30040
 domain_model: SD.A.30010
 persistence: SD.A.30020
 service: SD.A.30030
-updated: 2026-07-10
+updated: 2026-07-13
 ---
 
 # API.A.300-17 이메일 재인증
@@ -59,7 +59,8 @@ updated: 2026-07-10
 
 - 웹은 Session cookie, CSRF token과 Origin을 함께 검증하고 모바일은 access JWT를 검증한다.
 - 비밀번호, proof, cookie, access/refresh token 원문을 저장·로그·trace·event에 남기지 않는다.
-- 공개 목적은 `replace_phone`과 `link_identity`로 제한하고 `manual_recovery`는 운영 API 경계에 둔다.
+- 공개 목적은 `replace_phone`, `link_identity`, `seller_order_export`, `seller_member_manage`, `seller_account_update`, `seller_partnership_respond`로 제한하고 `manual_recovery`는 운영 API 경계에 둔다.
+- seller purpose proof는 seller ID와 실제 권한을 담지 않는다. 소비 workload가 Session, target seller와 operation을 binding하고 Context 판매자가 현재 membership·permission을 별도로 검증한다.
 - 웹은 새 Session cookie와 CSRF token, 모바일은 새 access/refresh token을 같은 성공 응답에서 전달한다.
 - 응답 유실 복구는 같은 Session·operation·key·request fingerprint의 `rotated_pending_delivery`에만 이전 credential hash를 허용하고 최초 credential·proof 응답을 short-TTL 암호문에서 재생한다.
 
@@ -124,6 +125,7 @@ updated: 2026-07-10
 - 웹 성공에서 새 cookie와 CSRF token이 함께 전달된다.
 - 모바일 성공에서 access/refresh token이 회전되고 이전 refresh token이 비활성화된다.
 - purpose가 proof에 고정되고 다른 목적에서 소비되지 않는다.
+- seller purpose가 다른 seller, Session, operation에서 소비되지 않고 membership 변경 뒤 권한 근거로 재사용되지 않는다.
 - 같은 key 재시도가 credential과 proof를 중복 만들지 않는다.
 - 회전 전 credential은 정확한 복구 binding에서만 성공하고 일반 보호 API에서는 거부된다.
 - 비밀번호와 credential 원문이 로그, trace, event와 IdempotencyRecord에 남지 않는다.
@@ -132,6 +134,7 @@ updated: 2026-07-10
 
 - 시퀀스 문서: [SCN.A.300-03 휴대폰 번호 교체](../../../80-sequence/A_300_auth/SCN_A_300_03_phone_replacement.md)
 - 관련 API: `API.A.300-18`, `API.A.300-21`, `API.A.300-22`, `API.A.300-23`
+- 판매자 소비 API: [API.A.200 operation catalog](../../A_200_seller/A_200_40-api/operation-catalog.md)
 - 여러 참여자의 Mermaid 다이어그램은 `80-sequence` 문서에서 관리한다.
 
 ## 호환성과 변경 정책

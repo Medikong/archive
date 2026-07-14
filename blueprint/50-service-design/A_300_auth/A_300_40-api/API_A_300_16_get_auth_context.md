@@ -8,7 +8,7 @@ api_design: SD.A.30040
 domain_model: SD.A.30010
 persistence: SD.A.30020
 service: SD.A.30030
-updated: 2026-07-10
+updated: 2026-07-13
 ---
 
 # API.A.300-16 현재 인증 컨텍스트 조회
@@ -62,6 +62,12 @@ updated: 2026-07-10
 - 웹 Session cookie와 모바일 Bearer token이 함께 오면 어느 쪽도 우선하지 않고 `AUTH_MULTIPLE_CREDENTIALS`로 거부한다.
 - 응답은 공유 캐시와 브라우저 저장을 막고 credential 종류에 따라 cache key가 섞이지 않게 한다.
 - 이 Query 결과를 다른 보호 API의 권한 근거로 재사용하지 않는다.
+
+## Context 판매자 연동
+
+- 판매자 BFF는 이 API에서 검증된 `user_id`와 Session ref만 얻고 [Seller access context](../../A_200_seller/A_200_40-api/operation-catalog.md)를 별도로 조회한다.
+- seller ID, membership, role, permission과 seller 업무 상태는 이 응답과 Auth claim에 추가하지 않는다.
+- `API.A.200-01`과 판매자 Command 수신 측은 현재 membership·permission version을 Context 판매자 원장에서 재검증한다.
 
 ## 처리 규칙
 

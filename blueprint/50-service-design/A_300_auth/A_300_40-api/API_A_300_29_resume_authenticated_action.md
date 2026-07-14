@@ -8,7 +8,7 @@ api_design: SD.A.30040
 domain_model: SD.A.30010
 persistence: SD.A.30020
 service: SD.A.30030
-updated: 2026-07-10
+updated: 2026-07-13
 ---
 
 # API.A.300-29 인증 후 행동 복구
@@ -47,8 +47,9 @@ updated: 2026-07-10
 ## 책임과 경계
 
 - 소비된 AuthenticationIntent의 allowlist action payload를 같은 Session에 한 번 전달한다.
-- 현재 지원하는 action은 구매 재개이며 업무 명령 자체는 실행하지 않는다.
+- 지원 action은 구매 재개와 `seller_order_export`, `seller_member_manage`, `seller_account_update`, `seller_partnership_respond`다. 어떤 variant도 업무 명령 자체는 실행하지 않는다.
 - 프론트엔드는 반환값을 검증한 뒤 Ingress를 통해 주문·드롭 API에 별도 멱등 key로 요청한다.
+- seller action은 `sellerId`와 선택적 opaque `resourceId`만 전달한다. BFF는 이를 canonical `API.A.200-*` 호출로 변환하고 현재 membership·permission을 다시 확인한다.
 - 임의 URL, script, 결제 비밀정보와 개인정보를 저장하거나 전달하지 않는다.
 
 ## 보안과 개인정보
@@ -129,5 +130,5 @@ updated: 2026-07-10
 
 ## 확인 필요
 
-- 구매 외 후속 action 목록과 각 최소 payload schema를 확정한다.
+- seller action별 `resourceId` 필요 여부와 로그인 Intent 생성 화면의 최소 context를 consumer contract test로 고정해야 한다.
 - delivery replay TTL과 crypto-shred worker의 운영 기준을 확정한다.

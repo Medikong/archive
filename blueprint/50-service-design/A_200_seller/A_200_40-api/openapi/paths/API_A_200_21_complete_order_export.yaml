@@ -1,0 +1,40 @@
+post:
+  tags: [SellerExport]
+  summary: 판매자 주문 자료 생성 완료
+  description: export worker가 checksum, row count, watermark와 private object ref를 검증 가능한 결과로 기록한다.
+  operationId: completeSellerOrderExport
+  x-api-id: API.A.200-21
+  x-command: CMD.A.200-13
+  x-service-design: SD.A.20040
+  security:
+    - WorkloadBearerAuth: []
+  parameters:
+    - $ref: ../components/parameters.yaml#/SellerId
+    - $ref: ../components/parameters.yaml#/XRequestId
+    - $ref: ../components/parameters.yaml#/Traceparent
+    - $ref: ../components/parameters.yaml#/IdempotencyKey
+    - $ref: ../components/parameters.yaml#/VersionPrecondition
+    - $ref: ../components/parameters.yaml#/ExportId
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema: {$ref: ../components/schemas.yaml#/SellerCommandRequest}
+  responses:
+    '200':
+      description: 주문 자료 생성 완료를 기록했다.
+      headers:
+        X-Request-Id: {$ref: ../components/headers.yaml#/XRequestId}
+        Cache-Control: {$ref: ../components/headers.yaml#/CacheControlNoStore}
+        ETag: {$ref: ../components/headers.yaml#/ETag}
+      content:
+        application/json:
+          schema: {$ref: ../components/schemas.yaml#/SellerCommandResponse}
+    '400': {$ref: ../components/responses.yaml#/BadRequest}
+    '401': {$ref: ../components/responses.yaml#/AuthenticationRequired}
+    '403': {$ref: ../components/responses.yaml#/Forbidden}
+    '404': {$ref: ../components/responses.yaml#/NotFound}
+    '409': {$ref: ../components/responses.yaml#/Conflict}
+    '422': {$ref: ../components/responses.yaml#/BusinessRejected}
+    '503': {$ref: ../components/responses.yaml#/Unavailable}
+

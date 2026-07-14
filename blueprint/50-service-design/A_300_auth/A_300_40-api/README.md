@@ -278,7 +278,7 @@ X-Token-Id: <jwt.jti-or-session-artifact-id>
 | `API.A.300-14` | POST `/api/v1/auth/sessions/refresh` | 모바일 Session 갱신 | [Markdown](API_A_300_14_refresh_session.md) | [Path Item](openapi/paths/API_A_300_14_refresh_session.yaml) |
 | `API.A.300-15` | POST `/api/v1/auth/sessions/logout` | 로그아웃 | [Markdown](API_A_300_15_logout_session.md) | [Path Item](openapi/paths/API_A_300_15_logout_session.yaml) |
 | `API.A.300-16` | GET `/api/v1/auth/context` | 현재 인증 컨텍스트 조회 | [Markdown](API_A_300_16_get_auth_context.md) | [Path Item](openapi/paths/API_A_300_16_get_auth_context.yaml) |
-| `API.A.300-17` | POST `/api/v1/auth/reauthentications/email` | 이메일 재인증 | [Markdown](API_A_300_17_reauthenticate_email.md) | [Path Item](openapi/paths/API_A_300_17_reauthenticate_email.yaml) |
+| `API.A.300-17` | POST `/api/v1/auth/reauthentications/email` | 이메일 재인증과 seller purpose proof | [Markdown](API_A_300_17_reauthenticate_email.md) | [Path Item](openapi/paths/API_A_300_17_reauthenticate_email.yaml) |
 | `API.A.300-18` | POST `/api/v1/auth/method-links` | 인증 수단 연동 시작 | [Markdown](API_A_300_18_start_method_link.md) | [Path Item](openapi/paths/API_A_300_18_start_method_link.yaml) |
 | `API.A.300-19` | POST `/api/v1/auth/method-links/{linkIntentId}/challenges` | 인증 수단 연동 Challenge 발급 | [Markdown](API_A_300_19_issue_method_link_challenge.md) | [Path Item](openapi/paths/API_A_300_19_issue_method_link_challenge.yaml) |
 | `API.A.300-20` | POST `/api/v1/auth/method-links/{linkIntentId}/complete` | 인증 수단 연동 완료 | [Markdown](API_A_300_20_complete_method_link.md) | [Path Item](openapi/paths/API_A_300_20_complete_method_link.yaml) |
@@ -290,7 +290,7 @@ X-Token-Id: <jwt.jti-or-session-artifact-id>
 | `API.A.300-26` | PATCH `/api/v1/operator/auth/policies/{policyName}` | 인증 정책 변경 | [Markdown](API_A_300_26_update_auth_policy.md) | [Path Item](openapi/paths/API_A_300_26_update_auth_policy.yaml) |
 | `API.A.300-27` | POST `/api/v1/operator/auth/manual-actions` | 운영자 인증 수동 처리 | [Markdown](API_A_300_27_apply_manual_auth_action.md) | [Path Item](openapi/paths/API_A_300_27_apply_manual_auth_action.yaml) |
 | `API.A.300-28` | GET `/api/v1/auth/registrations/{registrationId}` | 회원가입 상태 조회 | [Markdown](API_A_300_28_get_registration_status.md) | [Path Item](openapi/paths/API_A_300_28_get_registration_status.yaml) |
-| `API.A.300-29` | POST `/api/v1/auth/intents/{intentId}/action-resume` | 인증 후 행동 복구 | [Markdown](API_A_300_29_resume_authenticated_action.md) | [Path Item](openapi/paths/API_A_300_29_resume_authenticated_action.yaml) |
+| `API.A.300-29` | POST `/api/v1/auth/intents/{intentId}/action-resume` | 구매·seller 행동 복구 | [Markdown](API_A_300_29_resume_authenticated_action.md) | [Path Item](openapi/paths/API_A_300_29_resume_authenticated_action.yaml) |
 | `API.A.300-30` | GET `/api/v1/dev/auth/verification-messages/{challengeId}` | 가상 인증 메시지 조회 | [Markdown](API_A_300_30_get_virtual_verification_message.md) | [Path Item](openapi/paths/API_A_300_30_get_virtual_verification_message.yaml) |
 | `API.A.300-31` | PUT `/api/v1/operator/auth/users/{userId}/account-status` | User 서명 proof로 계정 상태 동기 반영 | [Markdown](API_A_300_31_apply_user_account_status.md) | [Path Item](openapi/paths/API_A_300_31_apply_user_account_status.yaml) |
 
