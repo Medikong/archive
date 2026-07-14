@@ -4,6 +4,8 @@
 
 이 문서는 정상 구매 시나리오에서 호출되는 REST API 순서와 요청/응답 필드 초안을 정의한다. 공통 API 규칙은 `../_shared/00-shared-infra-test-contract.md`를 따른다.
 
+> 문서 상태: 목표 API 흐름 초안. 예시 payload는 기계 계약이 아니며, 현재 API는 `services/contracts/services/*/openapi.yaml`과 `test-execution-record.md`를 기준으로 한다.
+
 ## 1. API 원칙
 
 | 원칙 | 기준 |
@@ -28,7 +30,7 @@
 | `GET /orders/{orderId}` | 필수 | 주문 소유자 또는 admin만 허용 |
 | `GET /notifications` | 필수 | 본인 알림만 조회 |
 
-서비스는 `Authorization` 원문을 직접 파싱할 수 있지만, 목표 구조에서는 Istio Gateway가 검증한 claim을 내부 헤더로 전달받는 방식을 우선한다. `X-User-Id`, `X-User-Email`, `X-User-Role`은 클라이언트 입력값이 아니라 Gateway에서 생성되거나 덮어쓴 값으로만 신뢰한다.
+목표 구조에서는 서비스가 `Authorization` 원문을 단순 파싱해 신뢰하지 않는다. Istio Gateway가 서명, issuer, audience, expiry를 검증한 claim을 내부 헤더로 전달하고 보호 API의 인증 principal을 강제한다. Gateway를 우회해 JWT를 받는 배포라면 서비스가 동일한 검증을 수행하고 네트워크 정책으로 신뢰 경계를 제한해야 한다. `X-User-Id`, `X-User-Email`, `X-User-Role`은 클라이언트 입력값이 아니라 Gateway에서 생성되거나 덮어쓴 값으로만 신뢰한다.
 
 ## 2. 호출 순서
 

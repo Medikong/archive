@@ -4,6 +4,8 @@
 
 이 문서는 `../../medikong/12-user-flows.md`의 결제 실패/지연 흐름과 `../../blueprint/`의 주문/결제 화면, 요구사항, 유스케이스를 구현 가능한 서비스 설계로 연결한다.
 
+> 문서 상태: 목표 설계 초안. API·이벤트·데이터 표는 후속 구현 제안이며 기계 계약이 아니다. 현재 계약은 `services/contracts`, 현재 완료 범위는 `test-execution-record.md`와 `../_shared/03-purchase-development-handoff.md`를 기준으로 한다.
+
 ## 1. 목표
 
 주문 예약은 성공했지만 결제 실패, 결제 지연, 예약 만료가 발생하는 상황에서 고객이 현재 주문 상태와 다음 행동을 이해할 수 있어야 한다.
@@ -11,7 +13,7 @@
 ```text
 PENDING_PAYMENT
 -> payment.failed
--> CANCELLED + reservation RELEASED
+-> CANCELED + reservation RELEASED
 
 PENDING_PAYMENT
 -> payment.delayed
@@ -74,7 +76,7 @@ flowchart LR
     H --> I{"최종 상태"}
     I -->|"CONFIRMED"| J["구매 완료"]
     I -->|"EXPIRED"| K["주문 만료 안내"]
-    I -->|"CANCELLED"| F
+    I -->|"CANCELED"| F
 ```
 
 ## 5. API 계약
@@ -120,7 +122,7 @@ flowchart LR
 ```json
 {
   "orderId": "order-001",
-  "status": "CANCELLED",
+  "status": "CANCELED",
   "cancelReason": "PAYMENT_FAILED",
   "reservationStatus": "RELEASED"
 }
@@ -153,11 +155,11 @@ flowchart LR
 stateDiagram-v2
     [*] --> PENDING_PAYMENT: POST /orders
     PENDING_PAYMENT --> CONFIRMED: payment.approved
-    PENDING_PAYMENT --> CANCELLED: payment.failed
+    PENDING_PAYMENT --> CANCELED: payment.failed
     PENDING_PAYMENT --> PENDING_PAYMENT: payment.delayed
     PENDING_PAYMENT --> EXPIRED: reservation TTL exceeded
     EXPIRED --> EXPIRED: late payment.approved ignored
-    CANCELLED --> CANCELLED: duplicate payment.failed ignored
+    CANCELED --> CANCELED: duplicate payment.failed ignored
     CONFIRMED --> CONFIRMED: duplicate payment.approved ignored
 ```
 
@@ -204,7 +206,7 @@ stateDiagram-v2
 ### 결제 실패
 
 ```text
-orders.status: PENDING_PAYMENT -> CANCELLED
+orders.status: PENDING_PAYMENT -> CANCELED
 stock_reservations.status: ACTIVE -> RELEASED
 inventory_buckets.reserved_quantity: -quantity
 outbox_events: order.cancelled, notification.requested
@@ -233,7 +235,7 @@ outbox_events: order.reservation.expired, notification.requested
 
 ```text
 payment.approved 도착
-order.status == EXPIRED 또는 CANCELLED
+order.status == EXPIRED 또는 CANCELED
 -> confirm하지 않음
 -> processed_events 기록
 -> stale_payment_approved_total 증가
@@ -272,7 +274,7 @@ MVP 권장: `payment.failed` 후 짧은 시간 내 재시도는 같은 order의 
 | unit | `payment_fail_creates_failed_event` | 실패 결제가 `payment.failed` outbox를 만든다. |
 | unit | `payment_delay_creates_delayed_event` | 지연 결제가 `payment.delayed` outbox를 만든다. |
 | unit | `payment_idempotency_replay_returns_original_response` | 결제 재시도가 중복 결제를 만들지 않는다. |
-| unit | `payment_failed_releases_reservation` | 실패 이벤트로 예약이 release되고 주문이 `CANCELLED`가 된다. |
+| unit | `payment_failed_releases_reservation` | 목표 설계에서는 실패 이벤트로 예약이 release되고 주문이 `CANCELED`가 된다. 현재 구현은 `PAYMENT_FAILED`를 사용한다. |
 | unit | `reservation_ttl_releases_stock` | TTL 초과 시 예약이 만료되고 재고가 release된다. |
 | integration | `late_payment_approved_does_not_confirm_expired_order` | 만료 후 도착한 승인 이벤트는 주문 확정을 만들지 않는다. |
 | integration | `payment_failed_consumer_is_idempotent` | 중복 실패 이벤트가 중복 release를 만들지 않는다. |
@@ -320,7 +322,7 @@ MVP 권장: `payment.failed` 후 짧은 시간 내 재시도는 같은 order의 
 
 - `customer_payment_failed_path`가 통과한다.
 - `customer_payment_delayed_expiry_path`가 통과한다.
-- 결제 실패 후 order는 `CANCELLED`, reservation은 `RELEASED`가 된다.
+- 목표 설계에서는 결제 실패 후 order는 `CANCELED`, reservation은 `RELEASED`가 된다. 현재 자동 검증은 `PAYMENT_FAILED`와 활성 예약 집계 제외 방식을 사용한다.
 - 결제 지연 후 TTL이 지나면 order는 `EXPIRED`, reservation은 `EXPIRED`가 된다.
 - expired/cancelled order에 늦게 도착한 `payment.approved`는 주문을 확정하지 않는다.
 - 결제 실패와 예약 만료 알림은 중복 없이 생성된다.

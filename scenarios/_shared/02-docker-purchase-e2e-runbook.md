@@ -15,14 +15,14 @@
 | 항목 | 확인 기준 |
 | --- | --- |
 | 기능 흐름 | 주문 생성, 결제 승인/실패, 주문 상태 전이, 알림 조회가 기대대로 동작 |
-| 메시징 | Kafka 기반 `order.created`, `payment.approved`, `payment.failed`, `order.confirmed`, `notification.requested` 흐름이 깨지지 않음 |
+| 메시징 | Kafka 기반 `order.created`, `payment.approved`, `payment.failed`, `notification.requested` 흐름이 깨지지 않음. `order.confirmed`는 아직 미구현 |
 | 테스트 데이터 | 정상 구매, 결제 실패, 품절/동시성 시나리오가 서로의 fixture를 오염시키지 않음 |
 | 업무 metric | 성공/실패/품절 지표가 기대 방향으로 증가 |
 | trace | 정상 구매 주요 API span과 Kafka producer/consumer span graph가 Tempo에서 고유 request ID로 검색됨 |
-| log | HTTP와 Kafka JSON 로그가 Loki에서 correlation/trace ID로 연결되고 민감 필드가 노출되지 않음 |
+| log | HTTP와 Kafka JSON 로그가 Loki에서 correlation/trace ID로 연결되고, Kafka 로그는 metadata allowlist만 포함하며 raw payload·token·card를 기록하지 않음 |
 | 정리 상태 | 실행 후 compose stack과 volume이 제거되어 다음 실행에 영향을 주지 않음 |
 
-이 runbook의 자동 gate는 Gateway를 거치지 않는 내부 회귀다. 구매 서비스가 신뢰하는 `X-User-*` header를 직접 사용하며, 운영 또는 외부 ingress 준비 완료를 뜻하지 않는다.
+이 runbook의 자동 gate는 Gateway를 거치지 않는 내부 회귀다. 구매 서비스가 신뢰하는 `X-User-Id`, `X-User-Role` header를 직접 사용하며, 운영 또는 외부 ingress 준비 완료를 뜻하지 않는다.
 
 ## 2. 기본 실행 명령
 
@@ -187,43 +187,49 @@ Notification metric과 committed Kafka lag는 `task tests:purchase-e2e-with-noti
 
 | 항목 | 결과 |
 | --- | --- |
-| services 최종 기준선 | `34f909b` |
+| services 게시 후보 | `agent/purchase-internal-regression`의 `b7878ae` |
+| 구매 런타임 최종 기준선 | `34f909b` |
 | 통합 실행 기준 | `ea9710d` |
 | 명령 | `task purchase-internal-regression` |
 | 결과 | exit 0, 522.6초 |
 | log gate 최종 재실행 | services `34f909b`, exit 0, 99.9초 |
+| 2026-07-14 보완 검증 | 게시 후보에서 Python unit 102건과 Go workspace unit 전체 통과, `34f909b..b7878ae` 구매 런타임·E2E 변경 없음. Task 실행기 부재로 8개 gate 전체는 재실행하지 않음 |
 | concurrency | `201` 4건, `409` 1건, 활성 주문 4건, 예약 수량 40, 재고 42 이하 |
 | 결제 멱등성 | 결제 1행, 처리 이벤트 1행, Kafka 3건의 `eventId` 1개, 주문 `PAYMENT_FAILED` |
 | notification | `consumed/created/replayed/invalid=3/2/1/0`, lag 0 |
 | cleanup | container/network/volume/image/임시 context 모두 0 |
 | 최종 검토 | 5개 검토 영역 모두 `PASS` |
 
-Gateway JWT는 이 통합 실행에서 명시적으로 제외한다. 현재 경계는 신뢰된 내부 `X-User-Id`, `X-User-Email`, `X-User-Role`이다. Istio `RequestAuthentication`/`AuthorizationPolicy`, claim/header mapping, 위조 header 거부, auth-service 통합은 별도 Gateway E2E로 남아 있다.
+Gateway JWT는 이 통합 실행에서 명시적으로 제외한다. 현재 구매 서비스가 소비하는 경계는 신뢰된 내부 `X-User-Id`, `X-User-Role`이다. 기존 공통 계약 일부에 남은 `X-User-Email`은 현재 구매 서비스가 소비하지 않는다. Istio `RequestAuthentication`/`AuthorizationPolicy`, claim/header mapping, 위조 header 거부, auth-service 통합은 별도 Gateway E2E로 남아 있다.
 
-현재 결제 실패 수용 동작은 주문 `PAYMENT_FAILED`와 실패 주문을 예약 합계에서 제외하는 방식이다. `CANCELLED`, `EXPIRED`, 늦은 승인, 실패 알림, transactional outbox는 구현 완료로 보지 않는다.
+현재 결제 실패 수용 동작은 주문 `PAYMENT_FAILED`와 실패 주문을 예약 합계에서 제외하는 방식이다. 취소 상태의 기계 계약은 코드와 OpenAPI의 `CANCELED`다. `EXPIRED`, 늦은 승인, 실패 알림, 모든 구매 event producer의 transactional outbox도 구현 완료로 보지 않는다.
 
 ## 8. 수동 검증이 필요할 때
 
 Task 실행이 막히거나 metric을 직접 확인해야 하면 다음 흐름으로 본다.
 
 ```bash
-docker compose -p dropmong-purchase-check -f tests/e2e/docker-compose.yml up -d --build --wait --wait-timeout 180 postgres kafka kafka-init catalog-service order-service payment-service notification-service
-task tests:purchase-e2e-newman SCENARIO=04-customer-drop-purchase-happy-path E2E_COMPOSE_PROJECT=dropmong-purchase-check E2E_NETWORK=dropmong-purchase-check_default
-task tests:purchase-e2e-newman SCENARIO=05-payment-failure-flow E2E_COMPOSE_PROJECT=dropmong-purchase-check E2E_NETWORK=dropmong-purchase-check_default
-task tests:purchase-e2e-newman SCENARIO=06-sold-out-concurrency-flow E2E_COMPOSE_PROJECT=dropmong-purchase-check E2E_NETWORK=dropmong-purchase-check_default
-task tests:purchase-e2e-newman SCENARIO=07-purchase-flow-metrics E2E_COMPOSE_PROJECT=dropmong-purchase-check E2E_NETWORK=dropmong-purchase-check_default
-docker compose -p dropmong-purchase-check -f tests/e2e/docker-compose.yml down -v --remove-orphans
+PROJECT="$(python -c 'import uuid; print("dropmong-purchase-check-" + uuid.uuid4().hex[:12])')"
+docker compose -p "$PROJECT" -f tests/e2e/docker-compose.yml up -d --build --wait --wait-timeout 180 postgres kafka kafka-init catalog-service order-service payment-service notification-service
+task tests:purchase-e2e-newman SCENARIO=04-customer-drop-purchase-happy-path E2E_COMPOSE_PROJECT="$PROJECT" E2E_NETWORK="${PROJECT}_default"
+task tests:purchase-e2e-newman SCENARIO=05-payment-failure-flow E2E_COMPOSE_PROJECT="$PROJECT" E2E_NETWORK="${PROJECT}_default"
+task tests:purchase-e2e-newman SCENARIO=06-sold-out-concurrency-flow E2E_COMPOSE_PROJECT="$PROJECT" E2E_NETWORK="${PROJECT}_default"
+task tests:purchase-e2e-newman SCENARIO=07-purchase-flow-metrics E2E_COMPOSE_PROJECT="$PROJECT" E2E_NETWORK="${PROJECT}_default"
+docker ps -a --filter "label=com.docker.compose.project=$PROJECT"
+docker compose -p "$PROJECT" -f tests/e2e/docker-compose.yml down -v
 ```
 
-수동 실행에서는 마지막 `down -v --remove-orphans`까지 완료해야 다음 실행이 같은 조건에서 시작된다.
+수동 실행은 매번 고유 Compose project 이름을 사용한다. 정리 전에 project label로 대상 container가 이번 실행 소유인지 확인하고 마지막 `down -v`까지 완료한다. 고정 project 이름이나 소유권을 확인하지 않은 `--remove-orphans`는 사용하지 않는다.
 
 Trace를 수동으로 확인해야 하면 Tempo와 Collector를 함께 띄운 뒤 `04`와 `08`을 이어서 실행한다.
 
 ```bash
-docker compose -p dropmong-purchase-trace-check -f tests/e2e/docker-compose.yml up -d --build --wait --wait-timeout 180 postgres kafka kafka-init tempo otel-collector catalog-service order-service payment-service notification-service
-task tests:purchase-e2e-newman SCENARIO=04-customer-drop-purchase-happy-path E2E_COMPOSE_PROJECT=dropmong-purchase-trace-check E2E_NETWORK=dropmong-purchase-trace-check_default
-task tests:purchase-e2e-newman SCENARIO=08-purchase-flow-trace-smoke E2E_COMPOSE_PROJECT=dropmong-purchase-trace-check E2E_NETWORK=dropmong-purchase-trace-check_default
-docker compose -p dropmong-purchase-trace-check -f tests/e2e/docker-compose.yml down -v --remove-orphans
+PROJECT="$(python -c 'import uuid; print("dropmong-purchase-trace-" + uuid.uuid4().hex[:12])')"
+docker compose -p "$PROJECT" -f tests/e2e/docker-compose.yml up -d --build --wait --wait-timeout 180 postgres kafka kafka-init tempo otel-collector catalog-service order-service payment-service notification-service
+task tests:purchase-e2e-newman SCENARIO=04-customer-drop-purchase-happy-path E2E_COMPOSE_PROJECT="$PROJECT" E2E_NETWORK="${PROJECT}_default"
+task tests:purchase-e2e-newman SCENARIO=08-purchase-flow-trace-smoke E2E_COMPOSE_PROJECT="$PROJECT" E2E_NETWORK="${PROJECT}_default"
+docker ps -a --filter "label=com.docker.compose.project=$PROJECT"
+docker compose -p "$PROJECT" -f tests/e2e/docker-compose.yml down -v
 ```
 
 ## 9. 실패했을 때 보는 순서
@@ -249,4 +255,4 @@ docker compose -p dropmong-purchase-trace-check -f tests/e2e/docker-compose.yml 
 
 Notification 업무 metric과 Kafka lag 자동 판정, `09` portability 수정, 8개 내부 gate 통합 실행은 완료했다.
 
-후속 자동화는 Gateway JWT 경계와 미구현 결제 상태에 한정한다. Istio 정책과 auth-service가 연결된 환경에서 JWT 누락·위조, claim/header mapping, 외부 `X-User-*` 위조를 검증하고, 별도 도메인 작업에서 `CANCELLED`, `EXPIRED`, 늦은 승인, 실패 알림, transactional outbox를 검증해야 한다.
+후속 자동화는 Gateway JWT 경계와 미구현 결제 상태에 한정한다. Istio 정책과 auth-service가 연결된 환경에서 JWT 누락·위조, claim/header mapping, 외부 `X-User-*` 위조를 검증하고, 별도 도메인 작업에서 `CANCELED`, `EXPIRED`, 늦은 승인, 실패 알림, 모든 구매 event producer의 transactional outbox를 검증해야 한다.

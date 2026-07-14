@@ -2,7 +2,7 @@
 
 작성일: 2026-07-03
 
-이 폴더는 DropMong의 정상 구매 시나리오 오너가 서비스 구현 전에 설계할 내용을 모아두는 공간이다. 기준 문서는 `archive/medikong/12-user-flows.md`의 "정상 구매 시나리오 오너"와 "고객 정상 구매 경로"이며, 내부 시스템 흐름은 `archive/medikong/07-critical-flows.md`의 드롭 조회, 주문 생성, 결제 승인 흐름을 따른다.
+이 폴더는 DropMong의 정상 구매 목표 설계, 현재 구현 흐름, 수용 테스트와 실행 기록을 연결한다. 기준 문서는 `archive/medikong/12-user-flows.md`의 "정상 구매 시나리오 오너"와 "고객 정상 구매 경로"이며, 내부 시스템 흐름은 `archive/medikong/07-critical-flows.md`의 드롭 조회, 주문 생성, 결제 승인 흐름을 따른다. 현재 동작은 `test-execution-record.md`와 `../_shared/03-purchase-development-handoff.md`를 기준으로 확인한다.
 
 ## 1. 시나리오 목표
 
@@ -97,7 +97,7 @@ sequenceDiagram
 
 3. `03-state-event-flow.md`
    - `PENDING_PAYMENT`, `CONFIRMED` 상태 전이를 정리한다.
-   - `order.created`, `payment.approved`, `order.confirmed`, `notification.requested` 이벤트를 연결한다.
+   - 현재 `order.created`, `payment.approved`, `notification.requested`와 목표 예약 계약 `order.confirmed`를 구분한다.
 
 4. `04-service-implementation-plan.md`
    - `catalog-service`, `order-service`, `payment-service`, `notification-service`에서 구현할 최소 기능을 나눈다.

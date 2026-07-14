@@ -4,6 +4,8 @@
 
 이 문서는 `../../medikong/12-user-flows.md`의 정상 구매 흐름과 `../../blueprint/`의 요구사항, 화면, 유스케이스를 개발 작업으로 연결한다. 기존 세부 문서 `01-user-journey.md`부터 `06-performance-and-language-decision.md`까지를 읽기 전에 보는 구현 기준 문서다.
 
+> 문서 상태: 목표 설계 초안. API·이벤트 표는 시나리오 설계 제안이며 기계 계약이 아니다. 현재 계약은 `services/contracts`, 현재 동작은 `test-execution-record.md`와 `../_shared/03-purchase-development-handoff.md`를 기준으로 한다.
+
 ## 1. 목표
 
 로그인된 고객이 한정 드롭 상품을 발견하고, 오픈 상태에서 주문을 생성하고, mock 결제를 승인한 뒤, 주문 확정과 알림을 확인한다.
@@ -114,7 +116,7 @@ sequenceDiagram
     P->>K: payment.approved
     K->>O: payment.approved
     O->>O: PENDING_PAYMENT -> CONFIRMED
-    O->>K: order.confirmed
+    O-->>K: order.confirmed (목표 예약, 현재 미발행)
     O->>K: notification.requested
     K->>N: notification.requested
     N->>N: notification 저장
@@ -171,7 +173,7 @@ sequenceDiagram
 | 영역 | 확인 |
 | --- | --- |
 | Gateway | 공개 API와 보호 API의 JWT 정책이 분리되어 있다. |
-| Kafka | `order.created`, `payment.approved`, `order.confirmed`, `notification.requested` topic이 준비되어 있다. |
+| Kafka | 현재 `order.created`, `payment.approved`, `notification.requested`를 사용한다. `order.confirmed`는 목표 예약 계약이며 현재 미발행이다. |
 | DB | 서비스별 schema 또는 database가 분리되어 있다. |
 | Observability | `orders_created_total`, `outbox_pending_count`, `kafka_consumer_lag`, `order_confirmed_total`을 볼 수 있다. |
 | Rollout | `order-service`, `payment-service`는 canary 대상이다. |

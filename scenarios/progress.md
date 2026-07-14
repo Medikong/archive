@@ -61,7 +61,7 @@ Task를 완료할 때마다 다음 형식으로 항목을 추가한다.
 - 정리와 revert: 모든 C002 Compose container/volume과 임시 build context를 제거했다. 검증되지 않은 runner 수정 `63babec`, `6d59f6a`는 `e322a52`, `a95a027`로 되돌렸다.
 - 로컬 환경 주의: `order-service`와 `payment-service`의 Git-ignored `.pytest_cache`는 샌드박스 전용 ACL 때문에 Docker build context에서 읽을 수 없다. 다음 재시도는 clean `git archive` context를 사용하거나 캐시 권한을 먼저 정리한다.
 - 범위 확인: coupon service는 이번 Task 2 진행에서 건드리지 않았다.
-- 남은 위험: payment-service의 DB commit 이후 Kafka publish 구간은 아직 outbox가 없어 원자성이 보장되지 않으며, 이번 범위 밖이다.
+- 남은 위험: order-service와 payment-service의 DB commit 이후 Kafka publish 구간은 아직 outbox가 없어 원자성이 보장되지 않으며, 이번 범위 밖이다.
 
 #### Task 2 재설계 완료 기록 (G008, 2026-07-13)
 
@@ -70,7 +70,7 @@ Task를 완료할 때마다 다음 형식으로 항목을 추가한다.
 - 검증 결과: 결제 1행, 처리 이벤트 1행, Kafka 재전달 3건의 `eventId` 1개, 주문 최종 상태 `PAYMENT_FAILED`를 확인했다.
 - 재고 처리: 실패 주문은 활성 예약 합계에서 제외되는 방식으로 수량을 회복한다.
 - 정리 결과: 관련 container, network, volume, image와 임시 context가 모두 0임을 확인했다.
-- 남은 범위: `CANCELLED`, `EXPIRED`, 늦은 승인, 실패 알림, transactional outbox는 후속 구현으로 남는다.
+- 남은 범위: `CANCELED`, `EXPIRED`, 늦은 승인, 실패 알림, transactional outbox는 후속 구현으로 남는다.
 
 ### Task 3. 구조화 로그 correlation
 
@@ -110,20 +110,22 @@ Task를 완료할 때마다 다음 형식으로 항목을 추가한다.
 ### Task 5. Gateway JWT E2E
 
 - 상태: 차단·연기
-- 현재 경계: 구매 서비스는 내부에서 전달된 `X-User-Id`, `X-User-Email`, `X-User-Role`을 신뢰하며, 이번 통합 실행도 그 내부 경계만 검증한다.
+- 현재 경계: 구매 서비스는 내부에서 전달된 `X-User-Id`, `X-User-Role`을 신뢰하며, 이번 통합 실행도 그 내부 경계만 검증한다. JWT convention과 order OpenAPI의 선택적 `X-User-Email`은 현재 구매 서비스가 소비하지 않는다. 역할값도 JWT/OpenAPI의 `OPERATOR`와 구매 런타임의 `OWNER`가 달라 auth-service owner와 정렬해야 한다.
 - 제외 범위: Istio `RequestAuthentication`/`AuthorizationPolicy`, JWT claim과 사용자 header mapping, 외부 위조 header 거부, auth-service 통합은 구현·검증하지 않았다.
 - 판정: 이번 결과를 운영 또는 외부 ingress 준비 완료로 해석하지 않는다.
 
 ### Task 6. 세 시나리오 전체 회귀 테스트
 
 - 상태: 완료, Gateway 제외
-- services 기준선: `34f909b`
+- services 게시 후보: `agent/purchase-internal-regression`의 `b7878ae`
+- 구매 런타임 기준선: `34f909b`
 - 통합 실행: services `ea9710d`에서 `task purchase-internal-regression`, exit 0, 522.6초
 - 8개 검증: unit, purchase metric, 실제 concurrency, 결제 실패 중복 멱등성, HTTP trace, Kafka trace, Loki correlation, notification metric/lag
 - 핵심 불변 조건: 동시 주문 `201` 4건/`409` 1건, 활성 주문 4건, 예약 수량 40이 재고 42 이하
 - 결제 실패 불변 조건: 결제 1행, 처리 이벤트 1행, Kafka 3건의 `eventId` 1개, 주문 `PAYMENT_FAILED`
 - notification 불변 조건: counter `3/2/1/0`, consumer lag 0
 - 최종 log gate: services `34f909b`에서 exit 0, 99.9초
+- 2026-07-14 보완 검증: 게시 후보에서 Python 서비스 unit 102건과 Go workspace unit 전체가 통과했다. `34f909b..b7878ae` 구간의 구매 런타임·E2E 경로 변경은 없으며, 로컬 Task 실행기 부재로 8개 gate 전체를 다시 실행하지는 않았다.
 - 정리 결과: container, network, volume, image, 임시 context 모두 0
 - 독립 검토: 최종 5개 검토 영역 모두 `PASS`
 
@@ -131,6 +133,7 @@ Task를 완료할 때마다 다음 형식으로 항목을 추가한다.
 
 - 상태: 완료
 - 기록 대상: 이 진행판, 공통 Docker runbook, 정상 구매·결제 실패·품절/동시성 실행 기록
+- 팀 인수인계: `_shared/03-purchase-development-handoff.md`에 서비스 책임, 코드 구조, API·Kafka 흐름, 개발 순서와 다음 작업을 연결했다.
 - 기록 원칙: G003 실패를 보존하고 G008 `Python` runner와 깨끗한 Git 추적 파일 복제 방식의 성공을 후속 기록으로 추가했다.
 - 범위 경고: Gateway JWT, 운영 ingress, 미구현 결제 상태와 transactional outbox를 완료로 표현하지 않는다.
 
@@ -140,8 +143,9 @@ Task를 완료할 때마다 다음 형식으로 항목을 추가한다.
 | --- | --- | --- |
 | 쿠폰 서비스 병합 | 이번 구매 내부 회귀와 분리되어 있다. | 별도 병합·연동 계획으로 진행한다. |
 | Gateway JWT | 내부 `X-User-*` 신뢰 경계만 검증했고 외부 위조 요청은 검증하지 않았다. | Istio 정책, claim/header mapping, 위조 header 거부와 auth-service 통합을 별도 Gateway E2E로 수행한다. |
-| 결제 후속 상태 | 현재 수용 동작은 `PAYMENT_FAILED`와 예약 집계 제외 방식이다. | `CANCELLED`, `EXPIRED`, 늦은 승인, 실패 알림을 별도 상태 전이 설계로 추가한다. |
-| 이벤트 원자성 | payment-service의 DB commit과 Kafka publish 사이 transactional outbox가 없다. | outbox 도입과 장애 복구 검증을 별도 Task로 수행한다. |
+| 인증 계약 드리프트 | 이메일 header 사용 여부와 `OPERATOR`/`OWNER` 역할값이 JWT/OpenAPI와 구매 런타임 사이에서 다르다. | auth-service owner와 authoritative contract를 결정한 뒤 OpenAPI, Gateway mapping, 런타임 enum을 함께 정렬한다. |
+| 결제 후속 상태 | 현재 수용 동작은 `PAYMENT_FAILED`와 예약 집계 제외 방식이다. 취소 상태의 기계 계약은 `CANCELED`다. | `PAYMENT_FAILED`와 `CANCELED`의 관계를 결정한 뒤 `EXPIRED`, 늦은 승인, 실패 알림을 별도 상태 전이로 추가한다. |
+| 이벤트 원자성 | order-service와 payment-service의 DB commit과 Kafka publish 사이 transactional outbox가 없다. | 모든 구매 event producer에 outbox와 장애 복구 검증을 별도 Task로 추가한다. |
 
 ## 공통 회귀 기준
 

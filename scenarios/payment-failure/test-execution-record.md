@@ -120,7 +120,7 @@ Windows bind mount와 `git archive`에 의존하던 runner를 `Python`으로 교
 | 정리 결과 | container/network/volume/image/임시 context 모두 0 |
 | 독립 검토 | 최종 5개 검토 영역 모두 `PASS` |
 
-현재 수용 동작은 `PAYMENT_FAILED`와 예약 집계 제외 방식이다. `CANCELLED`, `EXPIRED`, 늦은 승인, 실패 알림, transactional outbox는 연기된 후속 범위다. Gateway JWT도 이번 내부 gate에 포함되지 않았으며 운영 또는 외부 요청 경계가 준비됐다고 해석하지 않는다.
+현재 수용 동작은 `PAYMENT_FAILED`와 예약 집계 제외 방식이다. `CANCELED`, `EXPIRED`, 늦은 승인, 실패 알림, transactional outbox는 연기된 후속 범위다. Gateway JWT도 이번 내부 gate에 포함되지 않았으며 운영 또는 외부 요청 경계가 준비됐다고 해석하지 않는다.
 
 ## 9. 완료 판단
 

@@ -4,6 +4,8 @@
 
 이 문서는 `../../medikong/12-user-flows.md`의 품절/동시성 흐름과 `../../blueprint/`의 한정 드롭 요구사항을 구현 가능한 `order-service` 중심 설계로 풀어낸다.
 
+> 문서 상태: 목표 설계 초안. `inventory_buckets`, admission, outbox는 후속 설계이며 현재 구현이 아니다. 현재 계약은 `services/contracts`, 현재 동작은 `test-execution-record.md`와 `../_shared/03-purchase-development-handoff.md`를 기준으로 한다.
+
 ## 1. 목표
 
 오픈 직후 다수 고객이 같은 drop에 동시에 주문하더라도 재고 초과 판매가 발생하지 않아야 한다.
@@ -112,7 +114,7 @@ flowchart LR
 | --- | --- |
 | `inventory_buckets` | drop별 총 수량, 예약 수량, 확정 수량, version을 저장한다. |
 | `stock_reservations` | 주문별 예약 상태 `ACTIVE`, `CONFIRMED`, `RELEASED`, `EXPIRED`를 저장한다. |
-| `orders` | 주문 상태 `PENDING_PAYMENT`, `CONFIRMED`, `CANCELLED`, `EXPIRED`를 저장한다. |
+| `orders` | 목표 주문 상태 `PENDING_PAYMENT`, `CONFIRMED`, `CANCELED`, `EXPIRED`를 저장한다. 현재 자동 검증은 `PAYMENT_FAILED`를 추가로 사용한다. |
 | `idempotency_keys` | `scope`, `key`, `request_hash`, 최초 응답, resource id를 저장한다. |
 | `outbox_events` | `order.created` 등 발행할 이벤트를 저장한다. |
 | `processed_events` | consumer 중복 처리 방지를 저장한다. |
@@ -224,7 +226,7 @@ stateDiagram-v2
 | `order_create_duration_seconds` | admitted 요청 latency p95/p99 |
 | `inventory_transaction_conflict_total` | lock timeout 또는 retry 대상 |
 
-동적 ID인 `order_id`, `drop_id`, `customer_id`는 metric label로 넣지 않는다. 필요한 경우 log와 trace attribute에 남긴다.
+동적 ID인 `order_id`, `drop_id`, `customer_id`는 metric label로 넣지 않는다. `order_id`와 `drop_id`는 접근이 통제되고 보존 기간이 제한된 log와 trace에서만 사용한다. 원본 `customer_id`는 남기지 않고 필요한 경우 pseudonymous subject key를 사용한다.
 
 ## 13. 인프라 확인점
 

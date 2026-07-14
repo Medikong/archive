@@ -1,5 +1,7 @@
 # 정상 구매 테스트 시나리오
 
+> 문서 상태: 목표 수용 테스트 명세. 실제 실행 명령과 통과 결과는 `test-execution-record.md`에만 기록한다.
+
 작성일: 2026-07-03
 
 이 문서는 정상 구매 구현 중 함께 작성할 단위 테스트, 통합 테스트, E2E 테스트를 정의한다. 테스트 계층은 `archive/medikong/11-test-release-plan.md`와 `../_shared/00-shared-infra-test-contract.md`를 따른다.

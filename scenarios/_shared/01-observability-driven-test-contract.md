@@ -83,7 +83,7 @@ Idempotency-Key: idem-syn-20260707-001
 | 검증 | 기준 |
 | --- | --- |
 | trace | `GET /drops`, `POST /orders`, `POST /payments/mock-approvals`, `GET /orders/{orderId}`, `GET /notifications` 요청 span이 있다. |
-| event trace | `order.created`, `payment.approved`, `order.confirmed`, `notification.requested` 경계가 trace 또는 log correlation으로 이어진다. |
+| event trace | 현재 `order.created`, `payment.approved`, `notification.requested` 경계가 trace 또는 log correlation으로 이어진다. `order.confirmed`는 미구현 예약 계약이므로 현재 gate에 포함하지 않는다. |
 | metric | `orders_created_total`, `payments_approved_total`, notification counter 4종이 증가한다. |
 | latency | 정상 구매 journey 전체 p95가 목표 시간 이하이다. |
 | log | 같은 `request_id` 또는 `correlation_id`로 주문 생성부터 결제 승인까지 찾을 수 있다. |
@@ -200,7 +200,7 @@ Kafka trace 자동 판정은 고유 request ID로 현재 실행을 분리한다.
 | `outbox_pending_count` | gauge | 발행 대기 이벤트 수 |
 | `oversell_count` | gauge | 항상 0이어야 하는 안전 지표 |
 
-동적 ID는 Prometheus label로 올리지 않는다. `order_id`, `payment_id`, `customer_id`, `synthetic_run_id`는 log와 trace 검색에만 사용한다.
+동적 ID는 Prometheus label로 올리지 않는다. `order_id`, `payment_id`, `synthetic_run_id`는 접근이 통제되고 보존 기간이 제한된 log와 trace 검색에서만 사용한다. 원본 `customer_id`는 linkable identifier이므로 log와 trace에도 남기지 않으며, 업무상 필요하면 별도 salt와 접근 정책을 가진 pseudonymous subject key를 사용한다.
 
 ## 10. 구현 순서
 
@@ -229,4 +229,4 @@ task tests:purchase-e2e-with-notification-metrics
 - oversell 운영 metric과 부하 기반 lag SLO 추가
 - 결제 실패, 품절/동시성 시나리오의 trace smoke 확장
 
-즉, 현재 구매 시나리오는 기능 E2E, order/payment 업무 metric, HTTP trace, Kafka span graph, Loki log correlation에 더해 notification 업무 counter와 committed consumer lag 자동 판정을 갖췄다. 정상 구매에서는 counter `1/1/0/0`과 lag 0, 같은 이벤트를 두 번 추가 발행한 뒤에는 `3/2/1/0`과 lag 0, 중복 이벤트당 알림 1건을 확인했다. 다만 최종 전체 회귀에서 `09` runner가 Go Task 내장 셸의 `grep` 부재로 Newman 전에 중단되어 Task 4는 실패 상태로 남긴다.
+즉, 현재 구매 시나리오는 기능 E2E, order/payment 업무 metric, HTTP trace, Kafka span graph, Loki log correlation에 더해 notification 업무 counter와 committed consumer lag 자동 판정을 갖췄다. 초기 실행에서는 `09` runner의 `grep` 의존성 때문에 중단됐지만, 해당 의존성을 제거한 G009 통합 실행에서 8개 gate가 모두 통과했다. 정상 구매에서는 counter `1/1/0/0`과 lag 0, 같은 이벤트를 두 번 추가 발행한 뒤에는 `3/2/1/0`과 lag 0, 중복 이벤트당 알림 1건을 확인했다.

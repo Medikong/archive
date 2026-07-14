@@ -22,7 +22,19 @@
 | 문서 | 내용 |
 | --- | --- |
 | `00-detailed-design.md` | 사용자 흐름, API, 데이터, transaction, 테스트, 인프라 상세 설계 |
+| `01-user-journey.md` | 동시 주문에서 성공·품절 결과를 받는 사용자 흐름 |
+| `02-api-flow.md` | `POST /orders`와 병렬 요청의 API 판정 경계 |
+| `03-state-event-flow.md` | advisory lock, 활성 예약 합계, 상태와 멱등성 |
+| `04-service-implementation-plan.md` | order-service 중심의 현재 구현과 후속 작업 |
+| `05-test-scenarios.md` | PostgreSQL 동시성, 병렬 HTTP, E2E 수용 테스트 |
 | `test-execution-record.md` | 현재 구현 상태와 실제로 실행한 단위 테스트, E2E 테스트, 추가해야 할 통합 테스트 기록 |
+
+## 현재 완료 범위
+
+- 완료: PostgreSQL advisory transaction lock, 병렬 주문, 초과 판매 방지, 품절 409, 주문 REST 멱등성
+- 미완료: 실제 admission control, 장시간 spike p95/p99, 다중 상품 주문, 운영 SLO
+
+목표 설계의 `inventory_buckets` 조건부 update와 현재 구현의 활성 주문 예약 합계 방식은 다르다. 실제 동작은 `test-execution-record.md`와 `../_shared/03-purchase-development-handoff.md`를 기준으로 확인한다.
 
 ## 관련 시나리오
 

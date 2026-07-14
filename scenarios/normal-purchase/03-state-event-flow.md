@@ -2,7 +2,7 @@
 
 작성일: 2026-07-03
 
-이 문서는 정상 구매 시나리오의 상태 전이, Kafka event, outbox 처리 기준을 정의한다.
+이 문서는 정상 구매 시나리오의 상태 전이와 Kafka·outbox 목표를 정리한 설계 초안이다. 기계 계약은 `services/contracts/events/dropmong-purchase-events.md`, 현재 구현은 `test-execution-record.md`를 기준으로 한다.
 
 ## 1. 상태 전이 요약
 
@@ -23,7 +23,7 @@ stateDiagram-v2
 | --- | --- | --- |
 | `PENDING_PAYMENT` | 주문 생성과 재고 예약이 완료되고 결제를 기다린다. | 예 |
 | `CONFIRMED` | 결제 승인 이벤트를 반영해 주문이 확정되었다. | 예 |
-| `CANCELLED` | 결제 실패 또는 사용자 취소로 주문이 취소되었다. | 다른 시나리오 |
+| `CANCELED` | 사용자 취소 등으로 주문이 취소되었다. 현재 결제 실패 자동 검증은 별도 `PAYMENT_FAILED`를 사용한다. | 다른 시나리오 |
 | `EXPIRED` | 결제 제한 시간이 지나 예약이 만료되었다. | 다른 시나리오 |
 
 정상 구매에서 `order-service`는 `PENDING_PAYMENT -> CONFIRMED` 전이만 처리한다.
@@ -48,7 +48,9 @@ stateDiagram-v2
 
 정상 구매 성공 여부는 notification 상태에 의존하지 않는다.
 
-## 5. 이벤트 타임라인
+## 5. 목표 이벤트 타임라인
+
+아래 outbox와 `order.confirmed`는 목표 설계다. 현재 order/payment producer는 DB commit 뒤 직접 publish하며 `order.confirmed`는 발행하지 않는다.
 
 ```mermaid
 sequenceDiagram
@@ -66,22 +68,22 @@ sequenceDiagram
     P-->>K: payment.approved
     K->>O: payment.approved 전달
     O->>ODB: order CONFIRMED 처리
-    O-->>K: order.confirmed
+    O-->>K: order.confirmed (목표 예약, 현재 미발행)
     O-->>K: notification.requested
     K->>N: notification.requested 전달
     N->>N: notification 저장, processed event 기록
 ```
 
-## 6. 이벤트 계약 초안
+## 6. 이벤트 연결 초안
 
-| Topic | Producer | Consumer | 핵심 필드 |
+| Topic | Producer | Consumer | 현재 상태 |
 | --- | --- | --- | --- |
-| `order.created` | `order-service` | 관측/후속 실험 | `eventId`, `orderId`, `dropId`, `customerId`, `amount`, `occurredAt` |
-| `payment.approved` | `payment-service` | `order-service` | `eventId`, `paymentId`, `orderId`, `amount`, `approvedAt` |
-| `order.confirmed` | `order-service` | `notification-service`, catalog projection optional | `eventId`, `orderId`, `dropId`, `customerId`, `confirmedAt` |
-| `notification.requested` | `order-service` | `notification-service` | `eventId`, `notificationType`, `orderId`, `customerId`, `templateKey` |
+| `order.created` | `order-service` | `payment-service` | 사용 중 |
+| `payment.approved` | `payment-service` | `order-service` | 사용 중 |
+| `order.confirmed` | 미구현 | 미구현 | 목표 예약 계약 |
+| `notification.requested` | `order-service` | `notification-service` | 사용 중 |
 
-이벤트 payload는 업무 필드만 담고, `traceparent`, `tracestate`, `correlation_id`는 Kafka header로 전파한다.
+payload 필드는 이 문서에서 재정의하지 않고 이벤트 계약을 참조한다. `traceparent`, `tracestate`, `correlation_id`는 Kafka header로 전파한다.
 
 ## 7. Idempotency 규칙
 
@@ -107,6 +109,6 @@ sequenceDiagram
 | --- | --- | --- |
 | `payment.failed` | 예약만 한다. | 결제 실패 |
 | `payment.delayed` | 예약만 한다. | 결제 지연 |
-| `order.cancelled` | 예약만 한다. | 결제 실패, 사용자 취소 |
+| `order.cancelled` | 예약된 목표 이벤트 이름이며 현재 미구현이다. 주문 상태 표기는 `CANCELED`와 구분한다. | 결제 실패, 사용자 취소 |
 | `order.reservation.expired` | 예약만 한다. | 예약 만료 |
 | `coupon.usage.confirm.requested` | 쿠폰 제외로 미사용 | 쿠폰 구매 |

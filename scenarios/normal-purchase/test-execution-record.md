@@ -14,7 +14,7 @@
 | order-service | `POST /orders`로 주문을 만들고 `PENDING_PAYMENT` 상태와 재고 예약을 만든다. |
 | payment-service | mock 승인 API로 `APPROVED` 결제를 만들고 `payment.approved` 이벤트를 발행한다. |
 | notification-service | `notification.requested` 이벤트를 받아 고객 알림을 저장하고 조회한다. |
-| Kafka | `order.created`, `payment.approved`, `order.confirmed`, `notification.requested` 흐름을 사용한다. |
+| Kafka | 현재 `order.created`, `payment.approved`, `notification.requested` 흐름을 사용한다. `order.confirmed` topic 계약은 예약돼 있지만 아직 발행하지 않는다. |
 | 인증 | 로컬 E2E에서는 Gateway JWT 대신 서비스가 신뢰하는 `X-User-*` 테스트 헤더를 사용한다. Gateway JWT 검증은 별도 Gateway E2E 범위다. |
 
 ## 2. 최근 확인한 테스트
