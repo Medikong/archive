@@ -27,4 +27,3 @@ RetryAfter:
   schema:
     type: integer
     minimum: 1
-

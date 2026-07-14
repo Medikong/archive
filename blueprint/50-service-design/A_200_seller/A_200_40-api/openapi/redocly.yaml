@@ -12,4 +12,3 @@ rules:
   operation-operationId-unique: error
   path-parameters-defined: error
   spec-strict-refs: error
-

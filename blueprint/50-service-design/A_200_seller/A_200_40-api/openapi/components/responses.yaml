@@ -61,4 +61,3 @@ Unavailable:
   content:
     application/problem+json:
       schema: {$ref: ./schemas.yaml#/ProblemDetails}
-

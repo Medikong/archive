@@ -39,4 +39,3 @@ post:
     '409': {$ref: ../components/responses.yaml#/Conflict}
     '422': {$ref: ../components/responses.yaml#/BusinessRejected}
     '503': {$ref: ../components/responses.yaml#/Unavailable}
-
