@@ -65,6 +65,7 @@ updated: 2026-07-11
 | [A_01_user](A_01_user/README.md) | Context 사용자 | draft | [BC.A.01](../40-event-storming-bounded-context/BC_A_01_limited_drop_commerce.md), [REQ.A.05](../00-requirements/REQ_A_05_auth_member.md), [도메인 모델](A_01_user/A_01_10-domain-model/README.md), [영속성](A_01_user/A_01_20-persistence/README.md), [서비스](A_01_user/A_01_30-service/README.md), [API](A_01_user/A_01_40-api/README.md) |
 | [A_300_auth](A_300_auth/README.md) | Context 인증 | draft | [BC.A.300](../40-event-storming-bounded-context/BC_A_300_auth_member.md), [BC.A.01](../40-event-storming-bounded-context/BC_A_01_limited_drop_commerce.md) |
 | [A_19_coupon](A_19_coupon/README.md) | Context 쿠폰 | draft | [BC.A.19](../40-event-storming-bounded-context/BC_A_19_coupon.md), [REQ.A.02](../00-requirements/REQ_A_02_coupon_benefit.md), [도메인 모델](A_19_coupon/A_19_10-domain-model/README.md), [영속성](A_19_coupon/A_19_20-persistence/README.md), [서비스](A_19_coupon/A_19_30-service/README.md), [API](A_19_coupon/A_19_40-api/README.md) |
+| [A_07_interest_ranking](A_07_interest_ranking/README.md) | Context 찜 / Context 랭킹 집계 | draft | [BC.A.07](../40-event-storming-bounded-context/BC_A_07_interest_ranking.md), [REQ.A.07](../00-requirements/REQ_A_07_interest_ranking.md), [도메인 모델](A_07_interest_ranking/A_07_10-domain-model/SD_A_0710_interest_domain_model.md), [영속성](A_07_interest_ranking/A_07_20-persistence/persistence-design.md), [서비스](A_07_interest_ranking/A_07_30-service/service-design.md), [API](A_07_interest_ranking/A_07_40-api/README.md) |
 
 ## 템플릿
 

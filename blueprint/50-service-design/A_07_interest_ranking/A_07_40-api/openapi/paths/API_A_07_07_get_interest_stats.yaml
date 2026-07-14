@@ -1,0 +1,40 @@
+get:
+  tags:
+    - Ranking
+  summary: 드롭 관심도 통계 조회
+  description: |
+    DropMong 운영자(role: operator)가 드롭별 누적 찜 수 통계를 확인한다.
+    1차 스코프는 operator role로 제한하며, 브랜드 운영자(자사 드롭 한정 조회)는 소유권 검증 메커니즘이
+    확정되기 전까지 범위 밖이다(BC.A.07 ACTOR.A.07-03 참고, 2026-07-13 결정).
+    2026-07-14: dropPhase/viewCountTotal/sellThroughScore를 응답에서 제거했다(오픈 후 랭킹 후속 스코프).
+    조회 통계를 다시 포함할지는 확인 필요(api-endpoint-process.md API.A.07-07 참고).
+  operationId: getDropInterestStats
+  x-api-id: API.A.07-07
+  x-use-case: UC.A.07
+  x-service-design: SD.A.0740
+  x-design-doc: ../../api-endpoint-process.md
+  security:
+    - BearerAuth: []
+  parameters:
+    - $ref: ../components/parameters.yaml#/XUserId
+    - $ref: ../components/parameters.yaml#/XUserRole
+    - $ref: ../components/parameters.yaml#/XRequestId
+    - $ref: ../components/parameters.yaml#/Traceparent
+    - $ref: ../components/parameters.yaml#/DropIdPath
+  responses:
+    '200':
+      description: 드롭 관심도 통계다.
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas.yaml#/DropInterestStatsResponse
+          example:
+            data:
+              dropId: 7d4a8f2c-5e14-46be-9b9b-987f5d69e001
+              interestCount: 128
+    '401':
+      $ref: ../components/responses.yaml#/AuthenticationRequired
+    '403':
+      $ref: ../components/responses.yaml#/RequestForbidden
+    '404':
+      $ref: ../components/responses.yaml#/ResourceNotFound

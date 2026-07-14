@@ -1,0 +1,38 @@
+get:
+  tags:
+    - Ranking
+  summary: 실시간 많이 보는 상품 랭킹 조회
+  description: |
+    드롭 상태 구분 없이, 가장 최근에 마감된 KST 3시간 구간(00/03/06/09/12/15/18/21시 경계)의
+    서로 다른 조회자 수(`viewerCount`) 기준 랭킹을 반환한다. 매 요청마다 다시 집계하지 않고,
+    3시간마다 도는 배치가 미리 계산해 둔 스냅샷(`drop_view_rankings`)만 읽는다(2026-07-14 신설).
+    홈 화면 위젯은 `limit=3`으로, "전체보기" 페이지는 `limit` 최대 100으로 호출한다.
+  operationId: listTrendingRanking
+  x-api-id: API.A.07-08
+  x-use-case: UC.A.07
+  x-service-design: SD.A.0740
+  x-design-doc: ../../api-endpoint-process.md
+  security: []
+  parameters:
+    - $ref: ../components/parameters.yaml#/XRequestId
+    - $ref: ../components/parameters.yaml#/Traceparent
+    - $ref: ../components/parameters.yaml#/Limit
+    - $ref: ../components/parameters.yaml#/Cursor
+  responses:
+    '200':
+      description: 실시간 많이 보는 상품 랭킹 목록이다.
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas.yaml#/TrendingRankingListResponse
+          example:
+            data:
+              - dropId: 7d4a8f2c-5e14-46be-9b9b-987f5d69e001
+                rank: 1
+                viewerCount: 342
+            pageInfo:
+              nextCursor: null
+              hasNext: false
+            bucketStart: "2026-07-14T06:00:00+09:00"
+    '400':
+      $ref: ../components/responses.yaml#/InputInvalid

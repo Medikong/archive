@@ -31,6 +31,7 @@ updated: 2026-07-10
 
 - [UI.A.01 홈 화면 UI](buyer-mobile-web/UI_A_01_homepage.md)
 - [UI.A.02 상품 상세 페이지 UI](buyer-mobile-web/UI_A_02_product_detail.md)
+- [UI.A.09 기다리는 상품 페이지 UI](buyer-mobile-web/UI_A_09_waiting_products.md)
 - [UI.A.06 장바구니 페이지 UI](buyer-mobile-web/UI_A_06_shopping_cart.md)
 - [UI.A.10 마이 페이지 UI](buyer-mobile-web/UI_A_10_my.md)
 - [UI.A.11 주문/결제 페이지 UI](buyer-mobile-web/UI_A_11_payment.md)
@@ -39,6 +40,8 @@ updated: 2026-07-10
 - [UI.A.16 배송 조회 페이지 UI](buyer-mobile-web/UI_A_16_track_order.md)
 - [UI.A.17 배송/주문 관리 페이지 UI](buyer-mobile-web/UI_A_17_shipping_order_manage.md)
 - [UI.A.19 보유 쿠폰 UI 그룹](buyer-mobile-web/UI_A_19_coupon_wallet/UI_A_19_coupon_wallet.md)
+- [UI.A.22 찜리스트 페이지 UI](buyer-mobile-web/UI_A_22_wishlist.md)
+- [UI.A.23 실시간 많이 보는 상품 페이지 UI](buyer-mobile-web/UI_A_23_trending_products.md)
 
 ### 판매자 웹
 
@@ -67,6 +70,9 @@ updated: 2026-07-10
 - [배송 조회 모바일 웹 시안](buyer-mobile-web/assets/UI_A_16_track_order/UI_A_16_10_buyer_mobile_web.png)
 - [배송·주문 관리 모바일 웹 시안](buyer-mobile-web/assets/UI_A_17_shipping_order_manage/UI_A_17_10_buyer_mobile_web.png)
 - [보유 쿠폰 모바일 웹 시안](buyer-mobile-web/assets/UI_A_19_coupon_wallet/UI_A_19_10_buyer_mobile_web.png)
+- [기다리는 상품 모바일 웹 시안](buyer-mobile-web/assets/UI_A_09_waiting_products/UI_A_09_10_buyer_mobile_web.png)
+- [찜리스트 모바일 웹 시안](buyer-mobile-web/assets/UI_A_22_wishlist/UI_A_22_10_buyer_mobile_web.png)
+- [실시간 많이 보는 상품 모바일 웹 시안](buyer-mobile-web/assets/UI_A_23_trending_products/UI_A_23_10_buyer_mobile_web.png)
 - [홈 화면](buyer-mobile-web/assets/UI_A_01_homepage/UI_A_01_01_homepage.png)
 - [홈 화면 컴포넌트 시트](buyer-mobile-web/assets/UI_A_01_homepage/UI_A_01_02_hompage_component.png)
 - [상품 상세 페이지](buyer-mobile-web/assets/UI_A_02_product_detail/UI_A_02_01_product_detail.png)
@@ -123,4 +129,4 @@ updated: 2026-07-10
 
 ## 연관 태그
 
-🏷️ 요구사항 참조: [REQ.A.01](../00-requirements/REQ_A_01_limited_drop_commerce.md), [REQ.A.02](../00-requirements/REQ_A_02_coupon_benefit.md), [REQ.A.03](../00-requirements/REQ_A_03_seller.md), [REQ.A.05](../00-requirements/REQ_A_05_auth_member.md) | 페이지 참조: [PAGE.A.01](../10-sitemap/buyer-mobile-web/PAGE_A_01_homepage.md), [PAGE.A.02](../10-sitemap/buyer-mobile-web/PAGE_A_02_product_detail.md), [PAGE.A.06](../10-sitemap/buyer-mobile-web/PAGE_A_06_shopping_cart.md), [PAGE.A.10](../10-sitemap/buyer-mobile-web/PAGE_A_10_my.md), [PAGE.A.11](../10-sitemap/buyer-mobile-web/PAGE_A_11_payment.md), [PAGE.A.14](../10-sitemap/buyer-mobile-web/PAGE_A_14_order_complete.md), [PAGE.A.15](../10-sitemap/buyer-mobile-web/PAGE_A_15_order_history.md), [PAGE.A.16](../10-sitemap/buyer-mobile-web/PAGE_A_16_track_order.md), [PAGE.A.17](../10-sitemap/buyer-mobile-web/PAGE_A_17_shipping_order_manage.md), [PAGE.A.19](../10-sitemap/buyer-mobile-web/PAGE_A_19_coupon_wallet/PAGE_A_19_owned_coupon.md), [PAGE.A.200](../10-sitemap/PAGE_A_200_seller_portal/README.md), [PAGE.A.300](../10-sitemap/PAGE_A_300_auth_member/PAGE_A_300_auth_member.md), [PAGE.A.310](../10-sitemap/PAGE_A_310_password_find/PAGE_A_310_password_find.md) | 유스케이스 참조: UC.A.01, [UC.A.02](../30-uc/UC_A_02_seller_manage_drop.md), UC.A.04, [UC.A.19](../30-uc/UC_A_19_coupon_wallet.md), [UC.A.300](../30-uc/UC_A_300_auth_member.md) | API 참조: API.A.01, API.A.02, API.A.06, API.A.10, API.A.11, API.A.14, API.A.15, API.A.16, API.A.17, API.A.19, API.A.200, API.A.300, API.A.310
+🏷️ 요구사항 참조: [REQ.A.01](../00-requirements/REQ_A_01_limited_drop_commerce.md), [REQ.A.02](../00-requirements/REQ_A_02_coupon_benefit.md), [REQ.A.03](../00-requirements/REQ_A_03_seller.md), [REQ.A.05](../00-requirements/REQ_A_05_auth_member.md), [REQ.A.07](../00-requirements/REQ_A_07_interest_ranking.md) | 페이지 참조: [PAGE.A.01](../10-sitemap/buyer-mobile-web/PAGE_A_01_homepage.md), [PAGE.A.02](../10-sitemap/buyer-mobile-web/PAGE_A_02_product_detail.md), [PAGE.A.06](../10-sitemap/buyer-mobile-web/PAGE_A_06_shopping_cart.md), [PAGE.A.09](../10-sitemap/buyer-mobile-web/PAGE_A_09_waiting_products.md), [PAGE.A.10](../10-sitemap/buyer-mobile-web/PAGE_A_10_my.md), [PAGE.A.11](../10-sitemap/buyer-mobile-web/PAGE_A_11_payment.md), [PAGE.A.14](../10-sitemap/buyer-mobile-web/PAGE_A_14_order_complete.md), [PAGE.A.15](../10-sitemap/buyer-mobile-web/PAGE_A_15_order_history.md), [PAGE.A.16](../10-sitemap/buyer-mobile-web/PAGE_A_16_track_order.md), [PAGE.A.17](../10-sitemap/buyer-mobile-web/PAGE_A_17_shipping_order_manage.md), [PAGE.A.19](../10-sitemap/buyer-mobile-web/PAGE_A_19_coupon_wallet/PAGE_A_19_owned_coupon.md), [PAGE.A.22](../10-sitemap/buyer-mobile-web/PAGE_A_22_wishlist.md), [PAGE.A.23](../10-sitemap/buyer-mobile-web/PAGE_A_23_trending_products.md), [PAGE.A.200](../10-sitemap/PAGE_A_200_seller_portal/README.md), [PAGE.A.300](../10-sitemap/PAGE_A_300_auth_member/PAGE_A_300_auth_member.md), [PAGE.A.310](../10-sitemap/PAGE_A_310_password_find/PAGE_A_310_password_find.md) | 유스케이스 참조: UC.A.01, [UC.A.02](../30-uc/UC_A_02_seller_manage_drop.md), UC.A.04, [UC.A.07](../30-uc/UC_A_07_interest_ranking.md), [UC.A.19](../30-uc/UC_A_19_coupon_wallet.md), [UC.A.300](../30-uc/UC_A_300_auth_member.md) | API 참조: API.A.01, API.A.02, API.A.06, API.A.07, API.A.10, API.A.11, API.A.14, API.A.15, API.A.16, API.A.17, API.A.19, API.A.200, API.A.300, API.A.310

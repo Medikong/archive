@@ -58,7 +58,7 @@ flowchart TD
     CouponBox["PAGE.A.19 보유 쿠폰"]
     Point["포인트"]
     PaymentMethod["결제수단 관리"]
-    Wishlist["찜리스트"]
+    Wishlist["PAGE.A.22 찜리스트"]
     Invite["친구 초대"]
     Support["고객지원"]
 
@@ -79,6 +79,7 @@ flowchart TD
     click Cart "./PAGE_A_06_shopping_cart.md"
     click OrderHistory "./PAGE_A_15_order_history.md"
     click CouponBox "./PAGE_A_19_coupon_wallet/PAGE_A_19_owned_coupon.md"
+    click Wishlist "./PAGE_A_22_wishlist.md"
 ```
 
 ## 진입 경로
@@ -101,6 +102,7 @@ flowchart TD
 | 전체 주문 선택 | 주문 내역 | 로그인 필요 |
 | 배송중 선택 | 주문 내역 | 배송중 필터 적용 가능 |
 | 보유쿠폰 선택 | [PAGE.A.19 보유 쿠폰](./PAGE_A_19_coupon_wallet/PAGE_A_19_owned_coupon.md) | 로그인 필요 |
+| 찜리스트 선택 | [PAGE.A.22 찜리스트](./PAGE_A_22_wishlist.md) | 로그인 필요 |
 | 포인트 선택 | 포인트 | 포인트 내역 조회 |
 | 주문내역 전체보기 선택 | 주문 내역 | 최근 주문 목록 전체 이동 |
 | 최근 주문 카드 선택 | 주문 상세 | 주문 소유자만 조회 |
@@ -146,7 +148,7 @@ flowchart TD
 | `PAGE.A.19` | [보유 쿠폰](./PAGE_A_19_coupon_wallet/PAGE_A_19_owned_coupon.md) | 작성 완료 | 보유쿠폰, 쿠폰함 |
 | `PAGE.A.20` | 포인트 | 문서 예정 | 포인트 |
 | `PAGE.A.21` | 결제수단 관리 | 문서 예정 | 결제수단 관리 |
-| `PAGE.A.22` | 찜리스트 | 문서 예정 | 찜리스트 |
+| `PAGE.A.22` | [찜리스트](./PAGE_A_22_wishlist.md) | 작성 완료 | 찜리스트 |
 
 ## 연관 요구사항
 
@@ -154,10 +156,11 @@ flowchart TD
 | --- | --- |
 | [REQ.A.01](../../00-requirements/REQ_A_01_limited_drop_commerce.md) | 주문 현황, 배송 상태, 장바구니, 찜리스트, 드롭 참여 이후 관리와 연결된다. |
 | [REQ.A.02](../../00-requirements/REQ_A_02_coupon_benefit.md) | 보유 쿠폰, 포인트, 친구 초대 포인트 혜택과 연결된다. |
+| [REQ.A.07](../../00-requirements/REQ_A_07_interest_ranking.md) | 찜리스트(`PAGE.A.22`) 메뉴 항목은 interest-service가 소유한다(2026-07-14 추가). |
 
 ## 연관 태그
 
-🏷️ 요구사항 참조: [REQ.A.01](../../00-requirements/REQ_A_01_limited_drop_commerce.md), [REQ.A.02](../../00-requirements/REQ_A_02_coupon_benefit.md) | 플로우 참조: FLOW.A.10 | UI 참조: [UI.A.10](../../20-ui/buyer-mobile-web/UI_A_10_my.md) | UC 참조: UC.A.10 | 영속성 참조: PST.A.10 | 서비스 참조: SVC.A.10 | 시나리오 참조: SCN.A.10 | API 참조: API.A.10
+🏷️ 요구사항 참조: [REQ.A.01](../../00-requirements/REQ_A_01_limited_drop_commerce.md), [REQ.A.02](../../00-requirements/REQ_A_02_coupon_benefit.md), [REQ.A.07](../../00-requirements/REQ_A_07_interest_ranking.md) | 플로우 참조: FLOW.A.10 | UI 참조: [UI.A.10](../../20-ui/buyer-mobile-web/UI_A_10_my.md) | UC 참조: UC.A.10 | 영속성 참조: PST.A.10 | 서비스 참조: SVC.A.10 | 시나리오 참조: SCN.A.10 | API 참조: API.A.10 | 찜리스트 참조: [PAGE.A.22](./PAGE_A_22_wishlist.md)
 
 ## 열린 질문
 

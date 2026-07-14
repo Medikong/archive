@@ -1,0 +1,35 @@
+get:
+  tags:
+    - Ranking
+  summary: 오픈 후 인기 랭킹 조회 (보류)
+  description: |
+    OPEN 상태 드롭을 소진율 기반 점수(sell_through_score) 내림차순으로 반환한다.
+    2026-07-14: order-service 연동 방식이 미확정이라 후속 스코프다. 목표 설계로 문서만 남겨둔다
+    (api-endpoint-process.md의 API.A.07-05 참고).
+  operationId: listOpenRanking
+  x-api-id: API.A.07-05
+  x-use-case: UC.A.07
+  x-service-design: SD.A.0740
+  x-design-doc: ../../api-endpoint-process.md
+  security: []
+  parameters:
+    - $ref: ../components/parameters.yaml#/XRequestId
+    - $ref: ../components/parameters.yaml#/Traceparent
+    - $ref: ../components/parameters.yaml#/Limit
+    - $ref: ../components/parameters.yaml#/Cursor
+  responses:
+    '200':
+      description: 오픈 후 랭킹 목록이다.
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas.yaml#/OpenRankingListResponse
+          example:
+            data:
+              - dropId: 7d4a8f2c-5e14-46be-9b9b-987f5d69e001
+                sellThroughScore: 0.42
+            pageInfo:
+              nextCursor: null
+              hasNext: false
+    '400':
+      $ref: ../components/responses.yaml#/InputInvalid

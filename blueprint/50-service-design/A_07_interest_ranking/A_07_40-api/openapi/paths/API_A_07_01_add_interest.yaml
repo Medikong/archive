@@ -1,0 +1,38 @@
+put:
+  tags:
+    - Interest
+  summary: 찜 추가
+  description: 로그인 사용자를 특정 드롭에 찜한 상태로 만든다. 이미 찜한 상태면 변경 없이 성공을 반환한다(멱등).
+  operationId: addInterest
+  x-api-id: API.A.07-01
+  x-use-case: UC.A.07
+  x-service-design: SD.A.0740
+  x-design-doc: ../../api-endpoint-process.md
+  security:
+    - BearerAuth: []
+  parameters:
+    - $ref: ../components/parameters.yaml#/XUserId
+    - $ref: ../components/parameters.yaml#/XUserRole
+    - $ref: ../components/parameters.yaml#/XRequestId
+    - $ref: ../components/parameters.yaml#/Traceparent
+    - $ref: ../components/parameters.yaml#/DropIdPath
+  responses:
+    '200':
+      description: 찜 상태를 추가했거나 이미 추가된 상태였다.
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas.yaml#/InterestResponse
+          example:
+            data:
+              dropId: 7d4a8f2c-5e14-46be-9b9b-987f5d69e001
+              status: active
+              updatedAt: '2026-07-13T09:00:00Z'
+    '401':
+      $ref: ../components/responses.yaml#/AuthenticationRequired
+    '404':
+      $ref: ../components/responses.yaml#/ResourceNotFound
+    '409':
+      $ref: ../components/responses.yaml#/Conflict
+    '503':
+      $ref: ../components/responses.yaml#/ServiceUnavailable

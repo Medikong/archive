@@ -20,6 +20,7 @@ updated: 2026-07-10
 | UI ID | 문서 | PAGE | 신규 모바일 웹 시안 |
 | --- | --- | --- | --- |
 | [UI.A.01](UI_A_01_homepage.md) | 홈 | [PAGE.A.01](../../10-sitemap/buyer-mobile-web/PAGE_A_01_homepage.md) | [시안](assets/UI_A_01_homepage/UI_A_01_10_buyer_mobile_web.png) |
+| [UI.A.09](UI_A_09_waiting_products.md) | 기다리는 상품 | [PAGE.A.09](../../10-sitemap/buyer-mobile-web/PAGE_A_09_waiting_products.md) | [시안](assets/UI_A_09_waiting_products/UI_A_09_10_buyer_mobile_web.png) |
 | [UI.A.02](UI_A_02_product_detail.md) | 상품 상세 | [PAGE.A.02](../../10-sitemap/buyer-mobile-web/PAGE_A_02_product_detail.md) | [시안](assets/UI_A_02_product_detail/UI_A_02_10_buyer_mobile_web.png) |
 | [UI.A.06](UI_A_06_shopping_cart.md) | 장바구니 | [PAGE.A.06](../../10-sitemap/buyer-mobile-web/PAGE_A_06_shopping_cart.md) | [시안](assets/UI_A_06_shopping_cart/UI_A_06_10_buyer_mobile_web.png) |
 | [UI.A.10](UI_A_10_my.md) | 마이 | [PAGE.A.10](../../10-sitemap/buyer-mobile-web/PAGE_A_10_my.md) | [시안](assets/UI_A_10_my/UI_A_10_10_buyer_mobile_web.png) |
@@ -29,6 +30,8 @@ updated: 2026-07-10
 | [UI.A.16](UI_A_16_track_order.md) | 배송 조회 | [PAGE.A.16](../../10-sitemap/buyer-mobile-web/PAGE_A_16_track_order.md) | [시안](assets/UI_A_16_track_order/UI_A_16_10_buyer_mobile_web.png) |
 | [UI.A.17](UI_A_17_shipping_order_manage.md) | 배송·주문 관리 | [PAGE.A.17](../../10-sitemap/buyer-mobile-web/PAGE_A_17_shipping_order_manage.md) | [시안](assets/UI_A_17_shipping_order_manage/UI_A_17_10_buyer_mobile_web.png) |
 | [UI.A.19](UI_A_19_coupon_wallet/UI_A_19_coupon_wallet.md) | 보유 쿠폰·코드 등록 | [PAGE.A.19](../../10-sitemap/buyer-mobile-web/PAGE_A_19_coupon_wallet/PAGE_A_19_owned_coupon.md) | [시안](assets/UI_A_19_coupon_wallet/UI_A_19_10_buyer_mobile_web.png) |
+| [UI.A.22](UI_A_22_wishlist.md) | 찜리스트 | [PAGE.A.22](../../10-sitemap/buyer-mobile-web/PAGE_A_22_wishlist.md) | [시안](assets/UI_A_22_wishlist/UI_A_22_10_buyer_mobile_web.png) |
+| [UI.A.23](UI_A_23_trending_products.md) | 실시간 많이 보는 상품 | [PAGE.A.23](../../10-sitemap/buyer-mobile-web/PAGE_A_23_trending_products.md) | [시안](assets/UI_A_23_trending_products/UI_A_23_10_buyer_mobile_web.png) |
 
 ## 시각 기준
 

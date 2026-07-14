@@ -1,0 +1,35 @@
+get:
+  tags:
+    - Ranking
+  summary: 기다리는 상품 랭킹 조회
+  description: |
+    드롭 상태 구분 없이(2026-07-14: catalog-service 의존 제거, `SCHEDULED` 필터 삭제), 전체 드롭을
+    리셋 없는 누적 활성 찜 수(`interestCount`) 내림차순으로 반환한다. 홈 화면 위젯은 `limit=3`으로,
+    "전체보기" 페이지는 `limit` 최대 100으로 호출한다.
+  operationId: listUpcomingRanking
+  x-api-id: API.A.07-06
+  x-use-case: UC.A.07
+  x-service-design: SD.A.0740
+  x-design-doc: ../../api-endpoint-process.md
+  security: []
+  parameters:
+    - $ref: ../components/parameters.yaml#/XRequestId
+    - $ref: ../components/parameters.yaml#/Traceparent
+    - $ref: ../components/parameters.yaml#/Limit
+    - $ref: ../components/parameters.yaml#/Cursor
+  responses:
+    '200':
+      description: 기다리는 상품 랭킹 목록이다.
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas.yaml#/UpcomingRankingListResponse
+          example:
+            data:
+              - dropId: 7d4a8f2c-5e14-46be-9b9b-987f5d69e001
+                interestCount: 128
+            pageInfo:
+              nextCursor: null
+              hasNext: false
+    '400':
+      $ref: ../components/responses.yaml#/InputInvalid

@@ -1,0 +1,6 @@
+RetryAfter:
+  description: 재시도 전에 기다릴 최소 초다.
+  schema:
+    type: integer
+    minimum: 1
+  example: 1

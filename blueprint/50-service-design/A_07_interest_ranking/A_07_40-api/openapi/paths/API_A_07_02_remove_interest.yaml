@@ -1,0 +1,27 @@
+delete:
+  tags:
+    - Interest
+  summary: 찜 해제
+  description: 로그인 사용자의 찜 상태를 해제한다. 이미 해제된 상태거나 찜한 적이 없어도 성공을 반환한다(멱등).
+  operationId: removeInterest
+  x-api-id: API.A.07-02
+  x-use-case: UC.A.07
+  x-service-design: SD.A.0740
+  x-design-doc: ../../api-endpoint-process.md
+  security:
+    - BearerAuth: []
+  parameters:
+    - $ref: ../components/parameters.yaml#/XUserId
+    - $ref: ../components/parameters.yaml#/XUserRole
+    - $ref: ../components/parameters.yaml#/XRequestId
+    - $ref: ../components/parameters.yaml#/Traceparent
+    - $ref: ../components/parameters.yaml#/DropIdPath
+  responses:
+    '204':
+      description: 찜 상태를 해제했거나 이미 해제된 상태였다.
+    '401':
+      $ref: ../components/responses.yaml#/AuthenticationRequired
+    '409':
+      $ref: ../components/responses.yaml#/Conflict
+    '503':
+      $ref: ../components/responses.yaml#/ServiceUnavailable
