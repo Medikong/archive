@@ -52,5 +52,5 @@ domain_model: SD.A.0110
 
 ## 관련 시퀀스
 
-- [회원가입](../A_01_50-sequence/SCN_A_01_01_user_provisioning_auth_link.md)
+- [회원가입과 자동 로그인](../../../80-sequence/A_01_user/SCN_A_01_01_user_provisioning_auth_link.md)
 - [계정 상태 변경](../A_01_50-sequence/SCN_A_01_04_change_user_status.md)

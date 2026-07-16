@@ -6,7 +6,7 @@ status: draft
 tags: [sequence, scenario, user, registration, profile, my]
 source: local
 created: 2026-07-13
-updated: 2026-07-13
+updated: 2026-07-15
 service_design: SD.A.01
 domain_model: SD.A.0110
 ---
@@ -15,13 +15,13 @@ domain_model: SD.A.0110
 
 ## 역할
 
-프론트엔드, Istio Ingress Gateway, User, Auth와 Media가 참여하는 동기 처리 순서를 정리한다. 핵심 업무를 비동기 Event로 이어 붙이지 않는다.
+User 서비스 내부 처리와 User가 주도하는 단일 Context 시퀀스를 정리한다. Auth 등 여러 Context가 함께 참여하는 사용자 목적 시퀀스는 `80-sequence` 원장을 참조하며, 핵심 업무를 비동기 Event로 이어 붙이지 않는다.
 
 ## 문서 목록
 
 | ID | 처리 | 문서 |
 | --- | --- | --- |
-| `SCN.A.01-01` | 회원가입 | [상세](SCN_A_01_01_user_provisioning_auth_link.md) |
+| `SCN.A.01-01` | 회원가입과 자동 로그인 | [80-sequence 원장](../../../80-sequence/A_01_user/SCN_A_01_01_user_provisioning_auth_link.md) |
 | `SCN.A.01-02` | 본인 프로필 수정 | [상세](SCN_A_01_02_update_own_profile.md) |
 | `SCN.A.01-03` | 프로필 이미지 업로드와 연결 | [상세](SCN_A_01_03_profile_image_upload_attach.md) |
 | `SCN.A.01-04` | 사용자 계정 상태 변경과 Session 폐기 | [상세](SCN_A_01_04_change_user_status.md) |
@@ -47,4 +47,4 @@ domain_model: SD.A.0110
 - [멱등성과 실패 처리](../A_01_20-persistence/reliability-and-events.md)
 - [Application Service](../A_01_30-service/README.md)
 - [API 설계](../A_01_40-api/README.md)
-- [Auth 가입 시퀀스](../../../80-sequence/A_300_auth/SCN_A_300_01_email_registration.md)
+- [회원가입과 자동 로그인 원장](../../../80-sequence/A_01_user/SCN_A_01_01_user_provisioning_auth_link.md)

@@ -77,4 +77,4 @@ domain_model: SD.A.0110
 
 ## 연관 시퀀스
 
-- [SCN.A.01-01 회원가입](../A_01_50-sequence/SCN_A_01_01_user_provisioning_auth_link.md)
+- [SCN.A.01-01 회원가입과 자동 로그인](../../../80-sequence/A_01_user/SCN_A_01_01_user_provisioning_auth_link.md)

@@ -6,7 +6,7 @@ status: draft
 tags: [scenario, sequence, auth, phone-signin, refresh-rotation]
 source: local
 created: 2026-07-10
-updated: 2026-07-10
+updated: 2026-07-15
 use_case: UC.A.300-07
 service_design: SD.A.300
 ---
@@ -23,14 +23,14 @@ service_design: SD.A.300
 
 ## 연관 문서
 
-- [UC.A.300](../../30-uc/UC_A_300_auth_member.md)
-- [PAGE.A.300](../../10-sitemap/PAGE_A_300_auth_member/PAGE_A_300_auth_member.md)
-- [UI.A.300](../../20-ui/UI_A_300_auth_member/UI_A_300_auth_member.md)
-- [서비스 설계](../../50-service-design/A_300_auth/A_300_30-service/README.md)
-- [API 공통 계약](../../50-service-design/A_300_auth/A_300_40-api/README.md)
-- [API.A.300-08 휴대폰 로그인 Challenge 발급](../../50-service-design/A_300_auth/A_300_40-api/API_A_300_08_issue_phone_signin_challenge.md)
-- [API.A.300-09 휴대폰 로그인 검증](../../50-service-design/A_300_auth/A_300_40-api/API_A_300_09_verify_phone_signin.md)
-- [API.A.300-14 모바일 Session 갱신](../../50-service-design/A_300_auth/A_300_40-api/API_A_300_14_refresh_session.md)
+- [UC.A.300](../../../30-uc/UC_A_300_auth_member.md)
+- [PAGE.A.300](../../../10-sitemap/PAGE_A_300_auth_member/PAGE_A_300_auth_member.md)
+- [UI.A.300](../../../20-ui/UI_A_300_auth_member/UI_A_300_auth_member.md)
+- [서비스 설계](../A_300_30-service/README.md)
+- [API 공통 설계](../A_300_40-api/README.md)
+- [API.A.300-08 휴대폰 로그인 Challenge 발급](../A_300_40-api/API_A_300_08_issue_phone_signin_challenge.md)
+- [API.A.300-09 휴대폰 로그인 검증](../A_300_40-api/API_A_300_09_verify_phone_signin.md)
+- [API.A.300-14 모바일 Session 갱신](../A_300_40-api/API_A_300_14_refresh_session.md)
 
 ## 처리 과정
 
@@ -44,7 +44,6 @@ sequenceDiagram
     participant Relay as Outbox Relay
     participant Provider as Virtual SMS
     participant UserLink as IdentityLink
-    participant Authz as Authorization Source
     participant Session
 
     App->>Ingress: POST /signins/phone/challenges
@@ -62,15 +61,11 @@ sequenceDiagram
     Challenge-->>Auth: verified Identity
     Auth->>UserLink: active user_id 조회
     UserLink-->>Auth: user_id
-    Auth->>Authz: 최신 AccessGrant 조회
-    Authz-->>Auth: roles + permissions + version
     Auth->>Session: Session + refresh family 생성
     Auth-->>Ingress: access JWT + opaque refresh token
     Ingress-->>App: access JWT + opaque refresh token
     App->>Ingress: POST /sessions/refresh + Idempotency-Key
     Ingress->>Auth: 요청 전달
-    Auth->>Authz: 최신 AccessGrant 조회
-    Authz-->>Auth: roles + permissions + version
     Auth->>Session: credential row lock + 이전 credential을 rotated 상태로 전환
     Session-->>Auth: 새 access JWT + 새 refresh token
     Auth-->>Ingress: 회전된 token 묶음
@@ -102,7 +97,8 @@ sequenceDiagram
 - 같은 key의 검증 재시도는 Challenge 실패 횟수를 다시 늘리지 않는다.
 - 같은 `Idempotency-Key`로 refresh를 재시도한 경우에만 짧은 복구 TTL 동안 이전 성공 응답을 재생한다.
 - 동시에 들어온 refresh 요청은 credential row lock으로 직렬화하며 최초 한 요청만 회전에 성공한다.
-- Ingress는 인증 결과를 판단하거나 token을 저장하지 않는다.
+- Ingress는 로그인 성공 여부를 판단하거나 token을 저장하지 않는다. 이후 보호 API에서는 Istio가 Auth의 JWKS로 access JWT를 검증하고 `user_id`, `session_id`, `token_id`만 내부 헤더로 전달한다.
+- role, permission, 판매자 소속과 업무 ACL은 access JWT와 Auth의 Session에 저장하지 않는다.
 - 같은 refresh token을 다른 `Idempotency-Key`로 다시 보내면 재시도가 아니라 재사용 탐지로 처리한다.
 
 ## 예외 처리

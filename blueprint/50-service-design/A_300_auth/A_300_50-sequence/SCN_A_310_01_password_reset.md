@@ -23,16 +23,16 @@ service_design: SD.A.300
 
 ## 연관 문서
 
-- [REQ.A.05](../../00-requirements/REQ_A_05_auth_member.md)
-- [UC.A.300](../../30-uc/UC_A_300_auth_member.md)
-- [PAGE.A.310](../../10-sitemap/PAGE_A_310_password_find/PAGE_A_310_password_find.md)
-- [UI.A.310](../../20-ui/UI_A_310_password_find/UI_A_310_password_find.md)
-- [서비스 설계](../../50-service-design/A_300_auth/A_300_30-service/README.md)
-- [API 공통 계약](../../50-service-design/A_300_auth/A_300_40-api/README.md)
-- [API.A.300-10 비밀번호 재설정 시작](../../50-service-design/A_300_auth/A_300_40-api/API_A_300_10_start_password_reset.md)
-- [API.A.300-11 비밀번호 재설정 Challenge 발급](../../50-service-design/A_300_auth/A_300_40-api/API_A_300_11_issue_password_reset_challenge.md)
-- [API.A.300-12 비밀번호 재설정 Challenge 검증](../../50-service-design/A_300_auth/A_300_40-api/API_A_300_12_verify_password_reset_challenge.md)
-- [API.A.300-13 비밀번호 변경](../../50-service-design/A_300_auth/A_300_40-api/API_A_300_13_change_password.md)
+- [REQ.A.05](../../../00-requirements/REQ_A_05_auth_member.md)
+- [UC.A.300](../../../30-uc/UC_A_300_auth_member.md)
+- [PAGE.A.310](../../../10-sitemap/PAGE_A_310_password_find/PAGE_A_310_password_find.md)
+- [UI.A.310](../../../20-ui/UI_A_310_password_find/UI_A_310_password_find.md)
+- [서비스 설계](../A_300_30-service/README.md)
+- [API 공통 설계](../A_300_40-api/README.md)
+- [API.A.300-10 비밀번호 재설정 시작](../A_300_40-api/API_A_300_10_start_password_reset.md)
+- [API.A.300-11 비밀번호 재설정 Challenge 발급](../A_300_40-api/API_A_300_11_issue_password_reset_challenge.md)
+- [API.A.300-12 비밀번호 재설정 Challenge 검증](../A_300_40-api/API_A_300_12_verify_password_reset_challenge.md)
+- [API.A.300-13 비밀번호 변경](../A_300_40-api/API_A_300_13_change_password.md)
 
 ## 처리 과정
 
@@ -94,7 +94,7 @@ sequenceDiagram
 - 입력: 계정 식별자, 인증 수단, Challenge code, 새 비밀번호, Idempotency-Key.
 - 출력: PasswordReset 상태, Challenge metadata, 채널별 reset 권한, `204 No Content`.
 - 저장: PasswordReset, VerificationChallenge, 새 PasswordCredential hash, IdempotencyRecord, 감사 OutboxEvent.
-- 폐기: reset grant, `__Host-dm_auth`, 모바일 authFlowToken, 기존 Session, refresh family, 연결된 AuthenticationIntent.
+- 폐기: reset grant, `__Host-dm_auth`, 모바일 authFlowToken, 기존 Session, 웹 `__Host-dm_refresh`, 모바일 refresh family, 연결된 AuthenticationIntent.
 
 ## 불변 조건
 
@@ -115,5 +115,5 @@ sequenceDiagram
 
 - 존재하는 계정과 존재하지 않는 계정의 시작 응답 형식과 HTTP 상태 코드가 같다.
 - 비밀번호 변경 트랜잭션 실패 시 기존 credential과 Session이 유지된다.
-- 성공 후 기존 웹 Session과 모든 모바일 refresh family가 사용할 수 없는 상태가 된다.
+- 성공 후 기존 모든 Session과 웹·모바일 refresh family가 사용할 수 없는 상태가 된다.
 - 성공 후 웹 사전 인증 cookie와 모바일 authFlowToken을 다시 사용할 수 없다.

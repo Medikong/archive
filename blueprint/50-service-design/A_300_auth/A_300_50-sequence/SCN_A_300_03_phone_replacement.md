@@ -23,14 +23,14 @@ service_design: SD.A.300
 
 ## 연관 문서
 
-- [REQ.A.05](../../00-requirements/REQ_A_05_auth_member.md)
-- [UC.A.300](../../30-uc/UC_A_300_auth_member.md)
-- [서비스 설계](../../50-service-design/A_300_auth/A_300_30-service/README.md)
-- [API 공통 계약](../../50-service-design/A_300_auth/A_300_40-api/README.md)
-- [API.A.300-17 이메일 재인증](../../50-service-design/A_300_auth/A_300_40-api/API_A_300_17_reauthenticate_email.md)
-- [API.A.300-21 휴대폰 번호 교체 시작](../../50-service-design/A_300_auth/A_300_40-api/API_A_300_21_start_phone_replacement.md)
-- [API.A.300-22 휴대폰 번호 교체 Challenge 발급](../../50-service-design/A_300_auth/A_300_40-api/API_A_300_22_issue_phone_replacement_challenge.md)
-- [API.A.300-23 휴대폰 번호 교체 완료](../../50-service-design/A_300_auth/A_300_40-api/API_A_300_23_complete_phone_replacement.md)
+- [REQ.A.05](../../../00-requirements/REQ_A_05_auth_member.md)
+- [UC.A.300](../../../30-uc/UC_A_300_auth_member.md)
+- [서비스 설계](../A_300_30-service/README.md)
+- [API 공통 설계](../A_300_40-api/README.md)
+- [API.A.300-17 이메일 재인증](../A_300_40-api/API_A_300_17_reauthenticate_email.md)
+- [API.A.300-21 휴대폰 번호 교체 시작](../A_300_40-api/API_A_300_21_start_phone_replacement.md)
+- [API.A.300-22 휴대폰 번호 교체 Challenge 발급](../A_300_40-api/API_A_300_22_issue_phone_replacement_challenge.md)
+- [API.A.300-23 휴대폰 번호 교체 완료](../A_300_40-api/API_A_300_23_complete_phone_replacement.md)
 
 ## 처리 과정
 

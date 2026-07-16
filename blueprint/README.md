@@ -6,7 +6,7 @@ status: active
 tags: [project-design, ddd, ui, backend, template]
 source: local
 created: 2026-07-06
-updated: 2026-07-10
+updated: 2026-07-15
 ---
 
 # 프로젝트 설계 템플릿
@@ -28,7 +28,7 @@ updated: 2026-07-10
 11. `50-service-design/<context>/<context_id>_30-service/`에서 Application Service, Domain Service, Command Handler, 트랜잭션 경계를 설계한다.
 12. `50-service-design/<context>/<context_id>_40-api/`에서 API 엔드포인트, 요청/응답, 오류, 이벤트 계약을 설계한다.
 13. `60-web-application/README.md`에서 반응형 웹, 상태·데이터, 애플리케이션 수준 BFF, 배포·관측성 기준을 정리한다.
-14. `80-sequence/.template/scenario.md`로 여러 화면 행동, API 호출과 Context 간 처리 순서를 정리한다.
+14. `80-sequence/.template/scenario.md`를 사용해 여러 화면 행동, API 호출과 Context 간 처리 순서를 정리하고, 실제 문서는 `50-service-design/<context>/<context_id>_50-sequence/`에 둔다.
 
 ## 폴더 번호 규칙
 
@@ -45,7 +45,7 @@ updated: 2026-07-10
 80-sequence/
 ```
 
-`50-service-design/` 안에서는 컨텍스트 식별자 뒤에 `10`, `20`, `30`, `40` 하위 번호를 붙인다. 설계 분야 하나가 파일 하나로 끝나지 않을 수 있으므로 각 분야를 파일이 아니라 폴더로 둔다.
+`50-service-design/` 안에서는 컨텍스트 식별자 뒤에 `10`, `20`, `30`, `40`, `50` 하위 번호를 붙인다. 설계 분야 하나가 파일 하나로 끝나지 않을 수 있으므로 각 분야를 파일이 아니라 폴더로 둔다.
 
 ```text
 50-service-design/
@@ -54,6 +54,7 @@ updated: 2026-07-10
     A_300_20-persistence/
     A_300_30-service/
     A_300_40-api/
+    A_300_50-sequence/
 ```
 
 ## 피처 그룹 규칙
@@ -197,9 +198,9 @@ updated: 2026-07-10
 - [20-ui](20-ui/README.md): 스크린샷, 이미지, 문서, 와이어프레임 같은 UI 근거.
 - [30-uc](30-uc/README.md): 유스케이스 작성 컨텍스트. 실제 유스케이스 문서 목록은 [INDEX](30-uc/INDEX.md)에서 관리한다.
 - [40-event-storming-bounded-context](40-event-storming-bounded-context/README.md): 이벤트스토밍 결과, 도메인 언어, 바운디드 컨텍스트 경계.
-- [50-service-design](50-service-design/README.md): 바운디드 컨텍스트별 도메인 모델, 영속성, 서비스, API 상세 설계.
+- [50-service-design](50-service-design/README.md): 바운디드 컨텍스트별 도메인 모델, 영속성, 서비스, API, 처리 시퀀스 상세 설계.
 - [60-web-application](60-web-application/README.md): 반응형 웹 구조, 상태·데이터 전략, 애플리케이션 수준 BFF, 배포·관측성·테스트.
-- [80-sequence](80-sequence/README.md): 여러 UI 행동, API 호출과 Context가 참여하는 처리 시퀀스.
+- [80-sequence](80-sequence/README.md): 처리 시퀀스 공통 템플릿과 전체 인덱스.
 
 ## 에셋 규칙
 

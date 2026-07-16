@@ -40,7 +40,7 @@ domain_model: SD.A.0110
 
 | 처리 | 문서 |
 | --- | --- |
-| 회원가입 | [SCN.A.01-01](../A_01_50-sequence/SCN_A_01_01_user_provisioning_auth_link.md) |
+| 회원가입 | [SCN.A.01-01](../../../80-sequence/A_01_user/SCN_A_01_01_user_provisioning_auth_link.md) |
 | 프로필 수정 | [SCN.A.01-02](../A_01_50-sequence/SCN_A_01_02_update_own_profile.md) |
 | 프로필 이미지 | [SCN.A.01-03](../A_01_50-sequence/SCN_A_01_03_profile_image_upload_attach.md) |
 | 계정 상태 변경 | [SCN.A.01-04](../A_01_50-sequence/SCN_A_01_04_change_user_status.md) |
