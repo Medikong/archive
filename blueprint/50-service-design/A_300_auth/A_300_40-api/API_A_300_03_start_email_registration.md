@@ -6,7 +6,7 @@ status: draft
 tags: [service-design, auth, api, registration]
 source: local
 created: 2026-07-10
-updated: 2026-07-10
+updated: 2026-07-16
 service_design: SD.A.300
 api_design: SD.A.30040
 domain_model: SD.A.30010
@@ -28,10 +28,10 @@ service: SD.A.30030
 | 권한 | proof와 요청의 AuthenticationIntent binding이 일치해야 한다. |
 | 노출 범위 | public |
 | 멱등성 | `Idempotency-Key` 필수 |
-| 캐시 | `no-store` |
+| HTTP 응답 캐시 | `no-store` |
 | 호환성 | `/api/v1`, deprecation 없음 |
 
-## HTTP 계약 원장
+## HTTP 명세 원장
 
 - 완전한 OpenAPI 문서: [openapi/openapi.yaml](openapi/openapi.yaml)
 - 이 Endpoint의 Path Item: [openapi/paths/API_A_300_03_start_email_registration.yaml](openapi/paths/API_A_300_03_start_email_registration.yaml)
@@ -49,7 +49,7 @@ service: SD.A.30030
 | 도메인 | [SD.A.30010](../A_300_10-domain-model/SD_A_30010_auth_domain_model.md) |
 | 영속성 | [SD.A.30020](../A_300_20-persistence/README.md) |
 | 서비스 | [SD.A.30030](../A_300_30-service/README.md) |
-| 시퀀스 | [SCN.A.300-01](../../../80-sequence/A_300_auth/SCN_A_300_01_email_registration.md) |
+| 시퀀스 | [SCN.A.01-01](../../../80-sequence/A_01_user/SCN_A_01_01_user_provisioning_auth_link.md) |
 
 ## 책임과 경계
 
@@ -73,6 +73,16 @@ service: SD.A.30030
 4. `childExpiresAt = min(now + Registration TTL, Intent 생성 시각 + auth-flow 최대 수명)`으로 계산한다.
 5. Registration, 두 Identity와 PasswordCredential을 만들고 AuthenticationIntent와 active owner proof의 만료 시각을 `childExpiresAt`으로 맞춘다.
 6. 상태 조회 전용 `registrationStatusToken`을 발급하고 hash·만료 시각만 Registration에 저장한다. Challenge는 후속 발급 API에서 만든다.
+
+## 저장 모델과 캐시
+
+저장 구조는 [영속성 설계](../A_300_20-persistence/README.md#저장-모델)와 [Redis projection models](../A_300_20-persistence/README.md#redis-projection-models)를 기준으로 한다.
+
+| 저장 모델 | 전략 | 적용 근거 |
+| --- | --- | --- |
+| `Registration`, `Identity`, `PasswordCredential`, `AuthenticationIntent`, `IdempotencyRecord` | 우회 | Identity 유일성, 비밀번호 저장과 owner proof 만료 연장은 한 PostgreSQL 트랜잭션에서 확정한다. |
+| `AuthenticationPolicySnapshotProjection` (`P`) | 사용 | 비밀번호, 가입 TTL과 인증 수단 정책은 공통 snapshot이다. |
+| `RegistrationStatusProjection` (`R`) | 갱신 | 상태 조회 token 발급 뒤 polling이 시작되므로 생성된 Registration 상태를 commit 후 적재한다. |
 
 ## 상태 변경과 트랜잭션
 
@@ -132,7 +142,7 @@ service: SD.A.30030
 
 ## 연관 시퀀스
 
-- 시퀀스 문서: [SCN.A.300-01 이메일 회원가입과 자동 로그인](../../../80-sequence/A_300_auth/SCN_A_300_01_email_registration.md)
+- 시퀀스 문서: [SCN.A.01-01 회원가입과 자동 로그인](../../../80-sequence/A_01_user/SCN_A_01_01_user_provisioning_auth_link.md)
 - 관련 API: `API.A.300-03~06`, `API.A.300-28`
 - 여러 참여자의 Mermaid 다이어그램은 시퀀스 문서에서 관리한다.
 

@@ -6,7 +6,7 @@ status: draft
 tags: [service-design, auth, api, phone-signin, challenge]
 source: local
 created: 2026-07-10
-updated: 2026-07-10
+updated: 2026-07-16
 service_design: SD.A.300
 api_design: SD.A.30040
 domain_model: SD.A.30010
@@ -28,10 +28,10 @@ service: SD.A.30030
 | 권한 | proof와 요청의 AuthenticationIntent binding이 일치해야 한다. |
 | 노출 범위 | public |
 | 멱등성 | `Idempotency-Key` 필수 |
-| 캐시 | `no-store` |
+| HTTP 응답 캐시 | `no-store` |
 | 호환성 | `/api/v1`, deprecation 없음 |
 
-## HTTP 계약 원장
+## HTTP 명세 원장
 
 - 완전한 OpenAPI 문서: [openapi/openapi.yaml](openapi/openapi.yaml)
 - 이 Endpoint의 Path Item: [openapi/paths/API_A_300_08_issue_phone_signin_challenge.yaml](openapi/paths/API_A_300_08_issue_phone_signin_challenge.yaml)
@@ -49,7 +49,7 @@ service: SD.A.30030
 | 도메인 | [SD.A.30010](../A_300_10-domain-model/SD_A_30010_auth_domain_model.md) |
 | 영속성 | [SD.A.30020](../A_300_20-persistence/README.md) |
 | 서비스 | [SD.A.30030](../A_300_30-service/README.md) |
-| 시퀀스 | [SCN.A.300-02](../../../80-sequence/A_300_auth/SCN_A_300_02_phone_signin_refresh.md) |
+| 시퀀스 | [SCN.A.300-02](../A_300_50-sequence/SCN_A_300_02_phone_signin_refresh.md) |
 
 ## 책임과 경계
 
@@ -71,6 +71,16 @@ service: SD.A.30030
 3. 첫 요청이면 `rememberMe`를 AuthenticationIntent에 기록하고, 이미 기록되어 있으면 요청값과 client channel이 일치하는지 확인한다.
 4. IdentityLink 조회 없이 번호에 묶인 실제 `phone_signin` Challenge와 delivery outbox를 저장한다.
 5. 계정 연결 여부와 무관하게 동일한 accepted 응답을 반환한다.
+
+## 저장 모델과 캐시
+
+저장 구조는 [영속성 설계](../A_300_20-persistence/README.md#저장-모델)와 [Redis projection models](../A_300_20-persistence/README.md#redis-projection-models)를 기준으로 한다.
+
+| 저장 모델 | 전략 | 적용 근거 |
+| --- | --- | --- |
+| `AuthenticationIntent`, `VerificationChallenge`, `IdempotencyRecord`, `OutboxEvent` | 우회 | Challenge 재발급과 `rememberMe` 고정은 PostgreSQL에서 원자 처리한다. |
+| `AuthenticationPolicySnapshotProjection` (`P`) | 사용 | SMS 발급, 재발송 제한과 Challenge TTL은 반복 조회되는 정책이다. |
+| Challenge·전화번호 | 사용하지 않음 | 계정 연결 여부와 code 관련 값을 Redis에 복제하면 계정 열거와 비밀 노출 위험만 커진다. |
 
 ## 상태 변경과 트랜잭션
 
@@ -127,7 +137,7 @@ service: SD.A.30030
 
 ## 연관 시퀀스
 
-- 시퀀스 문서: [SCN.A.300-02 휴대폰 로그인과 refresh token 회전](../../../80-sequence/A_300_auth/SCN_A_300_02_phone_signin_refresh.md)
+- 시퀀스 문서: [SCN.A.300-02 휴대폰 로그인과 refresh token 회전](../A_300_50-sequence/SCN_A_300_02_phone_signin_refresh.md)
 - 관련 API: `API.A.300-08`, `API.A.300-09`, `API.A.300-14`
 - 여러 참여자의 Mermaid 다이어그램은 시퀀스 문서에서 관리한다.
 

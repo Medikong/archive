@@ -6,7 +6,7 @@ status: draft
 tags: [service-design, auth, api, phone-signin, session]
 source: local
 created: 2026-07-10
-updated: 2026-07-10
+updated: 2026-07-16
 service_design: SD.A.300
 api_design: SD.A.30040
 domain_model: SD.A.30010
@@ -28,10 +28,10 @@ service: SD.A.30030
 | 권한 | proof가 Challenge를 소유하고 연결된 UserAuthState가 active여야 한다. |
 | 노출 범위 | public |
 | 멱등성 | `Idempotency-Key` 필수 |
-| 캐시 | `no-store` |
+| HTTP 응답 캐시 | `no-store` |
 | 호환성 | `/api/v1`, deprecation 없음 |
 
-## HTTP 계약 원장
+## HTTP 명세 원장
 
 - 완전한 OpenAPI 문서: [openapi/openapi.yaml](openapi/openapi.yaml)
 - 이 Endpoint의 Path Item: [openapi/paths/API_A_300_09_verify_phone_signin.yaml](openapi/paths/API_A_300_09_verify_phone_signin.yaml)
@@ -49,13 +49,13 @@ code schema, 채널별 Session 응답, cookie·token과 오류 wire 예시는 Op
 | 도메인 | [SD.A.30010](../A_300_10-domain-model/SD_A_30010_auth_domain_model.md) |
 | 영속성 | [SD.A.30020](../A_300_20-persistence/README.md) |
 | 서비스 | [SD.A.30030](../A_300_30-service/README.md) |
-| 시퀀스 | [SCN.A.300-02](../../../80-sequence/A_300_auth/SCN_A_300_02_phone_signin_refresh.md) |
+| 시퀀스 | [SCN.A.300-02](../A_300_50-sequence/SCN_A_300_02_phone_signin_refresh.md) |
 
 ## 책임과 경계
 
-- 보장하는 업무 결과: code, IdentityLink, 사용자 상태와 권한을 확인하고 정확히 하나의 논리 Session을 발급한다.
+- 보장하는 업무 결과: code, IdentityLink와 사용자 인증 허용 상태를 확인하고 정확히 하나의 논리 Session을 발급한다.
 - 요청 안에서 하지 않는 일: 휴대폰 번호로 새 사용자 계정을 만들거나 기존 계정을 병합하지 않는다.
-- 다른 Context 또는 외부 시스템의 책임: Authorization Source가 최신 AccessGrant를 제공한다.
+- 다른 Context 또는 외부 시스템의 책임: role, permission, membership과 업무 ACL은 해당 소유 Context 또는 별도 인가 경계가 판단한다.
 
 ## 보안과 개인정보
 
@@ -69,8 +69,18 @@ code schema, 채널별 Session 응답, cookie·token과 오류 wire 예시는 Op
 1. auth flow proof, Challenge와 AuthenticationIntent의 소유 binding을 확인하고 Intent의 client channel·`rememberMe`를 읽는다.
 2. code를 검증하고 Challenge를 원자적으로 소비한다.
 3. verified phone Identity의 잠금과 active IdentityLink·UserAuthState를 확인한다.
-4. Authorization Source에서 최신 AccessGrant를 조회한다.
-5. Session, credential, 실패 count 초기화, Intent 소비와 감사 OutboxEvent를 저장한다.
+4. Session, refresh credential, 실패 count 초기화, Intent 소비와 감사 OutboxEvent를 저장한다.
+5. 커밋된 Session을 기준으로 allowlist claim만 포함한 access JWT를 발급한다.
+
+## 저장 모델과 캐시
+
+저장 구조는 [영속성 설계](../A_300_20-persistence/README.md#저장-모델)와 [Redis projection models](../A_300_20-persistence/README.md#redis-projection-models)를 기준으로 한다.
+
+| 저장 모델 | 전략 | 적용 근거 |
+| --- | --- | --- |
+| `VerificationChallenge`, `Identity`, `IdentityLink`, `UserAuthState` | 우회 | code 소비, 잠금과 Link 존재 여부는 PostgreSQL 최신 상태로 함께 판정한다. |
+| `AuthenticationPolicySnapshotProjection` (`P`) | 사용 | 검증 횟수, 잠금과 Session TTL 정책은 공통 snapshot이다. |
+| `SessionStatusProjection` (`S`) | 갱신 | 검증 성공 뒤 생성한 Session을 commit 후 `active`로 적재한다. |
 
 ## 상태 변경과 트랜잭션
 
@@ -78,7 +88,7 @@ code schema, 채널별 Session 응답, cookie·token과 오류 wire 예시는 Op
 - 성공 종료 상태: `verified` Challenge와 active Session·SessionCredential.
 - 실패·만료 상태: code 실패·만료, Identity 잠금, Link 부재 또는 사용자 제한.
 - Challenge 실패와 attempt·잠금 감사 상태를 원자적으로 저장한다.
-- 성공은 Session 관련 상태와 outbox를 저장하며 Authorization Source 호출 중 트랜잭션을 열어 두지 않는다.
+- 성공은 Session 관련 상태와 outbox를 한 로컬 트랜잭션에 저장한다.
 
 ## 멱등성과 동시성
 
@@ -96,7 +106,7 @@ code schema, 채널별 Session 응답, cookie·token과 오류 wire 예시는 Op
 | --- | --- | --- |
 | code 실패·만료 | Link와 계정 존재 여부를 공개하지 않는다. | 올바른 code를 제출하거나 새 Challenge를 받는다. |
 | code 확인 뒤 Link 부재·잠금·제한 | 검증된 번호 소유자에게만 일반화된 상태를 공개한다. | 회원가입·연동, 대기 또는 지원 절차를 따른다. |
-| 권한 원천·저장소 장애 | Session을 부분 발급하지 않는다. | 같은 key로 재시도한다. |
+| 인증 저장소·token signer 장애 | Session을 부분 발급하지 않는다. | 같은 key로 재시도한다. |
 | credential 전달 복구 TTL 종료 | 번호·Link·Session 세부 상태를 숨긴다. | `AUTH_SESSION_DELIVERY_EXPIRED` 뒤 새 로그인을 시작한다. |
 
 ## 도메인과 서비스 매핑
@@ -104,9 +114,9 @@ code schema, 채널별 Session 응답, cookie·token과 오류 wire 예시는 Op
 | 계층 | 매핑 |
 | --- | --- |
 | Command / Query Handler | `VerifyChallengeHandler`, `SignInWithPhoneHandler`, `IssueSessionHandler` |
-| Aggregate / Entity | `AuthenticationIntent`, `VerificationChallenge`, `Identity`, `IdentityLink`, `Session`, `SessionCredential`, `AccessGrant` |
-| Repository / Read Model | Intent·Challenge·Identity·Link·Session·AccessGrant·Idempotency Repository |
-| Port / Adapter | `CredentialIssuerPort`, Authorization Source, `AuthenticationPolicyProvider`, `RateLimitPort` |
+| Aggregate / Entity | `AuthenticationIntent`, `VerificationChallenge`, `Identity`, `IdentityLink`, `Session`, `SessionCredential` |
+| Repository / Read Model | Intent·Challenge·Identity·Link·Session·Idempotency Repository |
+| Port / Adapter | `AccessTokenIssuerPort`, `AuthenticationPolicyProvider`, `RateLimitPort` |
 | Domain / Integration Event | `EVT.A.300-05~07`, `EVT.A.300-31~33` |
 
 ## 관측성과 운영
@@ -129,7 +139,7 @@ code schema, 채널별 Session 응답, cookie·token과 오류 wire 예시는 Op
 
 ## 연관 시퀀스
 
-- 시퀀스 문서: [SCN.A.300-02 휴대폰 로그인과 refresh token 회전](../../../80-sequence/A_300_auth/SCN_A_300_02_phone_signin_refresh.md)
+- 시퀀스 문서: [SCN.A.300-02 휴대폰 로그인과 refresh token 회전](../A_300_50-sequence/SCN_A_300_02_phone_signin_refresh.md)
 - 관련 API: `API.A.300-08`, `API.A.300-09`, `API.A.300-14`
 - 여러 참여자의 Mermaid 다이어그램은 시퀀스 문서에서 관리한다.
 

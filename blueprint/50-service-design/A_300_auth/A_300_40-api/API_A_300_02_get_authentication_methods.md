@@ -6,7 +6,7 @@ status: draft
 tags: [service-design, auth, api, method]
 source: local
 created: 2026-07-10
-updated: 2026-07-10
+updated: 2026-07-16
 service_design: SD.A.300
 api_design: SD.A.30040
 domain_model: SD.A.30010
@@ -28,10 +28,10 @@ service: SD.A.30030
 | 권한 | 조회 proof가 query의 Intent를 소유해야 한다. |
 | 노출 범위 | public |
 | 멱등성 | 읽기 전용이므로 별도 key 없음 |
-| 캐시 | `no-store` |
+| HTTP 응답 캐시 | `no-store` |
 | 호환성 | `/api/v1`, deprecation 없음 |
 
-## HTTP 계약 원장
+## HTTP 명세 원장
 
 - 완전한 OpenAPI 문서: [openapi/openapi.yaml](openapi/openapi.yaml)
 - 이 Endpoint의 Path Item: [openapi/paths/API_A_300_02_get_authentication_methods.yaml](openapi/paths/API_A_300_02_get_authentication_methods.yaml)
@@ -70,6 +70,15 @@ service: SD.A.30030
 2. Intent가 active이고 만료되지 않았는지 확인한다.
 3. 채널, Intent 목적과 활성 AuthenticationPolicy를 적용한다.
 4. 계정별 상태가 아닌 지원 인증 수단 목록만 반환한다.
+
+## 저장 모델과 캐시
+
+저장 구조는 [영속성 설계](../A_300_20-persistence/README.md#저장-모델)와 [Redis projection models](../A_300_20-persistence/README.md#redis-projection-models)를 기준으로 한다.
+
+| 저장 모델 | 전략 | 적용 근거 |
+| --- | --- | --- |
+| `AuthenticationIntent` | 우회 | 사용자별 소유 proof, active 상태와 만료 시각을 요청마다 PostgreSQL에서 확인한다. |
+| `AuthenticationPolicySnapshotProjection` (`P`) | 사용 | 지원 인증 수단은 활성 정책 snapshot을 여러 요청이 공통으로 읽는다. |
 
 ## 상태 변경과 트랜잭션
 
@@ -121,7 +130,7 @@ service: SD.A.30030
 ## 연관 시퀀스
 
 - 이 Query는 가입·로그인의 인증 수단 선택 전에 사용한다.
-- 여러 참여자의 Mermaid 다이어그램은 [인증 시퀀스 인덱스](../../../80-sequence/A_300_auth/README.md)에서 관리한다.
+- 여러 참여자의 Mermaid 다이어그램은 [인증 시퀀스 인덱스](../A_300_50-sequence/README.md)에서 관리한다.
 
 ## 호환성과 변경 정책
 

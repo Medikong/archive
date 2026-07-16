@@ -8,7 +8,7 @@ api_design: SD.A.30040
 domain_model: SD.A.30010
 persistence: SD.A.30020
 service: SD.A.30030
-updated: 2026-07-10
+updated: 2026-07-16
 ---
 
 # API.A.300-28 회원가입 상태 조회
@@ -25,10 +25,10 @@ updated: 2026-07-10
 | 권한 | Registration 소유 binding 일치 |
 | 노출 범위 | public |
 | 멱등성 | 해당 없음 |
-| 캐시 | `no-store` |
+| HTTP 응답 캐시 | `no-store` |
 | 호환성 | `/api/v1`, 미지원 중단 상태 |
 
-## HTTP 계약 원장
+## HTTP 명세 원장
 
 - 완전한 OpenAPI 문서: [openapi/openapi.yaml](openapi/openapi.yaml)
 - 이 Endpoint의 Path Item: [openapi/paths/API_A_300_28_get_registration_status.yaml](openapi/paths/API_A_300_28_get_registration_status.yaml)
@@ -43,12 +43,12 @@ updated: 2026-07-10
 - [SD.A.30010 인증 도메인 모델](../A_300_10-domain-model/SD_A_30010_auth_domain_model.md)
 - [SD.A.30020 인증 영속성 설계](../A_300_20-persistence/README.md)
 - [SD.A.30030 인증 서비스 설계](../A_300_30-service/README.md)
-- [SCN.A.300-01 이메일 회원가입과 자동 로그인](../../../80-sequence/A_300_auth/SCN_A_300_01_email_registration.md)
+- [SCN.A.01-01 회원가입과 자동 로그인](../../../80-sequence/A_01_user/SCN_A_01_01_user_provisioning_auth_link.md)
 
 ## 책임과 경계
 
 - 소유 확인된 Registration의 현재 단계와 검증 완료 수단을 조회한다.
-- terminal 상태도 정상 상태 조회 결과로 반환해 클라이언트가 한 계약으로 처리하게 한다.
+- terminal 상태도 정상 상태 조회 결과로 반환해 클라이언트가 같은 응답 형식으로 처리하게 한다.
 - API.A.300-03이 발급한 상태 조회 전용 token으로 사전 인증 credential 정리 뒤에도 짧은 보존 기간 동안 terminal 상태를 확인할 수 있게 한다.
 - Session, cookie, access token이나 refresh token을 발급하지 않는다.
 - User 생성 상세와 내부 실패 사유를 공개하지 않는다.
@@ -69,6 +69,16 @@ updated: 2026-07-10
 4. 진행 상태와 terminal 상태를 모두 같은 성공 envelope로 반환한다.
 5. `verified`이면 프론트엔드가 User 생성 API를 호출할 수 있음을 표시한다.
 
+## 저장 모델과 캐시
+
+저장 구조는 [영속성 설계](../A_300_20-persistence/README.md#저장-모델)와 [Redis projection models](../A_300_20-persistence/README.md#redis-projection-models)를 기준으로 한다.
+
+| 저장 모델 | 전략 | 적용 근거 |
+| --- | --- | --- |
+| `RegistrationStatusProjection` | 사용 | 원문 status token이 아닌 `HMAC(statusToken)` key로 가입 진행 상태를 먼저 조회하고, cache miss 때 PostgreSQL 원장을 조회한다. |
+| `Registration`, `VerificationChallenge` | 우회 | cache hit는 조회만 줄일 뿐 가입 상태나 challenge 상태를 전이시키지 않는다. projection으로 상태를 확정할 수 없으면 PostgreSQL을 기준으로 응답한다. |
+| HTTP 응답 | 사용하지 않음 | 내부 Redis projection을 사용하더라도 status token으로 조회한 응답에는 `Cache-Control: no-store`를 유지한다. |
+
 ## 상태 변경과 트랜잭션
 
 - 상태를 바꾸지 않는 Query다.
@@ -87,7 +97,7 @@ updated: 2026-07-10
 
 ## 예외와 복구 규칙
 
-정확한 HTTP 상태와 ProblemDetails 계약은 OpenAPI를 기준으로 한다.
+정확한 HTTP 상태와 ErrorResponse 형식은 OpenAPI를 기준으로 한다.
 
 - Registration 부재, 소유 proof 오류·만료와 binding 불일치는 같은 not-found 오류로 처리한다.
 - failed와 expired는 오류 응답으로 바꾸지 않고 재시도 불가 terminal 상태로 반환한다.
@@ -122,7 +132,7 @@ updated: 2026-07-10
 
 ## 연관 시퀀스
 
-- [SCN.A.300-01 이메일 회원가입과 자동 로그인](../../../80-sequence/A_300_auth/SCN_A_300_01_email_registration.md)
+- [SCN.A.01-01 회원가입과 자동 로그인](../../../80-sequence/A_01_user/SCN_A_01_01_user_provisioning_auth_link.md)
 - 연관 API: `API.A.300-03~06`
 - 여러 참여자의 Mermaid 다이어그램은 시퀀스 문서에서 관리한다.
 
@@ -130,7 +140,7 @@ updated: 2026-07-10
 
 - 상태별 선택 안내 필드 추가는 하위 호환이다.
 - 기존 상태 이름과 terminal 의미 변경은 새 API 버전에서 처리한다.
-- 상태 조회 token의 권한을 완료 명령으로 넓히는 변경은 별도 보안 검토와 새 credential 계약이 필요하다.
+- 상태 조회 token의 권한을 완료 명령으로 넓히는 변경은 별도 보안 검토와 새 credential 검증 방식이 필요하다.
 - 새 내부 단계를 추가할 때 외부 상태로 그대로 노출하지 않고 기존 공개 상태에 매핑한다.
 
 ## 확인 필요

@@ -8,7 +8,7 @@ api_design: SD.A.30040
 domain_model: SD.A.30010
 persistence: SD.A.30020
 service: SD.A.30030
-updated: 2026-07-13
+updated: 2026-07-16
 ---
 
 # API.A.300-16 현재 인증 컨텍스트 조회
@@ -19,129 +19,85 @@ updated: 2026-07-13
 | --- | --- |
 | Method / Path | `GET /api/v1/auth/context` |
 | operationId | `getAuthContext` |
-| 역할 | 현재 요청의 익명 또는 인증 상태와 안전한 Session 요약을 반환한다. |
+| 역할 | Istio가 검증한 Principal과 안전한 Session 요약을 반환한다. |
 | API 유형 | Query |
-| 인증 | 선택적 웹 Session cookie 또는 모바일 access JWT, 두 credential의 동시 제출은 금지 |
-| 권한 | 본인 요청 credential이 가리키는 인증 컨텍스트만 조회 가능 |
-| 노출 범위 | public |
+| 인증 | 웹·모바일 공통 Bearer access JWT 필수 |
+| 권한 | 본인 JWT가 가리키는 active Session만 조회 가능 |
+| 노출 범위 | protected |
 | 멱등성 | 해당 없음 |
-| 캐시 | `no-store`, `Vary: Cookie, Authorization` |
-| 호환성 | `/api/v1`, deprecation 없음 |
+| HTTP 응답 캐시 | `no-store`, `Vary: Authorization` |
 
-## HTTP 계약 원장
+## HTTP 명세 원장
 
 - 완전한 OpenAPI 문서: [openapi/openapi.yaml](openapi/openapi.yaml)
 - 이 Endpoint의 Path Item: [openapi/paths/API_A_300_16_get_auth_context.yaml](openapi/paths/API_A_300_16_get_auth_context.yaml)
-- 공통 component: [schemas](openapi/components/schemas.yaml), [parameters](openapi/components/parameters.yaml), [headers](openapi/components/headers.yaml), [responses](openapi/components/responses.yaml), [security schemes](openapi/components/security-schemes.yaml)
-
-익명·웹·모바일 응답의 `oneOf`, 선택적 security, `x-credential-precedence: reject_multiple`, 응답 header, HTTP 상태와 wire 예시는 OpenAPI를 기준으로 한다.
-
-## 연관 문서
-
-| 구분 | 식별자와 경로 |
-| --- | --- |
-| 요구사항 | [REQ.A.05](../../../00-requirements/REQ_A_05_auth_member.md) |
-| UC | [UC.A.300](../../../30-uc/UC_A_300_auth_member.md) |
-| BC | [BC.A.300](../../../40-event-storming-bounded-context/BC_A_300_auth_member.md) |
-| 도메인 | [SD.A.30010](../A_300_10-domain-model/SD_A_30010_auth_domain_model.md) |
-| 영속성 | [SD.A.30020](../A_300_20-persistence/README.md) |
-| 서비스 | [SD.A.30030](../A_300_30-service/README.md) |
-| 시퀀스 | [인증 시퀀스 인덱스](../../../80-sequence/A_300_auth/README.md) |
+- JWT와 Istio 검증 기준: [SD.A.300.JWT](../jwt-jwks-istio.md)
 
 ## 책임과 경계
 
-- credential이 없거나 선택적 credential이 유효하지 않으면 익명 컨텍스트를 반환한다.
-- 유효한 credential이면 `user_id`, role, Session 요약과 연결된 인증 수단 종류만 반환한다.
-- 웹 응답에는 현재 Session credential에 바인딩된 CSRF token을 포함한다.
-- 보호 API의 인증·인가 결과를 대신하거나 구매 가능 여부를 판단하지 않는다.
+- Istio와 auth-service HTTP ext_authz Adapter가 검증한 `sub`, `sid`, `jti`와 SessionStatusService의 active 판정을 전제로 한다.
+- 응답에는 `user_id`, Session 요약과 연결된 인증 수단 종류만 포함한다.
+- role, permission, membership, seller 상태, 업무 ACL과 사용자 프로필을 반환하지 않는다.
+- 보호 API의 업무 인가나 구매 가능 여부를 대신 판단하지 않는다.
+
+## 처리 규칙
+
+1. Istio가 access JWT 서명, issuer, audience, 만료와 필수 claim을 검증한다.
+2. HTTP ext_authz Adapter가 Bearer JWT를 다시 검증한 뒤, SessionStatusService가 `sub`, `sid`, `jti`로 Session active 여부와 `user_id` 일치를 확인한다.
+3. Istio가 외부 내부용 헤더를 제거하고 `X-User-Id`, `X-Session-Id`, `X-Token-Id`를 만든다.
+4. Auth는 해당 Session과 IdentityLink 요약을 읽어 인증 컨텍스트를 반환한다.
+
+credential이 없거나 JWT·Session이 유효하지 않으면 익명 응답으로 바꾸지 않고 `401`을 반환한다. 웹앱 재실행 시에는 먼저 `API.A.300-14`로 refresh cookie를 회전해 새 access JWT를 받은 뒤 이 API를 호출한다.
+
+## 저장 모델과 캐시
+
+저장 구조는 [영속성 설계](../A_300_20-persistence/README.md#저장-모델)와 [Redis projection models](../A_300_20-persistence/README.md#redis-projection-models)를 기준으로 한다.
+
+| 저장 모델 | 전략 | 적용 근거 |
+| --- | --- | --- |
+| `SessionStatusProjection` | 사용 | 보호 API의 핵심 조회이므로 Redis에서 Session 상태를 먼저 확인하고 cache miss 때 PostgreSQL을 조회한다. Redis와 PostgreSQL에서 모두 상태를 확정하지 못하면 요청을 거부한다. |
+| `IdentityLink`, `UserAuthState` 요약 | 우회 | 연결된 인증 수단과 계정 상태는 개인정보·보안 상태가 바뀐 직후에도 정확해야 하므로 PostgreSQL에서 직접 조회한다. |
+| 최종 인증 context 응답 | 사용하지 않음 | Session 상태 projection 외에 조합된 응답 전체를 서버에서 별도 cache하지 않아 서로 다른 사용자의 context가 섞일 가능성을 없앤다. |
+
+## 상태 변경과 트랜잭션
+
+- Session, credential, IdentityLink와 UserAuthState를 변경하지 않는다.
+- `last_seen_at` 같은 관측성 갱신이 필요하면 Query transaction과 분리한다.
+- OutboxEvent와 외부 부수 효과를 만들지 않는다.
 
 ## 보안과 개인정보
 
 - 이메일, 휴대폰 번호, Identity ID와 credential 원문을 반환하지 않는다.
-- 변조·만료·폐기된 선택적 credential도 `authenticated=false`로 일반화한다.
-- 웹 Session cookie와 모바일 Bearer token이 함께 오면 어느 쪽도 우선하지 않고 `AUTH_MULTIPLE_CREDENTIALS`로 거부한다.
-- 응답은 공유 캐시와 브라우저 저장을 막고 credential 종류에 따라 cache key가 섞이지 않게 한다.
-- 이 Query 결과를 다른 보호 API의 권한 근거로 재사용하지 않는다.
+- Authorization header와 응답 body를 로그·trace·metric에 기록하지 않는다.
+- 이 Query 결과를 다른 요청의 인가 proof로 재사용하지 않는다.
+- Seller나 다른 업무 Context는 `user_id`를 기준으로 자신의 인가 원장을 별도로 확인한다.
 
-## Context 판매자 연동
+## 오류와 복구
 
-- 판매자 BFF는 이 API에서 검증된 `user_id`와 Session ref만 얻고 [Seller access context](../../A_200_seller/A_200_40-api/operation-catalog.md)를 별도로 조회한다.
-- seller ID, membership, role, permission과 seller 업무 상태는 이 응답과 Auth claim에 추가하지 않는다.
-- `API.A.200-01`과 판매자 Command 수신 측은 현재 membership·permission version을 Context 판매자 원장에서 재검증한다.
-
-## 처리 규칙
-
-1. 웹 Session cookie, 모바일 Bearer token 또는 익명 요청을 식별한다.
-2. cookie와 Bearer token이 함께 있으면 credential을 해석하기 전에 요청을 거부한다.
-3. 하나의 credential이 있으면 서명, Session 상태, 만료와 UserAuthState를 검증한다.
-4. 유효하지 않은 선택적 credential은 오류 대신 익명 컨텍스트로 변환한다.
-5. 유효한 Session이면 role, 인증 수단 종류와 채널별 Session 요약을 조합한다.
-6. 웹 Session에만 현재 credential에서 도출한 CSRF token을 반환한다.
-
-## 상태 변경과 트랜잭션
-
-- 인증 상태를 조회하는 Query이며 Session, credential, AccessGrant와 IdentityLink를 변경하지 않는다.
-- 조회 일관성은 하나의 request snapshot 안에서 Session, UserAuthState와 AccessGrant version을 확인한다.
-- `last_seen_at` 갱신이 필요하면 이 Query transaction과 분리된 정책으로 처리한다.
-- OutboxEvent와 외부 부수 효과를 만들지 않는다.
-
-## 멱등성과 동시성
-
-- GET Query이므로 `Idempotency-Key`를 받지 않는다.
-- 같은 credential과 같은 상태 snapshot은 같은 인증 의미를 반환한다.
-- 조회 중 Session이 폐기되면 최종 상태 확인에서 익명 컨텍스트로 수렴한다.
-- 동적 식별자는 cache key나 metric label로 사용하지 않는다.
-
-## 예외와 복구 규칙
-
-정확한 HTTP 상태, error code, ProblemDetails schema와 예시는 OpenAPI를 기준으로 한다.
-
-| 업무 조건 | 공개 원칙 | 클라이언트 복구 |
+| 조건 | 결과 | 클라이언트 복구 |
 | --- | --- | --- |
-| credential 없음·만료·변조·폐기 | 원인을 구분하지 않고 익명 컨텍스트를 반환한다. | 보호 행동에서 로그인 절차를 시작한다. |
-| cookie와 Bearer token 동시 제출 | credential 우선순위와 유효성을 공개하지 않는다. | 하나의 credential만 남겨 다시 요청한다. |
-| 사용자 제한 또는 비활성 | 세부 제한 사유를 반환하지 않는다. | 새 Session을 발급하지 않고 지원 절차를 안내한다. |
-| 필수 저장소 장애 | 인증 상태를 추측하지 않는다. | 선택적 개인화 영역만 대체 상태로 표시한다. |
+| access JWT 없음·변조·만료 | `401 AUTH_SESSION_REQUIRED` | 웹은 refresh를 시도하고 모바일은 저장된 refresh token을 사용한다. |
+| Session 만료·폐기·`sub` 불일치 | `401 AUTH_SESSION_REVOKED` | credential을 삭제하고 다시 로그인한다. |
+| JWKS 또는 Session 상태 확인 불가 | `503 AUTH_SERVICE_UNAVAILABLE` | 인증 성공으로 간주하지 않고 재시도한다. |
 
 ## 도메인과 서비스 매핑
 
 | 계층 | 매핑 |
 | --- | --- |
-| Command / Query Handler | `ResolvePrincipalHandler`와 인증 컨텍스트 Query 조합 |
-| Aggregate / Entity | `Session`, `SessionCredential`, `AccessGrant`, `IdentityLink`, `UserAuthState` |
-| Repository / Read Model | Session·AccessGrant·인증 수단 요약 Read Model |
-| Port / Adapter | access JWT verifier |
+| Query Handler | `ResolveAuthenticationPrincipalHandler`, `GetAuthContextHandler` |
+| Aggregate / Entity | `Session`, `SessionCredential`, `IdentityLink`, `UserAuthState` |
+| Repository / Read Model | Session·인증 수단 요약 Read Model |
+| Port / Adapter | `SessionStatusService` |
 | Domain / Integration Event | 해당 없음 |
-
-## 관측성과 운영
-
-- 로그에는 인증 여부, channel, credential 상태의 일반화 범주만 남긴다.
-- 익명·웹·모바일 응답 비율과 선택 credential 검증 실패율을 관측한다.
-- credential 검증과 read model 조회를 별도 span으로 기록한다.
-- 응답 body, CSRF token, cookie와 Authorization header는 sampling하지 않는다.
 
 ## 검증 항목
 
-- OpenAPI lint와 bundle이 성공한다.
-- 익명, 유효 웹, 유효 모바일 응답이 각 `oneOf` schema를 통과한다.
-- 만료·변조·폐기 credential이 모두 익명 응답으로 일반화된다.
-- cookie와 Bearer token을 함께 제출하면 `400 AUTH_MULTIPLE_CREDENTIALS`를 반환한다.
-- 웹 응답에만 CSRF token이 있으며 credential 회전 뒤 값이 바뀐다.
-- 응답이 `no-store`와 올바른 `Vary` header를 포함한다.
-- 개인정보와 credential이 응답·로그·trace·metric label에 남지 않는다.
+- Bearer access JWT 없이 호출하면 `401`이다.
+- 웹과 모바일이 같은 응답 schema를 사용하고 channel만 Session metadata로 구분한다.
+- 응답과 내부 헤더에 role, permission, membership과 개인정보가 없다.
+- 폐기된 Session의 JWT는 남은 TTL과 관계없이 차단된다.
+- 응답이 `no-store`와 `Vary: Authorization`을 포함한다.
 
 ## 연관 시퀀스
 
-- 시퀀스 문서: [인증 처리 시퀀스 인덱스](../../../80-sequence/A_300_auth/README.md)
-- 관련 API: 보호 행동을 시작하는 모든 API와 선택적 개인화 컴포넌트
-- 전용 조회 시퀀스는 없으며 여러 참여자가 추가되면 `80-sequence`에서 관리한다.
-
-## 호환성과 변경 정책
-
-- 새로운 비민감 role·Session metadata 추가는 하위 호환으로 처리한다.
-- `authenticated` 의미와 익명 fallback 정책 변경은 새 버전으로 제공한다.
-- linked method의 원문 식별자 노출은 호환성 추가가 아니라 보안 정책 변경으로 금지한다.
-
-## 확인 필요
-
-- 제한 사용자에게 익명 응답을 줄지 별도 일반화 상태를 줄지는 UI 지원 정책과 함께 확정한다.
+- [SCN.A.300-05 웹 JWT 인증과 Session 회전](../A_300_50-sequence/SCN_A_300_05_web_jwt_authentication.md)

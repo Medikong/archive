@@ -8,7 +8,7 @@ api_design: SD.A.30040
 domain_model: SD.A.30010
 persistence: SD.A.30020
 service: SD.A.30030
-updated: 2026-07-10
+updated: 2026-07-16
 ---
 
 # API.A.300-24 운영자 인증 상태 조회
@@ -21,14 +21,14 @@ updated: 2026-07-10
 | operationId | `getOperatorAuthUser` |
 | 역할 | CS 처리를 위해 사용자 인증 상태, Identity별 잠금·Link와 활성 Session 수를 조회한다. |
 | API 유형 | Query |
-| 인증 | 운영자 웹 Session, 최근 strong auth |
-| 권한 | 현재 AccessGrant의 `auth.case.read`, 필수 조회 사유 |
+| 인증 | `Authorization: Bearer <access-jwt>`, 최근 strong auth |
+| 외부 인가 | 검증된 `auth.case.read` 결정과 필수 조회 사유 |
 | 노출 범위 | operator |
 | 멱등성 | 해당 없음 |
-| 캐시 | `no-store` |
+| HTTP 응답 캐시 | `no-store` |
 | 호환성 | `/api/v1`, 미지원 중단 상태 |
 
-## HTTP 계약 원장
+## HTTP 명세 원장
 
 - 완전한 OpenAPI 문서: [openapi/openapi.yaml](openapi/openapi.yaml)
 - 이 Endpoint의 Path Item: [openapi/paths/API_A_300_24_get_operator_auth_user.yaml](openapi/paths/API_A_300_24_get_operator_auth_user.yaml)
@@ -53,18 +53,29 @@ updated: 2026-07-10
 
 ## 보안과 개인정보
 
-- 운영자 Principal의 현재 AccessGrant, `auth.case.read`, strong assurance와 필수 조회 사유를 모두 확인한다.
+- Istio 연동 계층이 전달한 `auth.case.read` 인가 결정, strong assurance와 필수 조회 사유를 모두 확인한다.
+- Auth는 운영자의 role, permission, 판매자 소속 또는 업무 ACL을 조회하거나 저장하지 않는다.
 - Identity 표시값은 권한 있는 운영자에게도 마스킹하며 unmask 기능은 제공하지 않는다.
 - 대상 부재와 권한 부족의 공개 범위는 운영자 정보 노출 정책을 따른다.
 - 조회자 `user_id`, 대상 `user_id`, 사유 코드와 결과를 감사하되 Identity 원문을 남기지 않는다.
 
 ## 처리 규칙
 
-1. 운영자 Session, 현재 AccessGrant, permission, strong assurance와 감사 사유 형식을 검증한다.
+1. access JWT의 Session, 외부 `auth.case.read` 결정, strong assurance와 감사 사유 형식을 검증한다.
 2. 대상 UserAuthState와 인증 상태 Read Model을 조회한다.
 3. Identity별 검증·Link·잠금 상태와 active Session 수를 구성한다.
 4. 표시값을 마스킹하고 민감 필드를 제거한다.
 5. 조회 감사 이벤트를 기록한 뒤 응답한다.
+
+## 저장 모델과 캐시
+
+저장 구조는 [영속성 설계](../A_300_20-persistence/README.md#저장-모델)와 [Redis projection models](../A_300_20-persistence/README.md#redis-projection-models)를 기준으로 한다.
+
+| 저장 모델 | 전략 | 적용 근거 |
+| --- | --- | --- |
+| 운영자 `SessionStatusProjection` | 사용 | 운영자 요청을 처리하기 전에 Session 상태를 빠르게 확인한다. 권한 판정은 Auth가 아닌 상위 운영자 인가 계층이 담당한다. |
+| 대상 사용자의 `UserAuthState`, `Identity`, `IdentityLink`, `Session` 조회 모델 | 우회 | Identity의 잠금 상태·실패 횟수와 활성 Session 수는 민감하며 최신 상태가 필요하므로 PostgreSQL에서 직접 조회한다. |
+| 운영자 조회 결과 | 사용하지 않음 | 개인정보와 보안 상태를 조합한 응답 전체를 서버에서 cache하지 않는다. |
 
 ## 상태 변경과 트랜잭션
 
@@ -81,10 +92,10 @@ updated: 2026-07-10
 
 ## 예외와 복구 규칙
 
-정확한 HTTP 상태와 ProblemDetails 계약은 OpenAPI를 기준으로 한다.
+정확한 HTTP 상태와 ErrorResponse 형식은 OpenAPI를 기준으로 한다.
 
-- permission이 없으면 대상 존재 여부를 더 공개하지 않는다.
-- AccessGrant가 폐기·만료됐거나 strong assurance가 끝났으면 재승인 또는 재인증 뒤 다시 조회한다.
+- 외부 인가 결정이 거부되면 대상 존재 여부를 더 공개하지 않는다.
+- 인가 결정이 만료됐거나 strong assurance가 끝났으면 재승인 또는 재인증 뒤 다시 조회한다.
 - 대상 인증 Read Model이 없으면 운영자 전용 not-found 오류를 반환한다.
 - 필수 감사 저장소 또는 인증 저장소 장애를 빈 정상 응답으로 바꾸지 않는다.
 
@@ -93,9 +104,9 @@ updated: 2026-07-10
 | 계층 | 매핑 |
 | --- | --- |
 | Query Handler | `GetAuthenticationStatusHandler` |
-| Aggregate / Entity | `UserAuthState`, `Identity`, `IdentityLink`, `LoginFailure`, `Session` |
+| Aggregate / Entity | `UserAuthState`, `Identity`, `IdentityLink`, `Session` |
 | Read Model | `RM.A.300-02 인증 상태 조회` |
-| Authorization | `AccessGrant`, `auth.case.read` |
+| External Authorization | 검증된 `auth.case.read` 결정 proof |
 | Audit | 운영자 인증 상태 조회 감사 OutboxEvent |
 
 ## 관측성과 운영
@@ -107,7 +118,7 @@ updated: 2026-07-10
 
 ## 검증 항목
 
-- 현재 AccessGrant, permission, strong assurance와 감사 사유가 모두 있어야 조회된다.
+- 유효한 외부 인가 결정, strong assurance와 감사 사유가 모두 있어야 조회된다.
 - Identity별 잠금 상태가 다른 Identity에 합쳐지지 않는다.
 - restricted/deactivated UserAuthState를 active로 완화하지 않는다.
 - 표시값이 항상 마스킹되고 secret 계열 필드가 응답에 없다.
@@ -117,15 +128,15 @@ updated: 2026-07-10
 
 - 현재 연결된 다중 API 시퀀스는 없다.
 - 후속 운영자 처리: `API.A.300-27`
-- 운영 절차가 확정되면 상태 조회와 수동 처리 시퀀스를 `80-sequence`에 추가한다.
+- 운영 절차가 확정되면 상태 조회와 수동 처리 시퀀스를 `A_300_50-sequence`에 추가한다.
 
 ## 호환성과 변경 정책
 
 - Identity 요약의 선택 필드 추가는 하위 호환이다.
-- 마스킹 규칙, UserAuthState 의미와 permission 이름 변경은 보안 검토와 버전 변경을 거친다.
+- 마스킹 규칙, UserAuthState 의미와 외부 인가 action 이름 변경은 보안 검토와 버전 변경을 거친다.
 - unmask 기능은 이 Endpoint 확장이 아니라 별도 승인 API로 설계한다.
 
 ## 확인 필요
 
-- 운영자 대상 없음 오류를 보여 줄 수 있는 역할 범위를 확정한다.
+- 운영자 대상 없음 오류를 보여 줄 수 있는 외부 인가 action 범위를 확정한다.
 - 감사 사유 코드 목록과 감사 저장 실패 시 운영 정책을 확정한다.

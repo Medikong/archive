@@ -15,7 +15,7 @@ WebCsrfToken:
   type: apiKey
   in: header
   name: X-CSRF-Token
-  description: WebAuthFlowCookie 또는 WebSessionCookie와 함께 제출하는 CSRF token이다. operation의 security requirement가 지정한 cookie와의 binding을 검증한다.
+  description: WebAuthFlowCookie 또는 WebRefreshCookie와 함께 제출하는 CSRF token이다. operation의 security requirement가 지정한 cookie와의 binding을 검증한다.
 
 WebOrigin:
   type: apiKey
@@ -24,11 +24,11 @@ WebOrigin:
   description: 웹 요청에서 필수인 Origin 헤더다. 인증 credential이 아니며 Gateway가 allowlist와 정확히 비교한다. OpenAPI의 조건부 header 한계를 보완하기 위해 security scheme으로 표현한다.
   x-purpose: origin-allowlist
 
-WebSessionCookie:
+WebRefreshCookie:
   type: apiKey
   in: cookie
-  name: __Host-dm_session
-  description: 로그인된 웹 사용자의 서버 Session을 가리키는 HttpOnly cookie다.
+  name: __Host-dm_refresh
+  description: 웹 refresh family를 가리키는 회전형 HttpOnly cookie다. 보호 API의 credential로 사용할 수 없다.
 
 MobileAuthFlowToken:
   type: apiKey
@@ -47,11 +47,18 @@ MobileRefreshToken:
   type: apiKey
   in: header
   name: X-Refresh-Token
-  description: 모바일 로그아웃에 제출하는 회전형 opaque credential이다. refresh API는 명시된 request body를 사용한다. URL, query 또는 로그에 넣지 않는다.
+  description: 모바일 refresh와 로그아웃에 제출하는 회전형 opaque credential이다. URL, query 또는 로그에 넣지 않는다.
   x-sensitive: true
 
-MobileBearerAuth:
+AccessBearerAuth:
   type: http
   scheme: bearer
   bearerFormat: JWT
-  description: 로그인된 모바일 사용자의 짧은 수명 access JWT다.
+  description: 웹과 모바일 보호 API에 공통으로 제출하는 짧은 수명 access JWT다.
+
+OperatorAuthorizationDecision:
+  type: apiKey
+  in: header
+  name: X-Authorization-Decision
+  description: 별도 인가 경계가 action, subject, resource, 만료와 일회성을 서명해 발급한 결정 proof다. auth-service는 role이나 permission을 직접 조회하지 않는다.
+  x-sensitive: true

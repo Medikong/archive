@@ -8,7 +8,7 @@ api_design: SD.A.30040
 domain_model: SD.A.30010
 persistence: SD.A.30020
 service: SD.A.30030
-updated: 2026-07-10
+updated: 2026-07-16
 ---
 
 # API.A.300-30 가상 인증 메시지 조회
@@ -24,10 +24,10 @@ updated: 2026-07-10
 | 인증 | 개발 접근 token과 Challenge 소유 credential의 AND 조건 |
 | 노출 범위 | `local`, `test`, 접근이 제한된 `demo` |
 | 멱등성 | GET, 같은 projection version에서는 같은 결과 |
-| 캐시 | 성공·오류 응답 모두 `no-store` |
+| HTTP 응답 캐시 | 성공·오류 응답 모두 `no-store` |
 | 호환성 | 개발 API bundle에만 포함하고 운영 Route에는 등록하지 않음 |
 
-## HTTP 계약 원장
+## HTTP 명세 원장
 
 - 개발 OpenAPI 진입 문서: [openapi/dev.openapi.yaml](openapi/dev.openapi.yaml)
 - 이 Endpoint의 Path Item: [openapi/paths/API_A_300_30_get_virtual_verification_message.yaml](openapi/paths/API_A_300_30_get_virtual_verification_message.yaml)
@@ -42,7 +42,7 @@ updated: 2026-07-10
 - [SD.A.30010 인증 도메인 모델](../A_300_10-domain-model/SD_A_30010_auth_domain_model.md)
 - [SD.A.30020 인증 영속성 설계](../A_300_20-persistence/README.md)
 - [SD.A.30030 인증 서비스 설계](../A_300_30-service/README.md)
-- [SD.A.30040 API 공통 계약](README.md)
+- [SD.A.30040 API 공통 설계](README.md)
 
 ## 책임과 경계
 
@@ -71,6 +71,16 @@ updated: 2026-07-10
 5. 아직 Adapter 처리가 끝나지 않았으면 code 없이 대기 결과를 반환한다.
 6. 준비된 메시지는 메모리에서만 복호화해 code와 마스킹 수신지를 반환한다.
 
+## 저장 모델과 캐시
+
+저장 구조는 [영속성 설계](../A_300_20-persistence/README.md#저장-모델)와 [Redis projection models](../A_300_20-persistence/README.md#redis-projection-models)를 기준으로 한다.
+
+| 저장 모델 | 전략 | 적용 근거 |
+| --- | --- | --- |
+| `VirtualVerificationMessage` 개발 전용 projection | 우회 | 테스트가 요청한 최신 message를 매번 PostgreSQL 개발 전용 projection에서 직접 조회해 이전 실행의 Redis 값이 섞이지 않게 한다. |
+| verification code | 사용하지 않음 | code는 응답을 만들 때만 메모리에서 복호화하고 Redis에 평문이나 복호화 가능한 값을 저장하지 않는다. |
+| 모든 Redis projection | 사용하지 않음 | 개발 전용 API는 운영 cache의 내용과 수명에 의존하지 않으며 운영 환경에서는 Route 자체가 활성화되지 않는다. |
+
 ## 상태 변경과 트랜잭션
 
 - 이 Query는 VerificationChallenge 상태, 검증 실패 횟수와 소비 시각을 변경하지 않는다.
@@ -91,7 +101,7 @@ updated: 2026-07-10
 
 ## 예외와 복구 규칙
 
-정확한 HTTP 상태, error code와 ProblemDetails 예시는 OpenAPI를 기준으로 한다.
+정확한 HTTP 상태, error code와 ErrorResponse 예시는 OpenAPI를 기준으로 한다.
 
 | 업무 조건 | 공개 원칙 | 클라이언트 복구 |
 | --- | --- | --- |
@@ -136,7 +146,7 @@ updated: 2026-07-10
 
 - 계획 문서: `SCN.A.300-04 가상 인증 메시지 전달과 조회`
 - 관련 API: `API.A.300-04`, `API.A.300-08`, `API.A.300-11`, `API.A.300-19`, `API.A.300-22`, `API.A.300-30`
-- 여러 참여자의 Mermaid 다이어그램은 [인증 시퀀스 폴더](../../../80-sequence/A_300_auth/README.md)에서 관리한다.
+- 여러 참여자의 Mermaid 다이어그램은 [인증 시퀀스 폴더](../A_300_50-sequence/README.md)에서 관리한다.
 
 ## 호환성과 변경 정책
 

@@ -8,7 +8,7 @@ api_design: SD.A.30040
 domain_model: SD.A.30010
 persistence: SD.A.30020
 service: SD.A.30030
-updated: 2026-07-10
+updated: 2026-07-16
 ---
 
 # API.A.300-23 휴대폰 번호 교체 완료
@@ -21,14 +21,14 @@ updated: 2026-07-10
 | operationId | `completePhoneReplacement` |
 | 역할 | 새 번호 소유를 확인하고 기존 휴대폰 Link를 닫은 뒤 같은 `user_id`에 새 Link를 활성화한다. |
 | API 유형 | Command |
-| 인증 | 사용자 Session과 recent auth, 웹 CSRF·Origin 또는 모바일 Bearer |
+| 인증 | 웹·모바일 공통 Bearer access JWT와 recent auth proof |
 | 권한 | 현재 사용자·Session이 requested Link와 Challenge binding에 일치해야 한다. |
 | 노출 범위 | public |
 | 멱등성 | `Idempotency-Key` 필수 |
-| 캐시 | `no-store` |
+| HTTP 응답 캐시 | `no-store` |
 | 호환성 | `/api/v1`, 미지원 중단 상태 |
 
-## HTTP 계약 원장
+## HTTP 명세 원장
 
 - 완전한 OpenAPI 문서: [openapi/openapi.yaml](openapi/openapi.yaml)
 - 이 Endpoint의 Path Item: [openapi/paths/API_A_300_23_complete_phone_replacement.yaml](openapi/paths/API_A_300_23_complete_phone_replacement.yaml)
@@ -43,7 +43,7 @@ updated: 2026-07-10
 - [SD.A.30010 인증 도메인 모델](../A_300_10-domain-model/SD_A_30010_auth_domain_model.md)
 - [SD.A.30020 인증 영속성 설계](../A_300_20-persistence/README.md)
 - [SD.A.30030 인증 서비스 설계](../A_300_30-service/README.md)
-- [SCN.A.300-03 휴대폰 번호 교체](../../../80-sequence/A_300_auth/SCN_A_300_03_phone_replacement.md)
+- [SCN.A.300-03 휴대폰 번호 교체](../A_300_50-sequence/SCN_A_300_03_phone_replacement.md)
 
 ## 책임과 경계
 
@@ -55,7 +55,7 @@ updated: 2026-07-10
 ## 보안과 개인정보
 
 - code proof, Session, Challenge와 requested Link 소유 binding을 모두 검증한다.
-- 웹은 회전된 HttpOnly cookie와 CSRF token을, 모바일은 새 access/refresh token을 전달한다.
+- 웹은 새 access JWT와 회전된 HttpOnly refresh cookie를, 모바일은 새 access/refresh token을 전달한다.
 - 회전 전 credential hash는 `rotated_pending_delivery` 복구 판정에만 사용할 수 있고 일반 인증에는 사용할 수 없다.
 - code, token, cookie, 전화번호 원문과 암호화 값을 로그·trace·event에 남기지 않는다.
 - 다른 사용자에 연결된 새 번호는 기존 계정을 공개하거나 병합하지 않고 거부한다.
@@ -68,6 +68,18 @@ updated: 2026-07-10
 4. 기존 Link를 replaced로 닫고 새 Identity와 Link를 같은 `user_id`에 활성화한다.
 5. 영향받는 Session을 폐기하고 현재 Session credential을 회전한다.
 6. 저장된 client channel에 따라 웹 또는 모바일 결과를 반환한다.
+
+## 저장 모델과 캐시
+
+저장 구조는 [영속성 설계](../A_300_20-persistence/README.md#저장-모델)와 [Redis projection models](../A_300_20-persistence/README.md#redis-projection-models)를 기준으로 한다.
+
+| 저장 모델 | 전략 | 적용 근거 |
+| --- | --- | --- |
+| `SessionStatusProjection` | 사용 | 교체 완료 요청을 보낸 사용자의 현재 Session 상태를 먼저 확인한다. |
+| `AuthenticationPolicySnapshotProjection` | 사용 | challenge 검증과 휴대폰 교체 뒤 Session 처리 정책을 활성 정책 version으로 적용한다. |
+| `Identity`, `IdentityLink`, `VerificationChallenge`, `Session`, `SessionCredential`, `IdempotencyRecord` | 우회 | challenge 소비, 휴대폰 Identity 교체와 영향받는 Session 처리를 하나의 PostgreSQL 트랜잭션으로 확정한다. |
+| 영향받는 Session의 `SessionStatusProjection` | 무효화 | 보안상 폐기 대상인 Session을 커밋 뒤 `revoked` 상태로 기록한다. |
+| 유지하거나 회전한 현재 `SessionStatusProjection` | 갱신 | 현재 Session을 계속 허용한다면 새 version과 만료 시각을 커밋 뒤 반영한다. |
 
 ## 상태 변경과 트랜잭션
 
@@ -88,7 +100,7 @@ updated: 2026-07-10
 
 ## 예외와 복구 규칙
 
-정확한 HTTP 상태와 ProblemDetails 계약은 OpenAPI를 기준으로 한다.
+정확한 HTTP 상태와 ErrorResponse 형식은 OpenAPI를 기준으로 한다.
 
 - Challenge 검증 실패는 내부 남은 횟수와 Identity 존재 여부를 공개하지 않는다.
 - requested Link 또는 Challenge가 만료되면 해당 단계부터 다시 시작한다.
@@ -126,7 +138,7 @@ updated: 2026-07-10
 
 ## 연관 시퀀스
 
-- [SCN.A.300-03 휴대폰 번호 교체](../../../80-sequence/A_300_auth/SCN_A_300_03_phone_replacement.md)
+- [SCN.A.300-03 휴대폰 번호 교체](../A_300_50-sequence/SCN_A_300_03_phone_replacement.md)
 - 선행 API: `API.A.300-17`, `API.A.300-21`, `API.A.300-22`
 - 여러 참여자의 Mermaid 다이어그램은 시퀀스 문서에서 관리한다.
 
@@ -134,7 +146,7 @@ updated: 2026-07-10
 
 - 채널별 응답에 선택 필드를 추가하는 변경은 하위 호환이다.
 - credential 전달 방식, Link 종료 의미와 Session 폐기 범위 변경은 새 버전 또는 명시적 정책 version으로 처리한다.
-- 외부 SMS Provider 도입은 Challenge 전달 Adapter만 바꾸며 완료 계약을 바꾸지 않는다.
+- 외부 SMS Provider 도입은 Challenge 전달 Adapter만 바꾸며 완료 처리 규칙을 바꾸지 않는다.
 
 ## 확인 필요
 

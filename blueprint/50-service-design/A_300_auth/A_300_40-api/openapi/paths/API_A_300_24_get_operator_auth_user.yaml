@@ -14,10 +14,9 @@ get:
   x-query-ids:
     - QRY.A.300-04
   x-design-doc: ../../API_A_300_24_get_operator_auth_user.md
-  x-required-permissions:
-    - auth.case.read
+  x-authorization-decision:
+    action: auth.case.read
   x-required-assurance: strong
-  x-require-current-access-grant: true
   x-audit-required: true
   x-error-codes:
     AUTH_INPUT_INVALID: 400
@@ -26,7 +25,8 @@ get:
     AUTH_OPERATOR_TARGET_NOT_FOUND: 404
     AUTH_SERVICE_UNAVAILABLE: 503
   security:
-    - WebSessionCookie: []
+    - AccessBearerAuth: []
+      OperatorAuthorizationDecision: []
   parameters:
     - $ref: ../components/parameters.yaml#/UserId
     - $ref: ../components/parameters.yaml#/XAuditReasonCode

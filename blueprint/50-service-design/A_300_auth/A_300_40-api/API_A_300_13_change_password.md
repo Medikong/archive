@@ -8,7 +8,7 @@ api_design: SD.A.30040
 domain_model: SD.A.30010
 persistence: SD.A.30020
 service: SD.A.30030
-updated: 2026-07-10
+updated: 2026-07-16
 ---
 
 # API.A.300-13 비밀번호 변경
@@ -25,10 +25,10 @@ updated: 2026-07-10
 | 권한 | PasswordReset, 채널, 목적과 단일 사용 reset 권한의 binding 일치 |
 | 노출 범위 | public |
 | 멱등성 | `Idempotency-Key` 필수 |
-| 캐시 | `no-store` |
+| HTTP 응답 캐시 | `no-store` |
 | 호환성 | `/api/v1`, deprecation 없음 |
 
-## HTTP 계약 원장
+## HTTP 명세 원장
 
 - 완전한 OpenAPI 문서: [openapi/openapi.yaml](openapi/openapi.yaml)
 - 이 Endpoint의 Path Item: [openapi/paths/API_A_300_13_change_password.yaml](openapi/paths/API_A_300_13_change_password.yaml)
@@ -46,7 +46,7 @@ updated: 2026-07-10
 | 도메인 | [SD.A.30010](../A_300_10-domain-model/SD_A_30010_auth_domain_model.md) |
 | 영속성 | [SD.A.30020](../A_300_20-persistence/README.md) |
 | 서비스 | [SD.A.30030](../A_300_30-service/README.md) |
-| 시퀀스 | [SCN.A.310-01](../../../80-sequence/A_300_auth/SCN_A_310_01_password_reset.md) |
+| 시퀀스 | [SCN.A.310-01](../A_300_50-sequence/SCN_A_310_01_password_reset.md) |
 
 ## 책임과 경계
 
@@ -71,6 +71,16 @@ updated: 2026-07-10
 4. PasswordReset과 연결된 AuthenticationIntent를 완료 사유로 소비한다.
 5. 해당 `user_id`의 모든 Session과 refresh family를 폐기하고 자동 로그인 없이 완료한다.
 
+## 저장 모델과 캐시
+
+저장 구조는 [영속성 설계](../A_300_20-persistence/README.md#저장-모델)와 [Redis projection models](../A_300_20-persistence/README.md#redis-projection-models)를 기준으로 한다.
+
+| 저장 모델 | 전략 | 적용 근거 |
+| --- | --- | --- |
+| `PasswordReset`, `PasswordCredential`, `Session`, `IdempotencyRecord` | 우회 | reset grant 소비, 비밀번호 교체, 기존 Session 폐기를 PostgreSQL 트랜잭션으로 함께 확정해야 한다. |
+| `AuthenticationPolicySnapshotProjection` | 사용 | 비밀번호 강도와 credential 정책을 활성 정책 version 기준으로 검사한다. |
+| `SessionStatusProjection` | 무효화 | 커밋 뒤 사용자의 모든 기존 Session을 삭제하지 않고 `revoked` 상태로 기록해 남은 access JWT도 즉시 거부한다. |
+
 ## 상태 변경과 트랜잭션
 
 - 시작 상태는 `PasswordReset.challenge_verified`다.
@@ -89,7 +99,7 @@ updated: 2026-07-10
 
 ## 예외와 복구 규칙
 
-정확한 HTTP 상태, error code, ProblemDetails schema와 예시는 OpenAPI를 기준으로 한다.
+정확한 HTTP 상태, error code, ErrorResponse schema와 예시는 OpenAPI를 기준으로 한다.
 
 | 업무 조건 | 공개 원칙 | 클라이언트 복구 |
 | --- | --- | --- |
@@ -122,21 +132,21 @@ updated: 2026-07-10
 - 웹 variant는 reset grant를 거부하고 모바일 variant는 reset grant 누락을 거부한다.
 - 성공한 웹 응답이 auth-flow cookie 만료 header를 포함한다.
 - credential 교체 실패 시 기존 비밀번호와 Session을 사용할 수 있다.
-- 성공 후 기존 웹 Session과 모든 모바일 refresh family가 폐기된다.
+- 성공 후 기존 모든 Session과 refresh family가 폐기된다.
 - 동시 요청과 같은 key 재요청이 credential을 중복 생성하지 않는다.
 - 비밀번호와 grant가 로그, trace, metric label, event와 IdempotencyRecord에 남지 않는다.
 
 ## 연관 시퀀스
 
-- 시퀀스 문서: [SCN.A.310-01 비밀번호 재설정](../../../80-sequence/A_300_auth/SCN_A_310_01_password_reset.md)
+- 시퀀스 문서: [SCN.A.310-01 비밀번호 재설정](../A_300_50-sequence/SCN_A_310_01_password_reset.md)
 - 관련 API: `API.A.300-10`, `API.A.300-11`, `API.A.300-12`
-- 여러 참여자의 Mermaid 다이어그램은 `80-sequence` 문서에서 관리한다.
+- 여러 참여자의 Mermaid 다이어그램은 `A_300_50-sequence` 문서에서 관리한다.
 
 ## 호환성과 변경 정책
 
 - 공개 가능한 비밀번호 정책 필드 추가는 하위 호환으로 처리한다.
 - reset 권한 전달 방식과 성공 후 자동 로그인 정책 변경은 새 버전에서 제공한다.
-- 이전 PasswordPolicy는 발급 시각이 아니라 완료 요청 시 적용하는 현재 계약을 유지한다.
+- 이전 PasswordPolicy는 발급 시각이 아니라 완료 요청 시 적용하는 현재 규칙을 유지한다.
 
 ## 확인 필요
 

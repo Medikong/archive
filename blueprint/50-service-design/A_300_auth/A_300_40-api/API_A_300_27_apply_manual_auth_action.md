@@ -8,7 +8,7 @@ api_design: SD.A.30040
 domain_model: SD.A.30010
 persistence: SD.A.30020
 service: SD.A.30030
-updated: 2026-07-10
+updated: 2026-07-16
 ---
 
 # API.A.300-27 운영자 인증 수동 처리
@@ -21,14 +21,14 @@ updated: 2026-07-10
 | operationId | `applyManualAuthAction` |
 | 역할 | 승인된 잠금 해제, IdentityLink 해제·재연동 또는 단일 Session 폐기를 동기 실행한다. |
 | API 유형 | Command |
-| 인증 | 운영자 웹 Session, CSRF·Origin, 최근 strong auth |
-| 권한 | `auth.case.execute`와 action별 세부 permission, 유효한 승인 |
+| 인증 | `Authorization: Bearer <access-jwt>`, 최근 strong auth |
+| 외부 인가 | action별 검증된 결정과 유효한 승인 |
 | 노출 범위 | operator |
 | 멱등성 | `Idempotency-Key` 필수이며 값 자체를 `operation_id`로 사용한다. |
-| 캐시 | `no-store` |
+| HTTP 응답 캐시 | `no-store` |
 | 호환성 | `/api/v1`, 미지원 중단 상태 |
 
-## HTTP 계약 원장
+## HTTP 명세 원장
 
 - 완전한 OpenAPI 문서: [openapi/openapi.yaml](openapi/openapi.yaml)
 - 이 Endpoint의 Path Item: [openapi/paths/API_A_300_27_apply_manual_auth_action.yaml](openapi/paths/API_A_300_27_apply_manual_auth_action.yaml)
@@ -47,19 +47,20 @@ action·target 조합, 낙관적 version, HTTP 상태, 오류와 예시는 OpenA
 ## 책임과 경계
 
 - 허용된 action을 승인 binding과 대상 version에 따라 한 번 실행한다.
-- action별 permission을 분리하고 수동 DB 수정 기능을 제공하지 않는다.
+- action별 외부 인가 결정을 분리하고 수동 DB 수정 기능을 제공하지 않는다.
 - `revoke_sessions`는 `session` target 하나만 허용하며 사용자 전체 Session 일괄 폐기는 이 API의 책임이 아니다.
 - 승인·증빙 원문은 복제하지 않고 접근 통제된 opaque reference만 저장한다.
 - 사용자 계정 병합과 프로필·업무 데이터 수정은 제공하지 않는다.
 
 ## 보안과 개인정보
 
-- 실행자 `user_id`, role과 assurance는 body가 아니라 검증된 운영자 Principal에서 가져온다.
+- 실행자 `user_id`와 assurance는 body가 아니라 검증된 운영자 Principal에서 가져온다.
+- Auth는 운영자의 role, permission, 판매자 소속 또는 업무 ACL을 조회하거나 저장하지 않는다.
 - approval의 승인자 등급, 대상, action, 만료와 증빙 접근 권한을 외부 승인 시스템에서 확인한다.
 - case·approval·evidence reference와 target ID는 일반 로그·metric label에 넣지 않는다.
 - 고위험 action의 결과와 실행자·승인자는 Audit Context에 장기 보존한다.
 
-| action | 추가 permission | 필수 승인 주체 |
+| action | 외부 인가 action | 필수 승인 주체 |
 | --- | --- | --- |
 | `unlock_identity` | `auth.identity.unlock` | `platform_operator` |
 | `revoke_identity_link` | `auth.identity_link.revoke` | `platform_operator` |
@@ -68,12 +69,22 @@ action·target 조합, 낙관적 version, HTTP 상태, 오류와 예시는 OpenA
 
 ## 처리 규칙
 
-1. 운영자 permission, strong auth, CSRF·Origin을 검증한다.
+1. action별 외부 인가 결정과 strong auth를 검증한다.
 2. `Idempotency-Key`를 operation ID로 claim한다.
-3. `auth.case.execute`, action별 permission, `platform_operator` 승인, action·target 조합, case, reason과 evidence reference를 검증한다.
+3. action별 결정 proof, 외부 승인 시스템의 `platform_operator` 승인, action·target 조합, case, reason과 evidence reference를 검증한다.
 4. target의 현재 row version이 `expectedTargetVersion`과 같은지 확인한다.
 5. action을 동기 실행하고 상태 변경과 감사 Event를 저장한다.
 6. 완료된 operation ID, action과 새 target version을 반환한다.
+
+## 저장 모델과 캐시
+
+저장 구조는 [영속성 설계](../A_300_20-persistence/README.md#저장-모델)와 [Redis projection models](../A_300_20-persistence/README.md#redis-projection-models)를 기준으로 한다.
+
+| 저장 모델 | 전략 | 적용 근거 |
+| --- | --- | --- |
+| 운영자 `SessionStatusProjection` | 사용 | 수동 조치를 실행하는 운영자의 Session 상태를 먼저 확인한다. 권한과 승인 판정은 상위 운영자 인가 계층이 담당한다. |
+| 조치 대상 도메인 모델, `IdempotencyRecord`, 승인 기록 | 우회 | 조치 종류별 불변조건, 중복 실행 방지와 승인 근거를 PostgreSQL 트랜잭션으로 확정해야 한다. |
+| 대상 사용자의 `SessionStatusProjection` | 무효화 | `revoke_sessions`처럼 Session을 폐기하는 조치에만 커밋 뒤 `revoked` 상태를 기록한다. Session과 무관한 조치는 projection을 바꾸지 않는다. |
 
 ## 상태 변경과 트랜잭션
 
@@ -93,7 +104,7 @@ action·target 조합, 낙관적 version, HTTP 상태, 오류와 예시는 OpenA
 
 ## 예외와 복구 규칙
 
-정확한 HTTP 상태와 ProblemDetails 계약은 OpenAPI를 기준으로 한다.
+정확한 HTTP 상태와 ErrorResponse 형식은 OpenAPI를 기준으로 한다.
 
 - 승인 누락·만료·대상 불일치는 새 승인을 받은 뒤 다시 요청한다.
 - target이 없거나 조회 권한이 없으면 민감한 존재 정보를 추가로 공개하지 않는다.
@@ -105,7 +116,7 @@ action·target 조합, 낙관적 version, HTTP 상태, 오류와 예시는 OpenA
 | 계층 | 매핑 |
 | --- | --- |
 | Command Handler | `ApplyManualIdentityOperationHandler`, `RevokeSessionHandler` |
-| Aggregate / Entity | `Identity`, `IdentityLink`, `LoginFailure`, `Session` |
+| Aggregate / Entity | `Identity`, `IdentityLink`, `Session` |
 | Repository | action별 Aggregate Repository, `IdempotencyRepository` |
 | Port | Approval verification port, Audit outbox port |
 | Event | `EVT.A.300-11 인증 수단 수동 변경됨`, `EVT.A.300-26`, action별 감사 Event |
@@ -115,13 +126,13 @@ action·target 조합, 낙관적 version, HTTP 상태, 오류와 예시는 OpenA
 - operation ID, actor, action, 일반화된 target type, approval ref와 결과를 보안 감사에 남긴다.
 - `auth_manual_action_total{action,result}`과 처리 지연을 관측한다.
 - evidence 원문, Identity 표시값과 target ID는 일반 로그·trace·metric label에서 제외한다.
-- 권한·승인·version 거부율과 반복 실패를 보안 경보로 관측한다.
+- 인가 결정·승인·version 거부율과 반복 실패를 보안 경보로 관측한다.
 
 ## 검증 항목
 
-- permission, strong auth, approval과 action binding을 모두 검증한다.
+- 외부 인가 결정, strong auth, approval과 action binding을 모두 검증한다.
 - action과 target type의 허용 조합 밖 요청을 거부한다.
-- 각 action의 세부 permission과 `platform_operator` 승인을 교차 검증하고 `user` target Session 폐기를 거부한다.
+- 각 action의 결정 proof와 `platform_operator` 승인을 교차 검증하고 `user` target Session 폐기를 거부한다.
 - stale target version에서 어떤 상태도 바뀌지 않는다.
 - 같은 operation ID 재시도에서 action과 감사 Event가 중복되지 않는다.
 - 상태 변경과 Session 폐기, OutboxEvent가 원자적으로 저장된다.
@@ -130,13 +141,13 @@ action·target 조합, 낙관적 version, HTTP 상태, 오류와 예시는 OpenA
 
 - 현재 연결된 다중 API 시퀀스는 없다.
 - 선행 조회 API: `API.A.300-24`
-- 승인 시스템, 운영자 API, Auth와 Audit Context를 잇는 수동 처리 시퀀스를 `80-sequence`에 추가한다.
+- 승인 시스템, 운영자 API, Auth와 Audit Context를 잇는 수동 처리 시퀀스를 `A_300_50-sequence`에 추가한다.
 
 ## 호환성과 변경 정책
 
 - 결과에 선택적 비민감 필드를 추가하는 변경은 하위 호환이다.
 - action, target 의미와 승인 요구를 완화하는 변경은 보안 검토와 새 API 버전이 필요하다.
-- 새 action은 permission, approval policy, version 규칙과 감사 Event를 함께 추가한다.
+- 새 action은 외부 인가 결정, approval policy, version 규칙과 감사 Event를 함께 추가한다.
 
 ## 확인 필요
 

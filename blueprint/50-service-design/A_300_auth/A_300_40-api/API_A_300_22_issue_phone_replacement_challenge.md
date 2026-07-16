@@ -8,7 +8,7 @@ api_design: SD.A.30040
 domain_model: SD.A.30010
 persistence: SD.A.30020
 service: SD.A.30030
-updated: 2026-07-10
+updated: 2026-07-16
 ---
 
 # API.A.300-22 휴대폰 번호 교체 Challenge 발급
@@ -21,14 +21,14 @@ updated: 2026-07-10
 | operationId | `issuePhoneReplacementChallenge` |
 | 역할 | 교체 대상으로 고정된 새 휴대폰 번호에 SMS Challenge를 발급한다. |
 | API 유형 | Command |
-| 인증 | requested Link 소유 사용자 Session, 웹 CSRF·Origin 또는 모바일 Bearer |
+| 인증 | requested Link 소유 Session의 웹·모바일 공통 Bearer access JWT |
 | 권한 | 현재 사용자·Session이 requested Link의 소유 binding과 같아야 한다. |
 | 노출 범위 | public |
 | 멱등성 | `Idempotency-Key` 필수 |
-| 캐시 | `no-store` |
+| HTTP 응답 캐시 | `no-store` |
 | 호환성 | `/api/v1`, 미지원 중단 상태 |
 
-## HTTP 계약 원장
+## HTTP 명세 원장
 
 - 완전한 OpenAPI 문서: [openapi/openapi.yaml](openapi/openapi.yaml)
 - 이 Endpoint의 Path Item: [openapi/paths/API_A_300_22_issue_phone_replacement_challenge.yaml](openapi/paths/API_A_300_22_issue_phone_replacement_challenge.yaml)
@@ -43,7 +43,7 @@ updated: 2026-07-10
 - [SD.A.30010 인증 도메인 모델](../A_300_10-domain-model/SD_A_30010_auth_domain_model.md)
 - [SD.A.30020 인증 영속성 설계](../A_300_20-persistence/README.md)
 - [SD.A.30030 인증 서비스 설계](../A_300_30-service/README.md)
-- [SCN.A.300-03 휴대폰 번호 교체](../../../80-sequence/A_300_auth/SCN_A_300_03_phone_replacement.md)
+- [SCN.A.300-03 휴대폰 번호 교체](../A_300_50-sequence/SCN_A_300_03_phone_replacement.md)
 
 ## 책임과 경계
 
@@ -67,6 +67,17 @@ updated: 2026-07-10
 4. Challenge와 암호화 delivery payload를 만들고 비동기 발송을 요청한다.
 5. 마스킹 수신지와 만료·재발송 가능 시각을 반환한다.
 
+## 저장 모델과 캐시
+
+저장 구조는 [영속성 설계](../A_300_20-persistence/README.md#저장-모델)와 [Redis projection models](../A_300_20-persistence/README.md#redis-projection-models)를 기준으로 한다.
+
+| 저장 모델 | 전략 | 적용 근거 |
+| --- | --- | --- |
+| `SessionStatusProjection` | 사용 | 휴대폰 교체를 진행 중인 사용자의 Session 상태를 먼저 확인한다. |
+| `AuthenticationPolicySnapshotProjection` | 사용 | challenge 수명, 재발급 간격과 발송 제한을 활성 정책 version으로 적용한다. |
+| 교체 요청 `IdentityLink`, `VerificationChallenge`, `IdempotencyRecord`, `OutboxEvent` | 우회 | 교체 요청 소유권, 기존 challenge 교체와 발송 요청을 PostgreSQL 트랜잭션으로 확정한다. |
+| challenge code와 발송 secret | 사용하지 않음 | 일회용 비밀값을 Redis projection으로 복제하지 않는다. |
+
 ## 상태 변경과 트랜잭션
 
 - Challenge, delivery payload, IdempotencyRecord와 발송 OutboxEvent를 같은 트랜잭션에 저장한다.
@@ -83,7 +94,7 @@ updated: 2026-07-10
 
 ## 예외와 복구 규칙
 
-정확한 HTTP 상태와 ProblemDetails 계약은 OpenAPI를 기준으로 한다.
+정확한 HTTP 상태와 ErrorResponse 형식은 OpenAPI를 기준으로 한다.
 
 - requested Link가 없거나 소유 binding이 다르면 존재 여부를 숨긴다.
 - requested Link 완료 기한이 지나면 새 교체 작업부터 다시 시작한다.
@@ -105,7 +116,7 @@ updated: 2026-07-10
 - purpose, channel, 결과와 policy version만 관측 데이터에 기록한다.
 - `auth_verification_challenge_issued_total{purpose,channel,result}`와 relay 지연을 측정한다.
 - destination, code, replacement ID는 로그·trace attribute·metric label에서 제외한다.
-- rate limit 응답의 재시도 정보는 OpenAPI 계약을 따른다.
+- rate limit 응답의 재시도 정보는 OpenAPI 명세을 따른다.
 
 ## 검증 항목
 
@@ -117,7 +128,7 @@ updated: 2026-07-10
 
 ## 연관 시퀀스
 
-- [SCN.A.300-03 휴대폰 번호 교체](../../../80-sequence/A_300_auth/SCN_A_300_03_phone_replacement.md)
+- [SCN.A.300-03 휴대폰 번호 교체](../A_300_50-sequence/SCN_A_300_03_phone_replacement.md)
 - 선행 API: `API.A.300-21`
 - 후속 API: `API.A.300-23`, 개발·테스트에서는 `API.A.300-30`
 - 여러 참여자의 Mermaid 다이어그램은 시퀀스 문서에서 관리한다.
@@ -126,7 +137,7 @@ updated: 2026-07-10
 
 - Challenge 응답에 선택적 표시 필드를 추가하는 변경은 하위 호환이다.
 - purpose, channel 또는 재발송 의미 변경은 새 버전에서 처리한다.
-- 외부 SMS Provider 도입 여부는 이 HTTP 계약을 바꾸지 않는다.
+- 외부 SMS Provider 도입 여부는 이 HTTP 명세을 바꾸지 않는다.
 
 ## 확인 필요
 

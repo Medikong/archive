@@ -6,7 +6,7 @@ status: draft
 tags: [service-design, auth, api, intent]
 source: local
 created: 2026-07-10
-updated: 2026-07-10
+updated: 2026-07-16
 service_design: SD.A.300
 api_design: SD.A.30040
 domain_model: SD.A.30010
@@ -28,10 +28,10 @@ service: SD.A.30030
 | 권한 | 사용자 권한은 없으며 Gateway의 채널별 요청 검증을 통과해야 한다. |
 | 노출 범위 | public |
 | 멱등성 | `Idempotency-Key` 필수 |
-| 캐시 | `no-store` |
+| HTTP 응답 캐시 | `no-store` |
 | 호환성 | `/api/v1`, deprecation 없음 |
 
-## HTTP 계약 원장
+## HTTP 명세 원장
 
 - 완전한 OpenAPI 문서: [openapi/openapi.yaml](openapi/openapi.yaml)
 - 이 Endpoint의 Path Item: [openapi/paths/API_A_300_01_create_authentication_intent.yaml](openapi/paths/API_A_300_01_create_authentication_intent.yaml)
@@ -74,6 +74,15 @@ Method/Path, parameter, request/response schema, required 여부, 응답 header,
 5. 새 요청이면 AuthenticationIntent와 payload reference를 같은 로컬 트랜잭션에 저장한다.
 6. 웹에는 사전 인증 cookie와 CSRF token을, 모바일에는 auth flow token을 전달한다.
 
+## 저장 모델과 캐시
+
+저장 구조는 [영속성 설계](../A_300_20-persistence/README.md#저장-모델)와 [Redis projection models](../A_300_20-persistence/README.md#redis-projection-models)를 기준으로 한다.
+
+| 저장 모델 | 전략 | 적용 근거 |
+| --- | --- | --- |
+| `AuthenticationIntent`, `ActionIntentPayload`, `IdempotencyRecord` | 우회 | owner proof 교체와 동일 요청 재생은 최신 상태와 row lock이 필요하므로 PostgreSQL에서 처리한다. |
+| `AuthenticationPolicySnapshotProjection` (`P`) | 사용 | 채널과 Intent 정책은 여러 요청이 반복 조회하고 변경 빈도가 낮다. |
+
 ## 상태 변경과 트랜잭션
 
 - 시작 상태: Intent 없음.
@@ -94,7 +103,7 @@ Method/Path, parameter, request/response schema, required 여부, 응답 header,
 
 ## 예외와 복구 규칙
 
-정확한 HTTP 상태, error code, ProblemDetails와 예시는 OpenAPI를 기준으로 한다.
+정확한 HTTP 상태, error code, ErrorResponse와 예시는 OpenAPI를 기준으로 한다.
 
 | 업무 조건 | 공개 원칙 | 클라이언트 복구 |
 | --- | --- | --- |
@@ -133,7 +142,7 @@ Method/Path, parameter, request/response schema, required 여부, 응답 header,
 ## 연관 시퀀스
 
 - 이 Endpoint는 가입, 이메일·휴대폰 로그인과 비밀번호 재설정 시퀀스의 공통 선행 단계다.
-- 여러 참여자의 Mermaid 다이어그램은 [인증 시퀀스 인덱스](../../../80-sequence/A_300_auth/README.md)에서 관리한다.
+- 여러 참여자의 Mermaid 다이어그램은 [인증 시퀀스 인덱스](../A_300_50-sequence/README.md)에서 관리한다.
 
 ## 호환성과 변경 정책
 

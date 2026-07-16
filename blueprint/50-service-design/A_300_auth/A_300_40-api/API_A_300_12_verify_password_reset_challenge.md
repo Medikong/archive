@@ -8,7 +8,7 @@ api_design: SD.A.30040
 domain_model: SD.A.30010
 persistence: SD.A.30020
 service: SD.A.30030
-updated: 2026-07-10
+updated: 2026-07-16
 ---
 
 # API.A.300-12 비밀번호 재설정 Challenge 검증
@@ -25,10 +25,10 @@ updated: 2026-07-10
 | 권한 | PasswordReset, Challenge, 소유 컨텍스트와 채널 binding 일치 |
 | 노출 범위 | public |
 | 멱등성 | `Idempotency-Key` 필수 |
-| 캐시 | `no-store` |
+| HTTP 응답 캐시 | `no-store` |
 | 호환성 | `/api/v1`, deprecation 없음 |
 
-## HTTP 계약 원장
+## HTTP 명세 원장
 
 - 완전한 OpenAPI 문서: [openapi/openapi.yaml](openapi/openapi.yaml)
 - 이 Endpoint의 Path Item: [openapi/paths/API_A_300_12_verify_password_reset_challenge.yaml](openapi/paths/API_A_300_12_verify_password_reset_challenge.yaml)
@@ -46,7 +46,7 @@ updated: 2026-07-10
 | 도메인 | [SD.A.30010](../A_300_10-domain-model/SD_A_30010_auth_domain_model.md) |
 | 영속성 | [SD.A.30020](../A_300_20-persistence/README.md) |
 | 서비스 | [SD.A.30030](../A_300_30-service/README.md) |
-| 시퀀스 | [SCN.A.310-01](../../../80-sequence/A_300_auth/SCN_A_310_01_password_reset.md) |
+| 시퀀스 | [SCN.A.310-01](../A_300_50-sequence/SCN_A_310_01_password_reset.md) |
 
 ## 책임과 경계
 
@@ -70,6 +70,16 @@ updated: 2026-07-10
 4. 웹은 reset 권한을 auth-flow 컨텍스트에 바인딩하고 모바일은 1회용 reset grant를 만든다.
 5. `credentialDelivery`에 맞는 웹 또는 모바일 응답을 반환한다.
 
+## 저장 모델과 캐시
+
+저장 구조는 [영속성 설계](../A_300_20-persistence/README.md#저장-모델)와 [Redis projection models](../A_300_20-persistence/README.md#redis-projection-models)를 기준으로 한다.
+
+| 저장 모델 | 전략 | 적용 근거 |
+| --- | --- | --- |
+| `PasswordReset`, `VerificationChallenge`, `IdempotencyRecord` | 우회 | challenge의 일회성 소비, 실패 횟수 증가, reset grant 교체를 row lock과 트랜잭션으로 확정해야 한다. |
+| `AuthenticationPolicySnapshotProjection` | 사용 | 검증 횟수와 reset grant 수명 같은 활성 `VerificationPolicy`를 일관되게 적용한다. |
+| reset grant와 challenge code | 사용하지 않음 | 탈취 시 비밀번호 변경 권한이 되는 proof와 code를 Redis 조회값으로 만들지 않는다. |
+
 ## 상태 변경과 트랜잭션
 
 - 시작 상태는 `PasswordReset.requested`와 `VerificationChallenge.issued`다.
@@ -89,7 +99,7 @@ updated: 2026-07-10
 
 ## 예외와 복구 규칙
 
-정확한 HTTP 상태, error code, ProblemDetails schema와 예시는 OpenAPI를 기준으로 한다.
+정확한 HTTP 상태, error code, ErrorResponse schema와 예시는 OpenAPI를 기준으로 한다.
 
 | 업무 조건 | 공개 원칙 | 클라이언트 복구 |
 | --- | --- | --- |
@@ -128,9 +138,9 @@ updated: 2026-07-10
 
 ## 연관 시퀀스
 
-- 시퀀스 문서: [SCN.A.310-01 비밀번호 재설정](../../../80-sequence/A_300_auth/SCN_A_310_01_password_reset.md)
+- 시퀀스 문서: [SCN.A.310-01 비밀번호 재설정](../A_300_50-sequence/SCN_A_310_01_password_reset.md)
 - 관련 API: `API.A.300-10`, `API.A.300-11`, `API.A.300-13`
-- 여러 참여자의 Mermaid 다이어그램은 `80-sequence` 문서에서 관리한다.
+- 여러 참여자의 Mermaid 다이어그램은 `A_300_50-sequence` 문서에서 관리한다.
 
 ## 호환성과 변경 정책
 

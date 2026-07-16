@@ -6,7 +6,7 @@ status: draft
 tags: [service-design, auth, api, registration, challenge]
 source: local
 created: 2026-07-10
-updated: 2026-07-10
+updated: 2026-07-16
 service_design: SD.A.300
 api_design: SD.A.30040
 domain_model: SD.A.30010
@@ -28,10 +28,10 @@ service: SD.A.30030
 | 권한 | 현재 proof가 path의 Registration을 소유해야 한다. |
 | 노출 범위 | public |
 | 멱등성 | `Idempotency-Key` 필수. 사용자가 새 발송을 의도하면 새 key 사용 |
-| 캐시 | `no-store` |
+| HTTP 응답 캐시 | `no-store` |
 | 호환성 | `/api/v1`, deprecation 없음 |
 
-## HTTP 계약 원장
+## HTTP 명세 원장
 
 - 완전한 OpenAPI 문서: [openapi/openapi.yaml](openapi/openapi.yaml)
 - 이 Endpoint의 Path Item: [openapi/paths/API_A_300_04_issue_registration_challenge.yaml](openapi/paths/API_A_300_04_issue_registration_challenge.yaml)
@@ -49,7 +49,7 @@ service: SD.A.30030
 | 도메인 | [SD.A.30010](../A_300_10-domain-model/SD_A_30010_auth_domain_model.md) |
 | 영속성 | [SD.A.30020](../A_300_20-persistence/README.md) |
 | 서비스 | [SD.A.30030](../A_300_30-service/README.md) |
-| 시퀀스 | [SCN.A.300-01](../../../80-sequence/A_300_auth/SCN_A_300_01_email_registration.md) |
+| 시퀀스 | [SCN.A.01-01](../../../80-sequence/A_01_user/SCN_A_01_01_user_provisioning_auth_link.md) |
 
 ## 책임과 경계
 
@@ -71,6 +71,16 @@ service: SD.A.30030
 3. 재발급 간격, 발송 횟수와 대상·IP·device rate limit을 확인한다.
 4. 이전 issued Challenge가 있으면 revoked로 닫고 새 Challenge를 만든다.
 5. Challenge와 delivery outbox를 같은 트랜잭션에 저장한다.
+
+## 저장 모델과 캐시
+
+저장 구조는 [영속성 설계](../A_300_20-persistence/README.md#저장-모델)와 [Redis projection models](../A_300_20-persistence/README.md#redis-projection-models)를 기준으로 한다.
+
+| 저장 모델 | 전략 | 적용 근거 |
+| --- | --- | --- |
+| `Registration`, `VerificationChallenge`, `IdempotencyRecord`, `OutboxEvent` | 우회 | 기존 Challenge 폐기와 신규 발급의 동시성을 PostgreSQL row lock으로 보장해야 한다. |
+| `AuthenticationPolicySnapshotProjection` (`P`) | 사용 | 재발급 간격, 횟수와 Challenge TTL은 반복 조회되는 정책이다. |
+| `RegistrationStatusProjection` (`R`) | 갱신 | 발급된 method 상태와 재시도 가능 시각을 상태 조회 API에 즉시 반영한다. |
 
 ## 상태 변경과 트랜잭션
 
@@ -126,14 +136,14 @@ service: SD.A.30030
 
 ## 연관 시퀀스
 
-- 시퀀스 문서: [SCN.A.300-01 이메일 회원가입과 자동 로그인](../../../80-sequence/A_300_auth/SCN_A_300_01_email_registration.md)
+- 시퀀스 문서: [SCN.A.01-01 회원가입과 자동 로그인](../../../80-sequence/A_01_user/SCN_A_01_01_user_provisioning_auth_link.md)
 - 관련 API: `API.A.300-03~06`, `API.A.300-28`
 - 여러 참여자의 Mermaid 다이어그램은 시퀀스 문서에서 관리한다.
 
 ## 호환성과 변경 정책
 
 - 새 가입 검증 method는 기존 enum 의미를 유지한 별도 값으로 추가한다.
-- code가 아닌 link proof 도입은 검증 request schema와 클라이언트 계약 변경으로 별도 버전에서 처리한다.
+- code가 아닌 link proof 도입은 검증 request schema와 클라이언트 입력 형식 변경으로 별도 버전에서 처리한다.
 - resend 정책 변경은 policy version으로 운영하며 wire schema를 바꾸지 않는다.
 
 ## 확인 필요

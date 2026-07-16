@@ -4,7 +4,7 @@ post:
   summary: 이메일 재인증
   description: |
     현재 비밀번호를 검증해 목적 한정 ReauthenticationProof를 발급한다.
-    성공 시 Session을 이메일 인증 근거로 재바인딩하고 웹 또는 모바일 credential을 회전한다.
+    성공 시 Session을 이메일 인증 근거로 재바인딩하고 access JWT와 refresh credential을 회전한다.
   operationId: reauthenticateEmail
   x-api-id: API.A.300-17
   x-use-case: UC.A.300
@@ -26,17 +26,13 @@ post:
     AUTH_INPUT_INVALID: 400
     AUTH_SIGNIN_FAILED: 401
     AUTH_SESSION_REQUIRED: 401
-    AUTH_CSRF_INVALID: 403
     AUTH_USER_RESTRICTED: 403
     AUTH_IDEMPOTENCY_CONFLICT: 409
     AUTH_SESSION_DELIVERY_EXPIRED: 410
     AUTH_RATE_LIMITED: 429
     AUTH_SERVICE_UNAVAILABLE: 503
   security:
-    - WebSessionCookie: []
-      WebCsrfToken: []
-      WebOrigin: []
-    - MobileBearerAuth: []
+    - AccessBearerAuth: []
   parameters:
     - $ref: ../components/parameters.yaml#/XRequestId
     - $ref: ../components/parameters.yaml#/Traceparent
@@ -81,7 +77,7 @@ post:
         Cache-Control:
           $ref: ../components/headers.yaml#/CacheControlNoStore
         Set-Cookie:
-          $ref: ../components/headers.yaml#/SetSessionCookie
+          $ref: ../components/headers.yaml#/SetRefreshCookie
       content:
         application/json:
           schema:
@@ -100,8 +96,8 @@ post:
                       - purpose
                       - expiresAt
                       - credentialDelivery
-                      - sessionId
-                      - csrfToken
+                      - session
+                      - access
                     properties:
                       reauthenticationProof:
                         type: string
@@ -122,14 +118,11 @@ post:
                       credentialDelivery:
                         type: string
                         enum:
-                          - web_session
-                      sessionId:
-                        type: string
-                        minLength: 1
-                      csrfToken:
-                        type: string
-                        minLength: 1
-                        x-sensitive: true
+                          - web_jwt_refresh_cookie
+                      session:
+                        $ref: ../components/schemas.yaml#/SessionSummary
+                      access:
+                        $ref: ../components/schemas.yaml#/WebAccessToken
                   - type: object
                     additionalProperties: false
                     required:
@@ -175,9 +168,13 @@ post:
                   reauthenticationProof: <short-lived-purpose-bound-proof>
                   purpose: replace_phone
                   expiresAt: '2026-07-10T08:05:00Z'
-                  credentialDelivery: web_session
-                  sessionId: ses_01JXYZ1234567890ABCDEFGHJK
-                  csrfToken: <rotated-session-bound-csrf-token>
+                  credentialDelivery: web_jwt_refresh_cookie
+                  session:
+                    sessionId: ses_01JXYZ1234567890ABCDEFGHJK
+                    expiresAt: '2026-07-24T08:00:00Z'
+                  access:
+                    accessToken: <short-lived-jwt>
+                    accessTokenExpiresAt: '2026-07-10T08:15:00Z'
                 meta:
                   requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
             mobile:
@@ -202,7 +199,7 @@ post:
     '401':
       $ref: ../components/responses.yaml#/AuthProblem401SessionRequiredOrSigninFailed
     '403':
-      $ref: ../components/responses.yaml#/AuthProblem403CsrfInvalidOrUserRestricted
+      $ref: ../components/responses.yaml#/AuthProblem403UserRestricted
     '409':
       $ref: ../components/responses.yaml#/Conflict
     '410':

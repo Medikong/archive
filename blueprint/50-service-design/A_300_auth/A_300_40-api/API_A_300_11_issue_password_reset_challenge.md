@@ -8,7 +8,7 @@ api_design: SD.A.30040
 domain_model: SD.A.30010
 persistence: SD.A.30020
 service: SD.A.30030
-updated: 2026-07-10
+updated: 2026-07-16
 ---
 
 # API.A.300-11 비밀번호 재설정 Challenge 발급
@@ -25,10 +25,10 @@ updated: 2026-07-10
 | 권한 | PasswordReset에 바인딩된 사전 인증 컨텍스트와 요청 채널 일치 |
 | 노출 범위 | public |
 | 멱등성 | `Idempotency-Key` 필수 |
-| 캐시 | `no-store` |
+| HTTP 응답 캐시 | `no-store` |
 | 호환성 | `/api/v1`, deprecation 없음 |
 
-## HTTP 계약 원장
+## HTTP 명세 원장
 
 - 완전한 OpenAPI 문서: [openapi/openapi.yaml](openapi/openapi.yaml)
 - 이 Endpoint의 Path Item: [openapi/paths/API_A_300_11_issue_password_reset_challenge.yaml](openapi/paths/API_A_300_11_issue_password_reset_challenge.yaml)
@@ -46,7 +46,7 @@ Method/Path, parameter, request/response schema, content type, 응답 header, HT
 | 도메인 | [SD.A.30010](../A_300_10-domain-model/SD_A_30010_auth_domain_model.md) |
 | 영속성 | [SD.A.30020](../A_300_20-persistence/README.md) |
 | 서비스 | [SD.A.30030](../A_300_30-service/README.md) |
-| 시퀀스 | [SCN.A.310-01](../../../80-sequence/A_300_auth/SCN_A_310_01_password_reset.md) |
+| 시퀀스 | [SCN.A.310-01](../A_300_50-sequence/SCN_A_310_01_password_reset.md) |
 
 ## 책임과 경계
 
@@ -70,11 +70,21 @@ Method/Path, parameter, request/response schema, content type, 응답 header, HT
 4. decoy 대상이면 외부에서 구분할 수 없는 검증 불가능 Challenge reference를 만든다.
 5. 발급 접수 결과만 반환하고 실제 전달은 Outbox Relay가 수행한다.
 
+## 저장 모델과 캐시
+
+저장 구조는 [영속성 설계](../A_300_20-persistence/README.md#저장-모델)와 [Redis projection models](../A_300_20-persistence/README.md#redis-projection-models)를 기준으로 한다.
+
+| 저장 모델 | 전략 | 적용 근거 |
+| --- | --- | --- |
+| `PasswordReset`, `VerificationChallenge`, `IdempotencyRecord`, `OutboxEvent` | 우회 | 실제 challenge 생성, 위장 응답, 기존 challenge 교체와 발송 요청을 하나의 PostgreSQL 트랜잭션으로 확정해야 한다. |
+| `AuthenticationPolicySnapshotProjection` | 사용 | challenge 수명, 재시도 횟수, 발송 제한 같은 `VerificationPolicy`를 자주 조회하므로 활성 정책 snapshot을 재사용한다. |
+| challenge code와 발송 secret | 사용하지 않음 | 일회용 비밀값은 Redis에 복제하지 않고 암호화된 PostgreSQL 원장과 발송 처리 메모리 안에서만 다룬다. |
+
 ## 상태 변경과 트랜잭션
 
 - 시작 상태는 `PasswordReset.requested`다.
 - 실재 대상의 Challenge, PasswordReset 참조, delivery payload와 OutboxEvent를 한 트랜잭션에 저장한다.
-- decoy 대상은 외부 계약을 유지하는 Challenge reference만 저장하고 delivery outbox를 만들지 않는다.
+- decoy 대상은 외부 응답 형식을 유지하는 Challenge reference만 저장하고 delivery outbox를 만들지 않는다.
 - 같은 context의 기존 issued Challenge를 교체하면 기존 항목을 `revoked`로 닫는다.
 - Provider 호출은 commit 이후 relay가 수행하며 발송 실패가 PasswordReset 소유 확인 성공을 뜻하지 않는다.
 
@@ -88,7 +98,7 @@ Method/Path, parameter, request/response schema, content type, 응답 header, HT
 
 ## 예외와 복구 규칙
 
-정확한 HTTP 상태, error code, ProblemDetails schema와 예시는 OpenAPI를 기준으로 한다.
+정확한 HTTP 상태, error code, ErrorResponse schema와 예시는 OpenAPI를 기준으로 한다.
 
 | 업무 조건 | 공개 원칙 | 클라이언트 복구 |
 | --- | --- | --- |
@@ -124,9 +134,9 @@ Method/Path, parameter, request/response schema, content type, 응답 header, HT
 
 ## 연관 시퀀스
 
-- 시퀀스 문서: [SCN.A.310-01 비밀번호 재설정](../../../80-sequence/A_300_auth/SCN_A_310_01_password_reset.md)
+- 시퀀스 문서: [SCN.A.310-01 비밀번호 재설정](../A_300_50-sequence/SCN_A_310_01_password_reset.md)
 - 관련 API: `API.A.300-10`, `API.A.300-12`, `API.A.300-13`
-- 여러 참여자의 Mermaid 다이어그램은 `80-sequence` 문서에서 관리한다.
+- 여러 참여자의 Mermaid 다이어그램은 `A_300_50-sequence` 문서에서 관리한다.
 
 ## 호환성과 변경 정책
 

@@ -6,7 +6,7 @@ status: draft
 tags: [service-design, auth, api, registration, challenge]
 source: local
 created: 2026-07-10
-updated: 2026-07-10
+updated: 2026-07-16
 service_design: SD.A.300
 api_design: SD.A.30040
 domain_model: SD.A.30010
@@ -28,10 +28,10 @@ service: SD.A.30030
 | 권한 | proof가 Registration과 Challenge를 모두 소유해야 한다. |
 | 노출 범위 | public |
 | 멱등성 | `Idempotency-Key` 필수 |
-| 캐시 | `no-store` |
+| HTTP 응답 캐시 | `no-store` |
 | 호환성 | `/api/v1`, deprecation 없음 |
 
-## HTTP 계약 원장
+## HTTP 명세 원장
 
 - 완전한 OpenAPI 문서: [openapi/openapi.yaml](openapi/openapi.yaml)
 - 이 Endpoint의 Path Item: [openapi/paths/API_A_300_05_verify_registration_challenge.yaml](openapi/paths/API_A_300_05_verify_registration_challenge.yaml)
@@ -49,7 +49,7 @@ code schema, 성공 상태, 오류와 wire 예시는 OpenAPI를 기준으로 한
 | 도메인 | [SD.A.30010](../A_300_10-domain-model/SD_A_30010_auth_domain_model.md) |
 | 영속성 | [SD.A.30020](../A_300_20-persistence/README.md) |
 | 서비스 | [SD.A.30030](../A_300_30-service/README.md) |
-| 시퀀스 | [SCN.A.300-01](../../../80-sequence/A_300_auth/SCN_A_300_01_email_registration.md) |
+| 시퀀스 | [SCN.A.01-01](../../../80-sequence/A_01_user/SCN_A_01_01_user_provisioning_auth_link.md) |
 
 ## 책임과 경계
 
@@ -72,6 +72,16 @@ code schema, 성공 상태, 오류와 wire 예시는 OpenAPI를 기준으로 한
 4. 성공하면 Challenge를 verified로 소비하고 대상 Identity와 Registration의 검증 상태를 갱신한다.
 5. 두 필수 Identity가 모두 verified이면 registration ID, 검증 완료 시각과 만료를 묶은 서명 proof를 반환한다.
 6. 실패하면 허용 범위에서 attempt count를 저장한다.
+
+## 저장 모델과 캐시
+
+저장 구조는 [영속성 설계](../A_300_20-persistence/README.md#저장-모델)와 [Redis projection models](../A_300_20-persistence/README.md#redis-projection-models)를 기준으로 한다.
+
+| 저장 모델 | 전략 | 적용 근거 |
+| --- | --- | --- |
+| `Registration`, `VerificationChallenge`, `Identity`, `IdempotencyRecord` | 우회 | code 검증, 실패 횟수와 1회 소비는 PostgreSQL의 최신 상태로 원자 처리한다. |
+| `AuthenticationPolicySnapshotProjection` (`P`) | 사용 | 목적별 최대 시도 횟수와 TTL은 공통 정책이다. |
+| `RegistrationStatusProjection` (`R`) | 갱신 | method 검증 결과와 Registration의 `verified` 전환을 commit 후 반영한다. |
 
 ## 상태 변경과 트랜잭션
 
@@ -127,14 +137,14 @@ code schema, 성공 상태, 오류와 wire 예시는 OpenAPI를 기준으로 한
 
 ## 연관 시퀀스
 
-- 시퀀스 문서: [SCN.A.300-01 이메일 회원가입과 자동 로그인](../../../80-sequence/A_300_auth/SCN_A_300_01_email_registration.md)
+- 시퀀스 문서: [SCN.A.01-01 회원가입과 자동 로그인](../../../80-sequence/A_01_user/SCN_A_01_01_user_provisioning_auth_link.md)
 - 관련 API: `API.A.300-03~06`, `API.A.300-28`
 - 여러 참여자의 Mermaid 다이어그램은 시퀀스 문서에서 관리한다.
 
 ## 호환성과 변경 정책
 
-- code 길이와 문자 집합 변경은 기존 클라이언트 입력 계약에 영향을 주므로 새 버전으로 처리한다.
-- link token proof 도입은 request `oneOf`와 별도 검증 정책을 추가하는 계약 변경이다.
+- code 길이와 문자 집합 변경은 기존 클라이언트 입력 형식에 영향을 주므로 새 버전으로 처리한다.
+- link token proof 도입은 request `oneOf`와 별도 검증 정책을 추가하는 명세 변경이다.
 - 새 verification method는 기존 method 의미를 바꾸지 않고 추가한다.
 
 ## 확인 필요

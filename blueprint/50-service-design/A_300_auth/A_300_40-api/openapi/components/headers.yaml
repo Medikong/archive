@@ -28,36 +28,35 @@ CacheControlNoStore:
       - no-store
   example: no-store
 
-SetSessionCookie:
+SetRefreshCookie:
   description: |
-    웹에서 새 Session credential을 전달하거나 기존 credential을 회전한다.
-    `rememberMe=false`이면 브라우저 session cookie로, `rememberMe=true`이면 서버의
-    absolute expiry를 넘지 않는 Max-Age를 포함해 발급한다.
+    웹 refresh family의 opaque credential을 새로 전달하거나 회전한다.
+    JavaScript에서 읽을 수 없으며 서버의 refresh expiry를 넘지 않는 Max-Age를 사용한다.
   schema:
     type: string
   x-multiple: true
-  example: __Host-dm_session=opaque-random; Path=/; HttpOnly; Secure; SameSite=Lax
+  example: __Host-dm_refresh=opaque-random; Path=/api/v1/auth/sessions; HttpOnly; Secure; SameSite=Strict
 
-SetSessionAndClearAuthCookies:
+SetRefreshAndClearAuthCookies:
   description: |
     로그인 또는 회원가입 완료 응답에서 두 개의 Set-Cookie 필드를 보낸다. 첫 필드는
-    `__Host-dm_session`을 새로 발급하며 rememberMe가 true일 때만 서버 absolute expiry를
-    넘지 않는 Max-Age를 포함한다. 둘째 필드는 `__Host-dm_auth`를 Max-Age=0으로 폐기한다.
+    `__Host-dm_refresh`를 새로 발급하며 서버 refresh expiry를 넘지 않는 Max-Age를
+    포함한다. 둘째 필드는 `__Host-dm_auth`를 Max-Age=0으로 폐기한다.
     클라이언트와 중간 계층은 반복된 Set-Cookie 필드를 쉼표로 합치지 않는다.
   schema:
     type: string
   x-multiple: true
-  example: __Host-dm_session=opaque-random; Path=/; HttpOnly; Secure; SameSite=Lax
+  example: __Host-dm_refresh=opaque-random; Path=/api/v1/auth/sessions; HttpOnly; Secure; SameSite=Strict
   x-required-set-cookie-fields:
-    - __Host-dm_session
+    - __Host-dm_refresh
     - __Host-dm_auth
 
-ClearSessionCookie:
-  description: 웹 Session cookie를 즉시 폐기하는 Set-Cookie 필드다.
+ClearRefreshCookie:
+  description: 웹 refresh cookie를 즉시 폐기하는 Set-Cookie 필드다.
   schema:
     type: string
   x-multiple: true
-  example: __Host-dm_session=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0
+  example: __Host-dm_refresh=; Path=/api/v1/auth/sessions; HttpOnly; Secure; SameSite=Strict; Max-Age=0
 
 ClearAuthFlowCookie:
   description: 웹 사전 인증 cookie를 즉시 폐기하는 Set-Cookie 필드다.
@@ -73,10 +72,10 @@ ETag:
     pattern: '^"policy-[0-9]+"$'
   example: '"policy-8"'
 
-VaryCredential:
-  description: 선택적 인증 응답을 공유 캐시가 credential별로 구분하도록 하는 값이다.
+VaryAuthorization:
+  description: 인증 응답을 공유 캐시가 Authorization header별로 구분하도록 하는 값이다.
   schema:
     type: string
     enum:
-      - Cookie, Authorization
-  example: Cookie, Authorization
+      - Authorization
+  example: Authorization

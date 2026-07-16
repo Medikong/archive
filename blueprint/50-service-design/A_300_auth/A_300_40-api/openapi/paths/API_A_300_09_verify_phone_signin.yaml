@@ -73,7 +73,7 @@ post:
         Cache-Control:
           $ref: ../components/headers.yaml#/CacheControlNoStore
         Set-Cookie:
-          $ref: ../components/headers.yaml#/SetSessionAndClearAuthCookies
+          $ref: ../components/headers.yaml#/SetRefreshAndClearAuthCookies
       content:
         application/json:
           schema:
@@ -82,10 +82,14 @@ post:
             web:
               value:
                 data:
-                  credentialDelivery: web_session
+                  credentialDelivery: web_jwt_refresh_cookie
                   userId: usr_01JXYZ1234567890ABCDEFGHJK
-                  sessionId: ses_01JXYZ1234567890ABCDEFGHJK
-                  csrfToken: <session-bound-csrf-token>
+                  session:
+                    sessionId: ses_01JXYZ1234567890ABCDEFGHJK
+                    expiresAt: '2026-08-09T08:00:00Z'
+                  access:
+                    accessToken: <signed-jwt>
+                    accessTokenExpiresAt: '2026-07-10T08:15:00Z'
                   next:
                     path: /drops/drop_01JXYZ1234567890ABCDEFGHJK
                     intentId: aint_01JXYZ1234567890ABCDEFGHJK

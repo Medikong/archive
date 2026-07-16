@@ -8,7 +8,7 @@ api_design: SD.A.30040
 domain_model: SD.A.30010
 persistence: SD.A.30020
 service: SD.A.30030
-updated: 2026-07-13
+updated: 2026-07-16
 ---
 
 # API.A.300-29 인증 후 행동 복구
@@ -21,14 +21,14 @@ updated: 2026-07-13
 | operationId | `resumeAuthenticatedAction` |
 | 역할 | 로그인 전에 보존한 허용 action과 최소 context를 같은 Session에 한 번 전달한다. |
 | API 유형 | Command |
-| 인증 | Intent를 소비한 사용자 Session, 웹 CSRF·Origin 또는 모바일 Bearer |
+| 인증 | Intent를 소비한 Session의 웹·모바일 공통 Bearer access JWT |
 | 권한 | 현재 Session이 Intent의 `consumed_by_session_id`와 같아야 한다. |
 | 노출 범위 | public |
 | 멱등성 | `Idempotency-Key` 필수 |
-| 캐시 | `no-store` |
+| HTTP 응답 캐시 | `no-store` |
 | 호환성 | `/api/v1`, 미지원 중단 상태 |
 
-## HTTP 계약 원장
+## HTTP 명세 원장
 
 - 완전한 OpenAPI 문서: [openapi/openapi.yaml](openapi/openapi.yaml)
 - 이 Endpoint의 Path Item: [openapi/paths/API_A_300_29_resume_authenticated_action.yaml](openapi/paths/API_A_300_29_resume_authenticated_action.yaml)
@@ -54,7 +54,7 @@ updated: 2026-07-13
 
 ## 보안과 개인정보
 
-- 웹은 Session cookie, CSRF token과 Origin을 함께 검증하고 모바일은 access JWT를 검증한다.
+- Istio가 access JWT와 active Session을 검증한다. Bearer 보호 API에는 CSRF 검사를 적용하지 않는다.
 - Intent의 소비 Session과 현재 Session이 정확히 같아야 한다.
 - action payload ciphertext는 응답 생성 중 메모리에서만 복호화한다.
 - payload, Intent·Session ID와 멱등 key를 로그·trace·metric label에 넣지 않는다.
@@ -66,6 +66,16 @@ updated: 2026-07-13
 3. action 이름에 해당하는 allowlist schema로 암호화 payload를 다시 검증한다.
 4. 최초 전달이면 delivered 상태와 감사 Event를 기록한다.
 5. 내부 상대 복귀 경로와 최소 action context를 반환한다.
+
+## 저장 모델과 캐시
+
+저장 구조는 [영속성 설계](../A_300_20-persistence/README.md#저장-모델)와 [Redis projection models](../A_300_20-persistence/README.md#redis-projection-models)를 기준으로 한다.
+
+| 저장 모델 | 전략 | 적용 근거 |
+| --- | --- | --- |
+| `SessionStatusProjection` | 사용 | 인증 뒤 작업을 재개하는 사용자의 Session 상태를 먼저 확인한다. |
+| `AuthenticationIntent`, `ActionIntentPayload`, `IdempotencyRecord` | 우회 | intent 소유권, payload의 일회성 소비와 중복 재개 방지를 PostgreSQL 트랜잭션으로 확정한다. |
+| action payload와 암호문 | 사용하지 않음 | 업무 요청 내용과 복호화 가능한 payload를 Redis에 복제하지 않는다. |
 
 ## 상태 변경과 트랜잭션
 
@@ -84,7 +94,7 @@ updated: 2026-07-13
 
 ## 예외와 복구 규칙
 
-정확한 HTTP 상태와 ProblemDetails 계약은 OpenAPI를 기준으로 한다.
+정확한 HTTP 상태와 ErrorResponse 형식은 OpenAPI를 기준으로 한다.
 
 - Intent가 만료됐거나 payload가 폐기됐으면 새 로그인 의도로 업무를 다시 시작한다.
 - 소비 Session이 다르면 Intent 존재와 payload를 더 공개하지 않는다.
@@ -120,7 +130,7 @@ updated: 2026-07-13
 
 - 현재 독립 시퀀스 문서는 없다.
 - 선행 API: `API.A.300-01`과 로그인 또는 회원가입 완료 API
-- 프론트엔드와 업무 Context까지 연결하는 인증 후 행동 재개 시퀀스는 후속으로 `80-sequence`에 추가한다.
+- 프론트엔드와 업무 Context까지 연결하는 인증 후 행동 재개 시퀀스는 후속으로 `A_300_50-sequence`에 추가한다.
 
 ## 호환성과 변경 정책
 
@@ -130,5 +140,5 @@ updated: 2026-07-13
 
 ## 확인 필요
 
-- seller action별 `resourceId` 필요 여부와 로그인 Intent 생성 화면의 최소 context를 consumer contract test로 고정해야 한다.
+- seller action별 `resourceId` 필요 여부와 로그인 Intent 생성 화면의 최소 context를 consumer 호환성 테스트로 고정해야 한다.
 - delivery replay TTL과 crypto-shred worker의 운영 기준을 확정한다.

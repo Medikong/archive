@@ -6,7 +6,7 @@ status: draft
 tags: [service-design, auth, api, registration, session]
 source: local
 created: 2026-07-10
-updated: 2026-07-13
+updated: 2026-07-16
 service_design: SD.A.300
 api_design: SD.A.30040
 domain_model: SD.A.30010
@@ -26,7 +26,7 @@ service: SD.A.30030
 | API 유형 | 동기 Command |
 | 인증 | 가입 소유 proof + User 생성 proof |
 | 멱등성 | `Idempotency-Key` 필수 |
-| 캐시 | `no-store` |
+| HTTP 응답 캐시 | `no-store` |
 
 ## 요청
 
@@ -39,7 +39,7 @@ service: SD.A.30030
 
 ## 성공 응답
 
-`200 OK`. 웹은 HttpOnly Session cookie를 설정하고 모바일은 Session credential을 본문으로 반환한다.
+`200 OK`. 웹은 access JWT를 본문으로 반환하고 HttpOnly refresh cookie를 설정한다. 모바일은 access JWT와 opaque refresh token을 본문으로 반환한다.
 
 ```json
 {
@@ -56,10 +56,21 @@ service: SD.A.30030
 
 1. Registration 소유 proof, 두 필수 Challenge의 verified 상태와 만료를 확인한다.
 2. User 공개 키로 `userCreationProof`의 registration ID, user ID, 발급·만료와 서명을 검증한다.
-3. 두 IdentityLink, Session, SessionCredential, AccessGrant와 Registration `completed`를 한 트랜잭션에 저장한다.
+3. 두 IdentityLink, Session, SessionCredential과 Registration `completed`를 한 트랜잭션에 저장한다.
 4. 커밋 뒤 채널에 맞는 Session credential을 반환한다.
 
 Auth는 User를 생성하거나 User API를 호출하지 않는다. 프론트엔드가 User 생성 성공 뒤 이 API를 호출한다.
+
+## 저장 모델과 캐시
+
+저장 구조는 [영속성 설계](../A_300_20-persistence/README.md#저장-모델)와 [Redis projection models](../A_300_20-persistence/README.md#redis-projection-models)를 기준으로 한다.
+
+| 저장 모델 | 전략 | 적용 근거 |
+| --- | --- | --- |
+| `Registration`, `IdentityLink`, `Session`, `SessionCredential`, `IdempotencyRecord` | 우회 | User proof 검증, Identity 귀속과 Session 생성은 하나의 PostgreSQL 트랜잭션에서 확정한다. |
+| `AuthenticationPolicySnapshotProjection` (`P`) | 사용 | 생성할 Session과 token TTL은 활성 정책 snapshot을 따른다. |
+| `SessionStatusProjection` (`S`) | 갱신 | commit된 신규 Session을 `active`로 적재해 직후 보호 API 요청이 Redis를 사용할 수 있게 한다. |
+| `RegistrationStatusProjection` (`R`) | 갱신 | Registration을 `completed` terminal 상태로 반영하고 조회 보존 기간까지만 유지한다. |
 
 ## 멱등성과 실패 처리
 
@@ -76,11 +87,11 @@ Auth는 User를 생성하거나 User API를 호출하지 않는다. 프론트엔
 | `AUTH_REGISTRATION_EXPIRED` | 410 | Registration 또는 proof 만료 |
 | `AUTH_USER_CREATION_PROOF_INVALID` | 403 | User 증거 무효·registration/user 불일치 |
 | `AUTH_IDEMPOTENCY_CONFLICT` | 409 | 같은 key의 다른 요청 |
-| `AUTH_DEPENDENCY_UNAVAILABLE` | 503 | AccessGrant 등 필수 의존성 장애 |
+| `AUTH_SERVICE_UNAVAILABLE` | 503 | 인증 저장소 또는 token signer 장애 |
 
 ## 연관 문서
 
-- [Auth 가입 시퀀스](../../../80-sequence/A_300_auth/SCN_A_300_01_email_registration.md)
+- [SCN.A.01-01 회원가입과 자동 로그인](../../../80-sequence/A_01_user/SCN_A_01_01_user_provisioning_auth_link.md)
 - [User 생성 API](../../A_01_user/A_01_40-api/API_A_01_01_create_user.md)
 
 ## 검증 항목

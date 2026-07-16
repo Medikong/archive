@@ -8,7 +8,7 @@ api_design: SD.A.30040
 domain_model: SD.A.30010
 persistence: SD.A.30020
 service: SD.A.30030
-updated: 2026-07-10
+updated: 2026-07-16
 ---
 
 # API.A.300-26 인증 정책 변경
@@ -21,14 +21,14 @@ updated: 2026-07-10
 | operationId | `updateAuthPolicy` |
 | 역할 | 선택한 정책 묶음을 변경하고 나머지 값을 복제해 새 global 정책 snapshot을 활성화한다. |
 | API 유형 | Command |
-| 인증 | 운영자 웹 Session, CSRF·Origin, 최근 strong auth |
-| 권한 | `auth.policy.write` |
+| 인증 | `Authorization: Bearer <access-jwt>`, 최근 strong auth |
+| 외부 인가 | 검증된 `auth.policy.write` 결정 |
 | 노출 범위 | operator |
 | 멱등성 | `Idempotency-Key`와 global version `If-Match` 필수 |
-| 캐시 | `no-store` |
+| HTTP 응답 캐시 | `no-store` |
 | 호환성 | `/api/v1`, 미지원 중단 상태 |
 
-## HTTP 계약 원장
+## HTTP 명세 원장
 
 - 완전한 OpenAPI 문서: [openapi/openapi.yaml](openapi/openapi.yaml)
 - 이 Endpoint의 Path Item: [openapi/paths/API_A_300_26_update_auth_policy.yaml](openapi/paths/API_A_300_26_update_auth_policy.yaml)
@@ -55,19 +55,31 @@ path·body `policyName` binding, 정책별 patch schema, 안전 상한, global E
 
 ## 보안과 개인정보
 
-- 운영자 Session, `auth.policy.write`, strong auth, CSRF와 Origin을 모두 확인한다.
+- access JWT의 Session, 외부 `auth.policy.write` 결정과 strong auth를 모두 확인한다.
+- Bearer 보호 API에는 웹 refresh cookie를 사용하지 않으므로 CSRF·Origin 검사를 적용하지 않는다.
+- Auth는 운영자의 role, permission, 판매자 소속 또는 업무 ACL을 조회하거나 저장하지 않는다.
 - actor는 body에서 받지 않고 검증된 Principal의 `user_id`를 사용한다.
 - changeReason에 개인정보와 secret을 허용하지 않는다.
 - 정책 전체와 변경 전후 값을 일반 로그·trace body에 기록하지 않는다.
 
 ## 처리 규칙
 
-1. permission, strong auth, CSRF·Origin과 global `If-Match`를 확인한다.
+1. 외부 `auth.policy.write` 결정, strong auth와 global `If-Match`를 확인한다.
 2. path와 body의 `policyName` 일치, discriminator variant, 허용된 patch 필드와 OpenAPI 안전 상한을 검증한다.
 3. 현재 active snapshot을 읽고 대상 필드만 변경한 새 전체 snapshot을 구성한다.
 4. 병합된 Session TTL의 `webIdle <= webAbsolute`, `mobileAccess < mobileRefresh <= rememberMe`, Verification의 목적·채널 허용 조합과 `(purpose, channel)` 유일성, Session revocation의 trigger 유일성과 password reset 필수 scope를 재검증한다.
 5. 새 version을 active로 만들고 이전 version을 superseded로 닫는다.
 6. 새 global version과 ETag를 반환한다.
+
+## 저장 모델과 캐시
+
+저장 구조는 [영속성 설계](../A_300_20-persistence/README.md#저장-모델)와 [Redis projection models](../A_300_20-persistence/README.md#redis-projection-models)를 기준으로 한다.
+
+| 저장 모델 | 전략 | 적용 근거 |
+| --- | --- | --- |
+| 운영자 `SessionStatusProjection` | 사용 | 정책을 바꾸려는 운영자의 Session 상태를 먼저 확인한다. 권한 판정은 상위 운영자 인가 계층이 담당한다. |
+| PostgreSQL 정책 모델, `If-Match` version, `IdempotencyRecord` | 우회 | 동시 수정 충돌과 새 정책 version 생성은 PostgreSQL 원장에서만 확정한다. |
+| `AuthenticationPolicySnapshotProjection` | 갱신 | 커밋 뒤 새 version의 불변 snapshot을 먼저 기록한 다음 활성 version pointer를 교체해 부분 갱신을 노출하지 않는다. |
 
 ## 상태 변경과 트랜잭션
 
@@ -86,7 +98,7 @@ path·body `policyName` binding, 정책별 patch schema, 안전 상한, global E
 
 ## 예외와 복구 규칙
 
-정확한 HTTP 상태와 ProblemDetails 계약은 OpenAPI를 기준으로 한다.
+정확한 HTTP 상태와 ErrorResponse 형식은 OpenAPI를 기준으로 한다.
 
 - 안전 범위를 벗어난 값이나 불완전한 rule 집합은 반영하지 않는다.
 - path와 body의 `policyName`이 다르거나 배열에 일부 규칙만 보내면 반영하지 않는다.
@@ -101,7 +113,7 @@ path·body `policyName` binding, 정책별 patch schema, 안전 상한, global E
 | Command Handler | `ChangeAuthenticationPolicyHandler` |
 | Value Object | `LoginLockPolicy`, `TokenTtlPolicy`, `RefreshRotationPolicy`, `VerificationPolicy`, `SessionRevocationPolicy` |
 | Repository | `PolicyRepository.Activate`, `IdempotencyRepository` |
-| Authorization | `AccessGrant`, `auth.policy.write`, strong assurance |
+| External Authorization | 검증된 `auth.policy.write` 결정 proof, strong assurance |
 | Event | `EVT.A.300-30 인증 정책 변경됨`, 감사 OutboxEvent |
 
 ## 관측성과 운영
@@ -113,7 +125,7 @@ path·body `policyName` binding, 정책별 patch schema, 안전 상한, global E
 
 ## 검증 항목
 
-- permission, strong auth, CSRF·Origin 중 하나라도 없으면 변경되지 않는다.
+- 외부 인가 결정 또는 strong auth가 없으면 변경되지 않는다.
 - path·body `policyName` 불일치, policyName별 허용 필드 외 입력과 unsafe 값을 거부한다.
 - 규칙 배열을 전체 교체하고 이전 규칙이 암묵적으로 남지 않는지 검증한다.
 - 병합된 TTL 대소 관계, 목적별 Verification channel, rule 업무 키 유일성과 password reset 필수 폐기 범위를 검증한다.
@@ -125,7 +137,7 @@ path·body `policyName` binding, 정책별 patch schema, 안전 상한, global E
 
 - 현재 연결된 다중 API 시퀀스는 없다.
 - 선행 조회 API: `API.A.300-25`
-- 승인·변경·감사 절차가 확정되면 운영자 정책 변경 시퀀스를 `80-sequence`에 추가한다.
+- 승인·변경·감사 절차가 확정되면 운영자 정책 변경 시퀀스를 `A_300_50-sequence`에 추가한다.
 
 ## 호환성과 변경 정책
 

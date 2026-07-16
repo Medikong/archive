@@ -1,9 +1,9 @@
 openapi: 3.0.4
 info:
   title: DropMong Context 인증 API
-  version: 0.2.0
+  version: 0.3.0
   description: |
-    SD.A.30040의 운영 HTTP 계약 원장이다. 사용자 인증 API와 운영자 API를 포함하며
+    SD.A.30040의 운영 HTTP 명세 원장이다. 사용자 인증 API와 운영자 API를 포함하며
     개발 전용 가상 인증 메시지 API는 dev.openapi.yaml에서 별도로 관리한다.
 servers:
   - url: https://api.dropmong.example
@@ -28,7 +28,7 @@ tags:
   - name: AuthenticationIntent
     description: 로그인 뒤 보존한 사용자 행동을 한 번 전달하는 API
   - name: OperatorAuth
-    description: 권한과 강한 인증이 필요한 운영자 인증 상태·수동 처리 API
+    description: 별도 인가 경계의 결정 proof와 강한 인증이 필요한 운영자 인증 상태·수동 처리 API
   - name: AuthPolicy
     description: 단일 version snapshot으로 관리하는 운영자 인증 정책 API
 paths:
@@ -100,13 +100,15 @@ components:
       $ref: ./components/security-schemes.yaml#/WebCsrfToken
     WebOrigin:
       $ref: ./components/security-schemes.yaml#/WebOrigin
-    WebSessionCookie:
-      $ref: ./components/security-schemes.yaml#/WebSessionCookie
+    WebRefreshCookie:
+      $ref: ./components/security-schemes.yaml#/WebRefreshCookie
     MobileAuthFlowToken:
       $ref: ./components/security-schemes.yaml#/MobileAuthFlowToken
     RegistrationStatusToken:
       $ref: ./components/security-schemes.yaml#/RegistrationStatusToken
     MobileRefreshToken:
       $ref: ./components/security-schemes.yaml#/MobileRefreshToken
-    MobileBearerAuth:
-      $ref: ./components/security-schemes.yaml#/MobileBearerAuth
+    AccessBearerAuth:
+      $ref: ./components/security-schemes.yaml#/AccessBearerAuth
+    OperatorAuthorizationDecision:
+      $ref: ./components/security-schemes.yaml#/OperatorAuthorizationDecision

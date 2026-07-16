@@ -6,7 +6,7 @@ status: draft
 tags: [service-design, auth, api, password-reset]
 source: local
 created: 2026-07-10
-updated: 2026-07-10
+updated: 2026-07-16
 service_design: SD.A.300
 api_design: SD.A.30040
 domain_model: SD.A.30010
@@ -28,10 +28,10 @@ service: SD.A.30030
 | 권한 | 사전 인증 컨텍스트 소유를 확인하며 로그인 Session은 요구하지 않는다. |
 | 노출 범위 | public |
 | 멱등성 | `Idempotency-Key` 필수 |
-| 캐시 | `no-store` |
+| HTTP 응답 캐시 | `no-store` |
 | 호환성 | `/api/v1`, deprecation 없음 |
 
-## HTTP 계약 원장
+## HTTP 명세 원장
 
 - 완전한 OpenAPI 문서: [openapi/openapi.yaml](openapi/openapi.yaml)
 - 이 Endpoint의 Path Item: [openapi/paths/API_A_300_10_start_password_reset.yaml](openapi/paths/API_A_300_10_start_password_reset.yaml)
@@ -49,7 +49,7 @@ service: SD.A.30030
 | 도메인 | [SD.A.30010](../A_300_10-domain-model/SD_A_30010_auth_domain_model.md) |
 | 영속성 | [SD.A.30020](../A_300_20-persistence/README.md) |
 | 서비스 | [SD.A.30030](../A_300_30-service/README.md) |
-| 시퀀스 | [SCN.A.310-01](../../../80-sequence/A_300_auth/SCN_A_310_01_password_reset.md) |
+| 시퀀스 | [SCN.A.310-01](../A_300_50-sequence/SCN_A_310_01_password_reset.md) |
 
 ## 책임과 경계
 
@@ -72,6 +72,16 @@ service: SD.A.30030
 4. 대상이 있으면 verified email Identity와 active PasswordCredential을 찾고, 없으면 decoy reset을 만든다.
 5. `childExpiresAt = min(now + PasswordReset TTL, Intent 생성 시각 + auth-flow 최대 수명)`으로 계산하고 PasswordReset을 만든다.
 6. AuthenticationIntent와 active owner proof의 만료를 `childExpiresAt`으로 맞춘 뒤 지원 recovery method와 만료 시각만 동일한 형태로 반환한다.
+
+## 저장 모델과 캐시
+
+저장 구조는 [영속성 설계](../A_300_20-persistence/README.md#저장-모델)와 [Redis projection models](../A_300_20-persistence/README.md#redis-projection-models)를 기준으로 한다.
+
+| 저장 모델 | 전략 | 적용 근거 |
+| --- | --- | --- |
+| `PasswordReset`, `Identity`, `IdentityLink`, `PasswordCredential`, `AuthenticationIntent` | 우회 | 실재 대상과 decoy를 같은 응답으로 처리하고 계정 존재 여부가 cache hit 차이로 드러나지 않게 한다. |
+| `AuthenticationPolicySnapshotProjection` (`P`) | 사용 | 재설정 TTL, recovery method와 제한 정책은 공통 snapshot이다. |
+| PasswordReset 상태 | 사용하지 않음 | 이 API는 외부 polling을 제공하지 않고 다음 단계가 소유 proof와 DB 상태를 직접 확인한다. |
 
 ## 상태 변경과 트랜잭션
 
@@ -129,7 +139,7 @@ service: SD.A.30030
 
 ## 연관 시퀀스
 
-- 시퀀스 문서: [SCN.A.310-01 비밀번호 재설정](../../../80-sequence/A_300_auth/SCN_A_310_01_password_reset.md)
+- 시퀀스 문서: [SCN.A.310-01 비밀번호 재설정](../A_300_50-sequence/SCN_A_310_01_password_reset.md)
 - 관련 API: `API.A.300-10~13`
 - 여러 참여자의 Mermaid 다이어그램은 시퀀스 문서에서 관리한다.
 

@@ -14,16 +14,16 @@ get:
   x-query-ids:
     - QRY.A.300-05
   x-design-doc: ../../API_A_300_25_get_auth_policies.md
-  x-required-permissions:
-    - auth.policy.read
+  x-authorization-decision:
+    action: auth.policy.read
   x-required-assurance: strong
-  x-require-current-access-grant: true
   x-error-codes:
     AUTH_SESSION_REQUIRED: 401
     AUTH_FORBIDDEN: 403
     AUTH_SERVICE_UNAVAILABLE: 503
   security:
-    - WebSessionCookie: []
+    - AccessBearerAuth: []
+      OperatorAuthorizationDecision: []
   parameters:
     - $ref: ../components/parameters.yaml#/XRequestId
     - $ref: ../components/parameters.yaml#/Traceparent

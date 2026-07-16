@@ -62,63 +62,48 @@ post:
         Cache-Control:
           $ref: ../components/headers.yaml#/CacheControlNoStore
         Set-Cookie:
-          $ref: ../components/headers.yaml#/SetSessionAndClearAuthCookies
+          $ref: ../components/headers.yaml#/SetRefreshAndClearAuthCookies
       content:
         application/json:
           schema:
-            type: object
-            required:
-              - data
-              - meta
-            additionalProperties: false
-            properties:
-              data:
-                type: object
-                required:
-                  - registrationId
-                  - userId
-                  - status
-                  - credentialDelivery
-                  - next
-                additionalProperties: false
-                properties:
-                  registrationId:
-                    $ref: ../components/schemas.yaml#/RegistrationId
-                  userId:
-                    type: string
-                    minLength: 1
-                  status:
-                    type: string
-                    enum:
-                      - completed
-                  credentialDelivery:
-                    type: string
-                    enum:
-                      - web_session
-                      - mobile_tokens
+            $ref: ../components/schemas.yaml#/RegistrationCompletedResponse
+          examples:
+            web:
+              value:
+                data:
+                  registrationId: reg_01JXYZ1234567890ABCDEFGHJK
+                  status: completed
+                  credentialDelivery: web_jwt_refresh_cookie
+                  userId: usr_01JXYZ1234567890ABCDEFGHJK
+                  session:
+                    sessionId: ses_01JXYZ1234567890ABCDEFGHJK
+                    expiresAt: '2026-08-09T08:00:00Z'
+                  access:
+                    accessToken: <signed-jwt>
+                    accessTokenExpiresAt: '2026-07-10T08:15:00Z'
                   next:
-                    type: object
-                    required:
-                      - path
-                    additionalProperties: false
-                    properties:
-                      path:
-                        type: string
-                        pattern: ^/.*$
-                      intentId:
-                        $ref: ../components/schemas.yaml#/AuthenticationIntentId
-              meta:
-                $ref: ../components/schemas.yaml#/ResponseMeta
-          example:
-            data:
-              registrationId: reg_01JXYZ1234567890ABCDEFGHJK
-              userId: usr_01JXYZ1234567890ABCDEFGHJK
-              status: completed
-              credentialDelivery: web_session
-              next:
-                path: /
-            meta:
-              requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
+                    path: /
+                meta:
+                  requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
+            mobile:
+              value:
+                data:
+                  registrationId: reg_01JXYZ1234567890ABCDEFGHJK
+                  status: completed
+                  credentialDelivery: mobile_tokens
+                  userId: usr_01JXYZ1234567890ABCDEFGHJK
+                  session:
+                    sessionId: ses_01JXYZ1234567890ABCDEFGHJK
+                    expiresAt: '2026-08-09T08:00:00Z'
+                  tokens:
+                    accessToken: <signed-jwt>
+                    accessTokenExpiresAt: '2026-07-10T08:15:00Z'
+                    refreshToken: <opaque-refresh-token>
+                    refreshTokenExpiresAt: '2026-08-09T08:00:00Z'
+                  next:
+                    path: /
+                meta:
+                  requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
     '400':
       $ref: ../components/responses.yaml#/InputInvalid
     '403':

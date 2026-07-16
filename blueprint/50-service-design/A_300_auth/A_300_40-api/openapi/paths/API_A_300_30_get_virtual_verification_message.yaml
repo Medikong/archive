@@ -13,7 +13,7 @@ get:
 
     개발 접근 token이나 소유 인증 정보가 없거나 유효하지 않거나 binding이 다르면 리소스 존재
     여부를 숨기기 위해 `404 AUTH_VIRTUAL_MESSAGE_NOT_FOUND`로 통합한다. Gateway도 같은
-    `application/problem+json` 계약을 반환한다.
+    `application/json` 형식을 반환한다.
   operationId: getVirtualVerificationMessage
   x-api-id: API.A.300-30
   x-use-case: UC.A.300
@@ -28,7 +28,7 @@ get:
     - local
     - test
     - demo-restricted
-  x-virtual-projection-contract:
+  x-virtual-projection:
     scope: dev_test_only
     readyCodeSchema: VerificationCode
     codeAtRest: envelope_encrypted
@@ -37,11 +37,9 @@ get:
     - DevAccessToken: []
       WebAuthFlowCookie: []
     - DevAccessToken: []
-      WebSessionCookie: []
-    - DevAccessToken: []
       MobileAuthFlowToken: []
     - DevAccessToken: []
-      MobileBearerAuth: []
+      AccessBearerAuth: []
   parameters:
     - $ref: ../components/parameters.yaml#/ChallengeId
     - $ref: ../components/parameters.yaml#/XRequestId

@@ -8,7 +8,7 @@ api_design: SD.A.30040
 domain_model: SD.A.30010
 persistence: SD.A.30020
 service: SD.A.30030
-updated: 2026-07-10
+updated: 2026-07-16
 ---
 
 # API.A.300-15 로그아웃
@@ -19,16 +19,16 @@ updated: 2026-07-10
 | --- | --- |
 | Method / Path | `POST /api/v1/auth/sessions/logout` |
 | operationId | `logoutSession` |
-| 역할 | 웹의 현재 Session 또는 모바일 refresh family를 폐기한다. |
+| 역할 | 웹·모바일의 현재 Session과 refresh family를 폐기한다. |
 | API 유형 | Command |
-| 인증 | 웹 Session·CSRF·Origin 또는 모바일 `X-Refresh-Token` header의 refresh credential |
+| 인증 | 웹 `__Host-dm_refresh` cookie·CSRF·Origin 또는 모바일 `X-Refresh-Token` header |
 | 권한 | 제출한 credential이 가리키는 현재 Session 또는 refresh family만 폐기 가능 |
 | 노출 범위 | public |
 | 멱등성 | `Idempotency-Key` 필수 |
-| 캐시 | `no-store` |
+| HTTP 응답 캐시 | `no-store` |
 | 호환성 | `/api/v1`, deprecation 없음 |
 
-## HTTP 계약 원장
+## HTTP 명세 원장
 
 - 완전한 OpenAPI 문서: [openapi/openapi.yaml](openapi/openapi.yaml)
 - 이 Endpoint의 Path Item: [openapi/paths/API_A_300_15_logout_session.yaml](openapi/paths/API_A_300_15_logout_session.yaml)
@@ -46,29 +46,39 @@ updated: 2026-07-10
 | 도메인 | [SD.A.30010](../A_300_10-domain-model/SD_A_30010_auth_domain_model.md) |
 | 영속성 | [SD.A.30020](../A_300_20-persistence/README.md) |
 | 서비스 | [SD.A.30030](../A_300_30-service/README.md) |
-| 시퀀스 | [인증 시퀀스 인덱스](../../../80-sequence/A_300_auth/README.md) |
+| 시퀀스 | [인증 시퀀스 인덱스](../A_300_50-sequence/README.md) |
 
 ## 책임과 경계
 
-- 웹은 현재 Session과 active credential을 폐기하고 Session cookie를 만료시킨다.
+- 웹은 refresh cookie가 가리키는 Session과 refresh family를 폐기하고 cookie를 만료시킨다.
 - 모바일은 `X-Refresh-Token` header로 제출한 refresh credential이 속한 refresh family와 Session을 폐기한다.
 - 다른 사용자, 다른 Session 또는 임의 family를 요청값으로 지정할 수 없다.
 - 모든 기기의 Session 일괄 폐기는 별도 내부·운영 명령의 책임이다.
 
 ## 보안과 개인정보
 
-- 웹은 Session cookie, CSRF token과 Origin을 함께 검증한다.
+- 웹은 refresh cookie, CSRF token, Origin과 Fetch Metadata를 함께 검증한다.
 - 모바일 refresh token은 `X-Refresh-Token` header credential이며 원문을 로그, trace, event와 IdempotencyRecord에 남기지 않는다.
 - 성공 여부로 Session의 과거 상태나 다른 credential 존재를 공개하지 않는다.
-- 웹 성공 응답은 Session cookie를 즉시 만료시키고 body를 반환하지 않는다.
+- 웹 성공 응답은 refresh cookie를 즉시 만료시키고 body를 반환하지 않는다.
 
 ## 처리 규칙
 
 1. 웹 security 조합 또는 모바일 `MobileRefreshToken` security scheme으로 요청 채널과 credential을 검증한다.
 2. credential에서 폐기할 Session과 refresh family를 서버 측에서 결정한다.
-3. 웹은 현재 Session, 모바일은 해당 refresh family 전체를 폐기한다.
+3. 두 채널 모두 해당 Session과 refresh family 전체를 폐기한다.
 4. 감사 OutboxEvent를 저장하고 웹에는 cookie 만료 header를 반환한다.
 5. 이미 폐기된 같은 대상을 다시 요청해도 완료로 처리한다.
+
+## 저장 모델과 캐시
+
+저장 구조는 [영속성 설계](../A_300_20-persistence/README.md#저장-모델)와 [Redis projection models](../A_300_20-persistence/README.md#redis-projection-models)를 기준으로 한다.
+
+| 저장 모델 | 전략 | 적용 근거 |
+| --- | --- | --- |
+| `Session`, `SessionCredential`, `ReauthenticationProof`, `IdempotencyRecord` | 우회 | Session 폐기와 관련 credential·proof 무효화를 PostgreSQL 트랜잭션으로 확정해야 한다. |
+| `SessionStatusProjection` | 무효화 | 커밋 뒤 key를 삭제하지 않고 `revoked` 상태를 기록해 오래된 access JWT가 cache miss로 되살아나지 않게 한다. |
+| refresh token과 reauth proof | 사용하지 않음 | bearer secret과 일회용 proof는 Redis에 저장하지 않는다. |
 
 ## 상태 변경과 트랜잭션
 
@@ -88,7 +98,7 @@ updated: 2026-07-10
 
 ## 예외와 복구 규칙
 
-정확한 HTTP 상태, error code, ProblemDetails schema와 예시는 OpenAPI를 기준으로 한다.
+정확한 HTTP 상태, error code, ErrorResponse schema와 예시는 OpenAPI를 기준으로 한다.
 
 | 업무 조건 | 공개 원칙 | 클라이언트 복구 |
 | --- | --- | --- |
@@ -117,7 +127,7 @@ updated: 2026-07-10
 ## 검증 항목
 
 - OpenAPI lint와 bundle이 성공한다.
-- 웹은 body 없이 Session과 cookie를 폐기한다.
+- 웹은 body 없이 Session, refresh family와 cookie를 폐기한다.
 - 모바일은 body credential을 받지 않고 `X-Refresh-Token`으로 제출한 token family만 폐기한다.
 - body를 생략하거나 빈 객체로 제출한 요청만 허용한다.
 - 이미 폐기된 대상과 동시 요청이 같은 완료 결과로 수렴한다.
@@ -126,9 +136,9 @@ updated: 2026-07-10
 
 ## 연관 시퀀스
 
-- 시퀀스 문서: [인증 처리 시퀀스 인덱스](../../../80-sequence/A_300_auth/README.md)
+- 시퀀스 문서: [인증 처리 시퀀스 인덱스](../A_300_50-sequence/README.md)
 - 관련 API: `API.A.300-14`, `API.A.300-16`
-- 전용 로그아웃 시퀀스는 아직 없으며 여러 참여자가 추가되면 `80-sequence`에서 관리한다.
+- 전용 로그아웃 시퀀스는 아직 없으며 여러 참여자가 추가되면 `A_300_50-sequence`에서 관리한다.
 
 ## 호환성과 변경 정책
 

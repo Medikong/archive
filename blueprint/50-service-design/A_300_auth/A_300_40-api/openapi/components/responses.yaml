@@ -6,10 +6,10 @@ InputInvalid:
     Cache-Control:
       $ref: ./headers.yaml#/CacheControlNoStore
   content:
-    application/problem+json:
+    application/json:
       schema:
         allOf:
-          - $ref: ./schemas.yaml#/ProblemDetails
+          - $ref: ./schemas.yaml#/ErrorResponse
           - type: object
             properties:
               status:
@@ -21,16 +21,10 @@ InputInvalid:
                 enum:
                   - AUTH_INPUT_INVALID
       example:
-        type: https://api.dropmong.example/problems/auth-input-invalid
-        title: 요청 형식이 올바르지 않습니다.
         status: 400
         code: AUTH_INPUT_INVALID
-        detail: 입력값을 확인한 뒤 다시 시도해주세요.
-        retryable: false
+        message: 입력값을 확인한 뒤 다시 시도해주세요.
         requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
-        violations:
-          - field: body
-            reason: additional_property
 
 RegistrationNotFound:
   description: 인증 정보가 없거나 유효하지 않거나 현재 소유 binding으로 조회 가능한 Registration을 찾을 수 없다.
@@ -40,10 +34,10 @@ RegistrationNotFound:
     Cache-Control:
       $ref: ./headers.yaml#/CacheControlNoStore
   content:
-    application/problem+json:
+    application/json:
       schema:
         allOf:
-          - $ref: ./schemas.yaml#/ProblemDetails
+          - $ref: ./schemas.yaml#/ErrorResponse
           - type: object
             properties:
               status:
@@ -55,12 +49,9 @@ RegistrationNotFound:
                 enum:
                   - AUTH_REGISTRATION_NOT_FOUND
       example:
-        type: https://api.dropmong.example/problems/auth-registration-not-found
-        title: 회원가입 요청을 찾을 수 없습니다.
         status: 404
         code: AUTH_REGISTRATION_NOT_FOUND
-        detail: 회원가입 요청과 현재 인증 컨텍스트를 확인해주세요.
-        retryable: false
+        message: 회원가입 요청과 현재 인증 컨텍스트를 확인해주세요.
         requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
 
 CompleteRegistrationForbidden:
@@ -71,10 +62,10 @@ CompleteRegistrationForbidden:
     Cache-Control:
       $ref: ./headers.yaml#/CacheControlNoStore
   content:
-    application/problem+json:
+    application/json:
       schema:
         allOf:
-          - $ref: ./schemas.yaml#/ProblemDetails
+          - $ref: ./schemas.yaml#/ErrorResponse
           - type: object
             properties:
               status:
@@ -91,22 +82,16 @@ CompleteRegistrationForbidden:
         csrfInvalid:
           summary: 웹 CSRF 또는 Origin 검증 실패
           value:
-            type: https://api.dropmong.example/problems/auth-csrf-invalid
-            title: 요청을 검증할 수 없습니다.
             status: 403
             code: AUTH_CSRF_INVALID
-            detail: 인증 화면을 새로 연 뒤 다시 시도해주세요.
-            retryable: false
+            message: 인증 화면을 새로 연 뒤 다시 시도해주세요.
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
         userRestricted:
           summary: 연결된 사용자 인증 제한
           value:
-            type: https://api.dropmong.example/problems/auth-user-restricted
-            title: 로그인을 완료할 수 없습니다.
             status: 403
             code: AUTH_USER_RESTRICTED
-            detail: 지원 절차를 확인해주세요.
-            retryable: false
+            message: 지원 절차를 확인해주세요.
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
 
 CompleteRegistrationConflict:
@@ -117,10 +102,10 @@ CompleteRegistrationConflict:
     Cache-Control:
       $ref: ./headers.yaml#/CacheControlNoStore
   content:
-    application/problem+json:
+    application/json:
       schema:
         allOf:
-          - $ref: ./schemas.yaml#/ProblemDetails
+          - $ref: ./schemas.yaml#/ErrorResponse
           - type: object
             properties:
               status:
@@ -136,22 +121,16 @@ CompleteRegistrationConflict:
         idempotencyConflict:
           summary: 다른 Idempotency-Key 또는 payload 충돌
           value:
-            type: https://api.dropmong.example/problems/auth-idempotency-conflict
-            title: 같은 요청을 이어 갈 수 없습니다.
             status: 409
             code: AUTH_IDEMPOTENCY_CONFLICT
-            detail: 최초 요청에 사용한 Idempotency-Key로 다시 시도해주세요.
-            retryable: false
+            message: 최초 요청에 사용한 Idempotency-Key로 다시 시도해주세요.
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
         verificationRequired:
           summary: 필수 이메일 또는 휴대폰 소유 확인 미완료
           value:
-            type: https://api.dropmong.example/problems/auth-verification-required
-            title: 필수 인증이 완료되지 않았습니다.
             status: 409
             code: AUTH_VERIFICATION_REQUIRED
-            detail: 이메일과 휴대폰 인증을 모두 완료한 뒤 다시 시도해주세요.
-            retryable: false
+            message: 이메일과 휴대폰 인증을 모두 완료한 뒤 다시 시도해주세요.
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
 
 CompleteRegistrationGone:
@@ -162,10 +141,10 @@ CompleteRegistrationGone:
     Cache-Control:
       $ref: ./headers.yaml#/CacheControlNoStore
   content:
-    application/problem+json:
+    application/json:
       schema:
         allOf:
-          - $ref: ./schemas.yaml#/ProblemDetails
+          - $ref: ./schemas.yaml#/ErrorResponse
           - type: object
             properties:
               status:
@@ -181,22 +160,16 @@ CompleteRegistrationGone:
         registrationExpired:
           summary: Registration 기한 만료
           value:
-            type: https://api.dropmong.example/problems/auth-registration-expired
-            title: 회원가입 처리 시간이 만료되었습니다.
             status: 410
             code: AUTH_REGISTRATION_EXPIRED
-            detail: 회원가입을 처음부터 다시 진행해주세요.
-            retryable: false
+            message: 회원가입을 처음부터 다시 진행해주세요.
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
         sessionDeliveryExpired:
           summary: 자동 로그인 credential 전달 기한 만료
           value:
-            type: https://api.dropmong.example/problems/auth-session-delivery-expired
-            title: 자동 로그인을 완료할 수 없습니다.
             status: 410
             code: AUTH_SESSION_DELIVERY_EXPIRED
-            detail: 회원가입은 유지되므로 일반 로그인으로 계속해주세요.
-            retryable: false
+            message: 회원가입은 유지되므로 일반 로그인으로 계속해주세요.
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
 
 AuthServiceUnavailable:
@@ -209,10 +182,10 @@ AuthServiceUnavailable:
     Retry-After:
       $ref: ./headers.yaml#/RetryAfter
   content:
-    application/problem+json:
+    application/json:
       schema:
         allOf:
-          - $ref: ./schemas.yaml#/ProblemDetails
+          - $ref: ./schemas.yaml#/ErrorResponse
           - type: object
             properties:
               status:
@@ -224,12 +197,9 @@ AuthServiceUnavailable:
                 enum:
                   - AUTH_SERVICE_UNAVAILABLE
       example:
-        type: https://api.dropmong.example/problems/auth-service-unavailable
-        title: 인증 서비스를 일시적으로 사용할 수 없습니다.
         status: 503
         code: AUTH_SERVICE_UNAVAILABLE
-        detail: 잠시 뒤 다시 시도해주세요.
-        retryable: true
+        message: 잠시 뒤 다시 시도해주세요.
         requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
 
 AuthProblem410IntentExpiredOrSessionDeliveryExpired:
@@ -240,10 +210,10 @@ AuthProblem410IntentExpiredOrSessionDeliveryExpired:
     Cache-Control:
       $ref: ./headers.yaml#/CacheControlNoStore
   content:
-    application/problem+json:
+    application/json:
       schema:
         allOf:
-          - $ref: ./schemas.yaml#/ProblemDetails
+          - $ref: ./schemas.yaml#/ErrorResponse
           - type: object
             properties:
               status:
@@ -259,22 +229,16 @@ AuthProblem410IntentExpiredOrSessionDeliveryExpired:
         intentExpired:
           summary: AUTH_INTENT_EXPIRED
           value:
-            type: https://api.dropmong.example/problems/auth-intent-expired
-            title: 요청을 처리할 수 없습니다.
             status: 410
             code: AUTH_INTENT_EXPIRED
-            detail: 요청 조건과 현재 인증 상태를 확인해주세요.
-            retryable: false
+            message: 요청 조건과 현재 인증 상태를 확인해주세요.
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
         sessionDeliveryExpired:
           summary: AUTH_SESSION_DELIVERY_EXPIRED
           value:
-            type: https://api.dropmong.example/problems/auth-session-delivery-expired
-            title: 요청을 처리할 수 없습니다.
             status: 410
             code: AUTH_SESSION_DELIVERY_EXPIRED
-            detail: 요청 조건과 현재 인증 상태를 확인해주세요.
-            retryable: false
+            message: 요청 조건과 현재 인증 상태를 확인해주세요.
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
 
 AuthProblem410ChallengeExpiredOrSessionDeliveryExpired:
@@ -285,10 +249,10 @@ AuthProblem410ChallengeExpiredOrSessionDeliveryExpired:
     Cache-Control:
       $ref: ./headers.yaml#/CacheControlNoStore
   content:
-    application/problem+json:
+    application/json:
       schema:
         allOf:
-          - $ref: ./schemas.yaml#/ProblemDetails
+          - $ref: ./schemas.yaml#/ErrorResponse
           - type: object
             properties:
               status:
@@ -304,22 +268,16 @@ AuthProblem410ChallengeExpiredOrSessionDeliveryExpired:
         challengeExpired:
           summary: AUTH_CHALLENGE_EXPIRED
           value:
-            type: https://api.dropmong.example/problems/auth-challenge-expired
-            title: 요청을 처리할 수 없습니다.
             status: 410
             code: AUTH_CHALLENGE_EXPIRED
-            detail: 요청 조건과 현재 인증 상태를 확인해주세요.
-            retryable: false
+            message: 요청 조건과 현재 인증 상태를 확인해주세요.
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
         sessionDeliveryExpired:
           summary: AUTH_SESSION_DELIVERY_EXPIRED
           value:
-            type: https://api.dropmong.example/problems/auth-session-delivery-expired
-            title: 요청을 처리할 수 없습니다.
             status: 410
             code: AUTH_SESSION_DELIVERY_EXPIRED
-            detail: 요청 조건과 현재 인증 상태를 확인해주세요.
-            retryable: false
+            message: 요청 조건과 현재 인증 상태를 확인해주세요.
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
 
 AuthProblem410SessionDeliveryExpired:
@@ -330,10 +288,10 @@ AuthProblem410SessionDeliveryExpired:
     Cache-Control:
       $ref: ./headers.yaml#/CacheControlNoStore
   content:
-    application/problem+json:
+    application/json:
       schema:
         allOf:
-          - $ref: ./schemas.yaml#/ProblemDetails
+          - $ref: ./schemas.yaml#/ErrorResponse
           - type: object
             properties:
               status:
@@ -348,12 +306,9 @@ AuthProblem410SessionDeliveryExpired:
         sessionDeliveryExpired:
           summary: AUTH_SESSION_DELIVERY_EXPIRED
           value:
-            type: https://api.dropmong.example/problems/auth-session-delivery-expired
-            title: 인증 결과 전달 시간이 만료되었습니다.
             status: 410
             code: AUTH_SESSION_DELIVERY_EXPIRED
-            detail: 새 인증 요청부터 다시 진행해주세요.
-            retryable: false
+            message: 새 인증 요청부터 다시 진행해주세요.
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
 
 AuthProblem410ChallengeExpiredOrIdentityLinkIntentExpiredOrSessionDeliveryExpired:
@@ -364,10 +319,10 @@ AuthProblem410ChallengeExpiredOrIdentityLinkIntentExpiredOrSessionDeliveryExpire
     Cache-Control:
       $ref: ./headers.yaml#/CacheControlNoStore
   content:
-    application/problem+json:
+    application/json:
       schema:
         allOf:
-          - $ref: ./schemas.yaml#/ProblemDetails
+          - $ref: ./schemas.yaml#/ErrorResponse
           - type: object
             properties:
               status:
@@ -384,32 +339,23 @@ AuthProblem410ChallengeExpiredOrIdentityLinkIntentExpiredOrSessionDeliveryExpire
         challengeExpired:
           summary: AUTH_CHALLENGE_EXPIRED
           value:
-            type: https://api.dropmong.example/problems/auth-challenge-expired
-            title: 요청을 처리할 수 없습니다.
             status: 410
             code: AUTH_CHALLENGE_EXPIRED
-            detail: 요청 조건과 현재 인증 상태를 확인해주세요.
-            retryable: false
+            message: 요청 조건과 현재 인증 상태를 확인해주세요.
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
         identityLinkIntentExpired:
           summary: AUTH_IDENTITY_LINK_INTENT_EXPIRED
           value:
-            type: https://api.dropmong.example/problems/auth-identity-link-intent-expired
-            title: 요청을 처리할 수 없습니다.
             status: 410
             code: AUTH_IDENTITY_LINK_INTENT_EXPIRED
-            detail: 요청 조건과 현재 인증 상태를 확인해주세요.
-            retryable: false
+            message: 요청 조건과 현재 인증 상태를 확인해주세요.
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
         sessionDeliveryExpired:
           summary: AUTH_SESSION_DELIVERY_EXPIRED
           value:
-            type: https://api.dropmong.example/problems/auth-session-delivery-expired
-            title: 요청을 처리할 수 없습니다.
             status: 410
             code: AUTH_SESSION_DELIVERY_EXPIRED
-            detail: 요청 조건과 현재 인증 상태를 확인해주세요.
-            retryable: false
+            message: 요청 조건과 현재 인증 상태를 확인해주세요.
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
 
 AuthProblem400ChallengeFailedOrInputInvalid:
@@ -420,10 +366,10 @@ AuthProblem400ChallengeFailedOrInputInvalid:
     Cache-Control:
       $ref: ./headers.yaml#/CacheControlNoStore
   content:
-    application/problem+json:
+    application/json:
       schema:
         allOf:
-          - $ref: ./schemas.yaml#/ProblemDetails
+          - $ref: ./schemas.yaml#/ErrorResponse
           - type: object
             properties:
               status:
@@ -439,22 +385,16 @@ AuthProblem400ChallengeFailedOrInputInvalid:
         challengeFailed:
           summary: AUTH_CHALLENGE_FAILED
           value:
-            type: https://api.dropmong.example/problems/auth-challenge-failed
-            title: 요청을 처리할 수 없습니다.
             status: 400
             code: AUTH_CHALLENGE_FAILED
-            detail: 요청 조건과 현재 인증 상태를 확인해주세요.
-            retryable: false
+            message: 요청 조건과 현재 인증 상태를 확인해주세요.
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
         inputInvalid:
           summary: AUTH_INPUT_INVALID
           value:
-            type: https://api.dropmong.example/problems/auth-input-invalid
-            title: 요청을 처리할 수 없습니다.
             status: 400
             code: AUTH_INPUT_INVALID
-            detail: 요청 조건과 현재 인증 상태를 확인해주세요.
-            retryable: false
+            message: 요청 조건과 현재 인증 상태를 확인해주세요.
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
 
 AuthProblem400ChallengeFailedOrInputInvalidOrPasswordResetInvalid:
@@ -465,10 +405,10 @@ AuthProblem400ChallengeFailedOrInputInvalidOrPasswordResetInvalid:
     Cache-Control:
       $ref: ./headers.yaml#/CacheControlNoStore
   content:
-    application/problem+json:
+    application/json:
       schema:
         allOf:
-          - $ref: ./schemas.yaml#/ProblemDetails
+          - $ref: ./schemas.yaml#/ErrorResponse
           - type: object
             properties:
               status:
@@ -485,32 +425,23 @@ AuthProblem400ChallengeFailedOrInputInvalidOrPasswordResetInvalid:
         challengeFailed:
           summary: AUTH_CHALLENGE_FAILED
           value:
-            type: https://api.dropmong.example/problems/auth-challenge-failed
-            title: 요청을 처리할 수 없습니다.
             status: 400
             code: AUTH_CHALLENGE_FAILED
-            detail: 요청 조건과 현재 인증 상태를 확인해주세요.
-            retryable: false
+            message: 요청 조건과 현재 인증 상태를 확인해주세요.
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
         inputInvalid:
           summary: AUTH_INPUT_INVALID
           value:
-            type: https://api.dropmong.example/problems/auth-input-invalid
-            title: 요청을 처리할 수 없습니다.
             status: 400
             code: AUTH_INPUT_INVALID
-            detail: 요청 조건과 현재 인증 상태를 확인해주세요.
-            retryable: false
+            message: 요청 조건과 현재 인증 상태를 확인해주세요.
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
         passwordResetInvalid:
           summary: AUTH_PASSWORD_RESET_INVALID
           value:
-            type: https://api.dropmong.example/problems/auth-password-reset-invalid
-            title: 요청을 처리할 수 없습니다.
             status: 400
             code: AUTH_PASSWORD_RESET_INVALID
-            detail: 요청 조건과 현재 인증 상태를 확인해주세요.
-            retryable: false
+            message: 요청 조건과 현재 인증 상태를 확인해주세요.
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
 
 AuthProblem400InputInvalidOrPasswordResetInvalid:
@@ -521,10 +452,10 @@ AuthProblem400InputInvalidOrPasswordResetInvalid:
     Cache-Control:
       $ref: ./headers.yaml#/CacheControlNoStore
   content:
-    application/problem+json:
+    application/json:
       schema:
         allOf:
-          - $ref: ./schemas.yaml#/ProblemDetails
+          - $ref: ./schemas.yaml#/ErrorResponse
           - type: object
             properties:
               status:
@@ -540,22 +471,16 @@ AuthProblem400InputInvalidOrPasswordResetInvalid:
         inputInvalid:
           summary: AUTH_INPUT_INVALID
           value:
-            type: https://api.dropmong.example/problems/auth-input-invalid
-            title: 요청을 처리할 수 없습니다.
             status: 400
             code: AUTH_INPUT_INVALID
-            detail: 요청 조건과 현재 인증 상태를 확인해주세요.
-            retryable: false
+            message: 요청 조건과 현재 인증 상태를 확인해주세요.
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
         passwordResetInvalid:
           summary: AUTH_PASSWORD_RESET_INVALID
           value:
-            type: https://api.dropmong.example/problems/auth-password-reset-invalid
-            title: 요청을 처리할 수 없습니다.
             status: 400
             code: AUTH_PASSWORD_RESET_INVALID
-            detail: 요청 조건과 현재 인증 상태를 확인해주세요.
-            retryable: false
+            message: 요청 조건과 현재 인증 상태를 확인해주세요.
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
 
 AuthProblem400InputInvalidOrRedirectInvalid:
@@ -566,10 +491,10 @@ AuthProblem400InputInvalidOrRedirectInvalid:
     Cache-Control:
       $ref: ./headers.yaml#/CacheControlNoStore
   content:
-    application/problem+json:
+    application/json:
       schema:
         allOf:
-          - $ref: ./schemas.yaml#/ProblemDetails
+          - $ref: ./schemas.yaml#/ErrorResponse
           - type: object
             properties:
               status:
@@ -585,22 +510,16 @@ AuthProblem400InputInvalidOrRedirectInvalid:
         inputInvalid:
           summary: AUTH_INPUT_INVALID
           value:
-            type: https://api.dropmong.example/problems/auth-input-invalid
-            title: 요청을 처리할 수 없습니다.
             status: 400
             code: AUTH_INPUT_INVALID
-            detail: 요청 조건과 현재 인증 상태를 확인해주세요.
-            retryable: false
+            message: 요청 조건과 현재 인증 상태를 확인해주세요.
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
         redirectInvalid:
           summary: AUTH_REDIRECT_INVALID
           value:
-            type: https://api.dropmong.example/problems/auth-redirect-invalid
-            title: 요청을 처리할 수 없습니다.
             status: 400
             code: AUTH_REDIRECT_INVALID
-            detail: 요청 조건과 현재 인증 상태를 확인해주세요.
-            retryable: false
+            message: 요청 조건과 현재 인증 상태를 확인해주세요.
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
 
 AuthProblem400MultipleCredentials:
@@ -611,10 +530,10 @@ AuthProblem400MultipleCredentials:
     Cache-Control:
       $ref: ./headers.yaml#/CacheControlNoStore
   content:
-    application/problem+json:
+    application/json:
       schema:
         allOf:
-          - $ref: ./schemas.yaml#/ProblemDetails
+          - $ref: ./schemas.yaml#/ErrorResponse
           - type: object
             properties:
               status:
@@ -629,12 +548,9 @@ AuthProblem400MultipleCredentials:
         multipleCredentials:
           summary: AUTH_MULTIPLE_CREDENTIALS
           value:
-            type: https://api.dropmong.example/problems/auth-multiple-credentials
-            title: 요청을 처리할 수 없습니다.
             status: 400
             code: AUTH_MULTIPLE_CREDENTIALS
-            detail: 요청 조건과 현재 인증 상태를 확인해주세요.
-            retryable: false
+            message: 요청 조건과 현재 인증 상태를 확인해주세요.
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
 
 AuthProblem401SessionRequiredOrSigninFailed:
@@ -645,10 +561,10 @@ AuthProblem401SessionRequiredOrSigninFailed:
     Cache-Control:
       $ref: ./headers.yaml#/CacheControlNoStore
   content:
-    application/problem+json:
+    application/json:
       schema:
         allOf:
-          - $ref: ./schemas.yaml#/ProblemDetails
+          - $ref: ./schemas.yaml#/ErrorResponse
           - type: object
             properties:
               status:
@@ -664,22 +580,16 @@ AuthProblem401SessionRequiredOrSigninFailed:
         sessionRequired:
           summary: AUTH_SESSION_REQUIRED
           value:
-            type: https://api.dropmong.example/problems/auth-session-required
-            title: 요청을 처리할 수 없습니다.
             status: 401
             code: AUTH_SESSION_REQUIRED
-            detail: 요청 조건과 현재 인증 상태를 확인해주세요.
-            retryable: false
+            message: 요청 조건과 현재 인증 상태를 확인해주세요.
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
         signinFailed:
           summary: AUTH_SIGNIN_FAILED
           value:
-            type: https://api.dropmong.example/problems/auth-signin-failed
-            title: 요청을 처리할 수 없습니다.
             status: 401
             code: AUTH_SIGNIN_FAILED
-            detail: 요청 조건과 현재 인증 상태를 확인해주세요.
-            retryable: false
+            message: 요청 조건과 현재 인증 상태를 확인해주세요.
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
 
 AuthProblem401SessionRevoked:
@@ -690,10 +600,10 @@ AuthProblem401SessionRevoked:
     Cache-Control:
       $ref: ./headers.yaml#/CacheControlNoStore
   content:
-    application/problem+json:
+    application/json:
       schema:
         allOf:
-          - $ref: ./schemas.yaml#/ProblemDetails
+          - $ref: ./schemas.yaml#/ErrorResponse
           - type: object
             properties:
               status:
@@ -708,12 +618,9 @@ AuthProblem401SessionRevoked:
         sessionRevoked:
           summary: AUTH_SESSION_REVOKED
           value:
-            type: https://api.dropmong.example/problems/auth-session-revoked
-            title: 요청을 처리할 수 없습니다.
             status: 401
             code: AUTH_SESSION_REVOKED
-            detail: 요청 조건과 현재 인증 상태를 확인해주세요.
-            retryable: false
+            message: 요청 조건과 현재 인증 상태를 확인해주세요.
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
 
 AuthProblem401SigninFailed:
@@ -724,10 +631,10 @@ AuthProblem401SigninFailed:
     Cache-Control:
       $ref: ./headers.yaml#/CacheControlNoStore
   content:
-    application/problem+json:
+    application/json:
       schema:
         allOf:
-          - $ref: ./schemas.yaml#/ProblemDetails
+          - $ref: ./schemas.yaml#/ErrorResponse
           - type: object
             properties:
               status:
@@ -742,12 +649,9 @@ AuthProblem401SigninFailed:
         signinFailed:
           summary: AUTH_SIGNIN_FAILED
           value:
-            type: https://api.dropmong.example/problems/auth-signin-failed
-            title: 요청을 처리할 수 없습니다.
             status: 401
             code: AUTH_SIGNIN_FAILED
-            detail: 요청 조건과 현재 인증 상태를 확인해주세요.
-            retryable: false
+            message: 요청 조건과 현재 인증 상태를 확인해주세요.
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
 
 AuthProblem403CsrfInvalid:
@@ -758,10 +662,10 @@ AuthProblem403CsrfInvalid:
     Cache-Control:
       $ref: ./headers.yaml#/CacheControlNoStore
   content:
-    application/problem+json:
+    application/json:
       schema:
         allOf:
-          - $ref: ./schemas.yaml#/ProblemDetails
+          - $ref: ./schemas.yaml#/ErrorResponse
           - type: object
             properties:
               status:
@@ -776,12 +680,9 @@ AuthProblem403CsrfInvalid:
         csrfInvalid:
           summary: AUTH_CSRF_INVALID
           value:
-            type: https://api.dropmong.example/problems/auth-csrf-invalid
-            title: 요청을 처리할 수 없습니다.
             status: 403
             code: AUTH_CSRF_INVALID
-            detail: 요청 조건과 현재 인증 상태를 확인해주세요.
-            retryable: false
+            message: 요청 조건과 현재 인증 상태를 확인해주세요.
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
 
 AuthProblem403CsrfInvalidOrForbidden:
@@ -792,10 +693,10 @@ AuthProblem403CsrfInvalidOrForbidden:
     Cache-Control:
       $ref: ./headers.yaml#/CacheControlNoStore
   content:
-    application/problem+json:
+    application/json:
       schema:
         allOf:
-          - $ref: ./schemas.yaml#/ProblemDetails
+          - $ref: ./schemas.yaml#/ErrorResponse
           - type: object
             properties:
               status:
@@ -811,22 +712,16 @@ AuthProblem403CsrfInvalidOrForbidden:
         csrfInvalid:
           summary: AUTH_CSRF_INVALID
           value:
-            type: https://api.dropmong.example/problems/auth-csrf-invalid
-            title: 요청을 처리할 수 없습니다.
             status: 403
             code: AUTH_CSRF_INVALID
-            detail: 요청 조건과 현재 인증 상태를 확인해주세요.
-            retryable: false
+            message: 요청 조건과 현재 인증 상태를 확인해주세요.
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
         forbidden:
           summary: AUTH_FORBIDDEN
           value:
-            type: https://api.dropmong.example/problems/auth-forbidden
-            title: 요청을 처리할 수 없습니다.
             status: 403
             code: AUTH_FORBIDDEN
-            detail: 요청 조건과 현재 인증 상태를 확인해주세요.
-            retryable: false
+            message: 요청 조건과 현재 인증 상태를 확인해주세요.
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
 
 AuthProblem403CsrfInvalidOrForbiddenOrReauthRequired:
@@ -837,10 +732,10 @@ AuthProblem403CsrfInvalidOrForbiddenOrReauthRequired:
     Cache-Control:
       $ref: ./headers.yaml#/CacheControlNoStore
   content:
-    application/problem+json:
+    application/json:
       schema:
         allOf:
-          - $ref: ./schemas.yaml#/ProblemDetails
+          - $ref: ./schemas.yaml#/ErrorResponse
           - type: object
             properties:
               status:
@@ -857,32 +752,23 @@ AuthProblem403CsrfInvalidOrForbiddenOrReauthRequired:
         csrfInvalid:
           summary: AUTH_CSRF_INVALID
           value:
-            type: https://api.dropmong.example/problems/auth-csrf-invalid
-            title: 요청을 처리할 수 없습니다.
             status: 403
             code: AUTH_CSRF_INVALID
-            detail: 요청 조건과 현재 인증 상태를 확인해주세요.
-            retryable: false
+            message: 요청 조건과 현재 인증 상태를 확인해주세요.
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
         forbidden:
           summary: AUTH_FORBIDDEN
           value:
-            type: https://api.dropmong.example/problems/auth-forbidden
-            title: 요청을 처리할 수 없습니다.
             status: 403
             code: AUTH_FORBIDDEN
-            detail: 요청 조건과 현재 인증 상태를 확인해주세요.
-            retryable: false
+            message: 요청 조건과 현재 인증 상태를 확인해주세요.
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
         reauthRequired:
           summary: AUTH_REAUTH_REQUIRED
           value:
-            type: https://api.dropmong.example/problems/auth-reauth-required
-            title: 요청을 처리할 수 없습니다.
             status: 403
             code: AUTH_REAUTH_REQUIRED
-            detail: 요청 조건과 현재 인증 상태를 확인해주세요.
-            retryable: false
+            message: 요청 조건과 현재 인증 상태를 확인해주세요.
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
 
 AuthProblem403CsrfInvalidOrPasswordResetRequiredOrUserRestricted:
@@ -893,10 +779,10 @@ AuthProblem403CsrfInvalidOrPasswordResetRequiredOrUserRestricted:
     Cache-Control:
       $ref: ./headers.yaml#/CacheControlNoStore
   content:
-    application/problem+json:
+    application/json:
       schema:
         allOf:
-          - $ref: ./schemas.yaml#/ProblemDetails
+          - $ref: ./schemas.yaml#/ErrorResponse
           - type: object
             properties:
               status:
@@ -913,32 +799,23 @@ AuthProblem403CsrfInvalidOrPasswordResetRequiredOrUserRestricted:
         csrfInvalid:
           summary: AUTH_CSRF_INVALID
           value:
-            type: https://api.dropmong.example/problems/auth-csrf-invalid
-            title: 요청을 처리할 수 없습니다.
             status: 403
             code: AUTH_CSRF_INVALID
-            detail: 요청 조건과 현재 인증 상태를 확인해주세요.
-            retryable: false
+            message: 요청 조건과 현재 인증 상태를 확인해주세요.
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
         passwordResetRequired:
           summary: AUTH_PASSWORD_RESET_REQUIRED
           value:
-            type: https://api.dropmong.example/problems/auth-password-reset-required
-            title: 요청을 처리할 수 없습니다.
             status: 403
             code: AUTH_PASSWORD_RESET_REQUIRED
-            detail: 요청 조건과 현재 인증 상태를 확인해주세요.
-            retryable: false
+            message: 요청 조건과 현재 인증 상태를 확인해주세요.
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
         userRestricted:
           summary: AUTH_USER_RESTRICTED
           value:
-            type: https://api.dropmong.example/problems/auth-user-restricted
-            title: 요청을 처리할 수 없습니다.
             status: 403
             code: AUTH_USER_RESTRICTED
-            detail: 요청 조건과 현재 인증 상태를 확인해주세요.
-            retryable: false
+            message: 요청 조건과 현재 인증 상태를 확인해주세요.
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
 
 AuthProblem403CsrfInvalidOrReauthRequired:
@@ -949,10 +826,10 @@ AuthProblem403CsrfInvalidOrReauthRequired:
     Cache-Control:
       $ref: ./headers.yaml#/CacheControlNoStore
   content:
-    application/problem+json:
+    application/json:
       schema:
         allOf:
-          - $ref: ./schemas.yaml#/ProblemDetails
+          - $ref: ./schemas.yaml#/ErrorResponse
           - type: object
             properties:
               status:
@@ -968,22 +845,16 @@ AuthProblem403CsrfInvalidOrReauthRequired:
         csrfInvalid:
           summary: AUTH_CSRF_INVALID
           value:
-            type: https://api.dropmong.example/problems/auth-csrf-invalid
-            title: 요청을 처리할 수 없습니다.
             status: 403
             code: AUTH_CSRF_INVALID
-            detail: 요청 조건과 현재 인증 상태를 확인해주세요.
-            retryable: false
+            message: 요청 조건과 현재 인증 상태를 확인해주세요.
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
         reauthRequired:
           summary: AUTH_REAUTH_REQUIRED
           value:
-            type: https://api.dropmong.example/problems/auth-reauth-required
-            title: 요청을 처리할 수 없습니다.
             status: 403
             code: AUTH_REAUTH_REQUIRED
-            detail: 요청 조건과 현재 인증 상태를 확인해주세요.
-            retryable: false
+            message: 요청 조건과 현재 인증 상태를 확인해주세요.
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
 
 AuthProblem403CsrfInvalidOrReauthRequiredOrUserRestricted:
@@ -994,10 +865,10 @@ AuthProblem403CsrfInvalidOrReauthRequiredOrUserRestricted:
     Cache-Control:
       $ref: ./headers.yaml#/CacheControlNoStore
   content:
-    application/problem+json:
+    application/json:
       schema:
         allOf:
-          - $ref: ./schemas.yaml#/ProblemDetails
+          - $ref: ./schemas.yaml#/ErrorResponse
           - type: object
             properties:
               status:
@@ -1014,32 +885,23 @@ AuthProblem403CsrfInvalidOrReauthRequiredOrUserRestricted:
         csrfInvalid:
           summary: AUTH_CSRF_INVALID
           value:
-            type: https://api.dropmong.example/problems/auth-csrf-invalid
-            title: 요청을 처리할 수 없습니다.
             status: 403
             code: AUTH_CSRF_INVALID
-            detail: 요청 조건과 현재 인증 상태를 확인해주세요.
-            retryable: false
+            message: 요청 조건과 현재 인증 상태를 확인해주세요.
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
         reauthRequired:
           summary: AUTH_REAUTH_REQUIRED
           value:
-            type: https://api.dropmong.example/problems/auth-reauth-required
-            title: 요청을 처리할 수 없습니다.
             status: 403
             code: AUTH_REAUTH_REQUIRED
-            detail: 요청 조건과 현재 인증 상태를 확인해주세요.
-            retryable: false
+            message: 요청 조건과 현재 인증 상태를 확인해주세요.
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
         userRestricted:
           summary: AUTH_USER_RESTRICTED
           value:
-            type: https://api.dropmong.example/problems/auth-user-restricted
-            title: 요청을 처리할 수 없습니다.
             status: 403
             code: AUTH_USER_RESTRICTED
-            detail: 요청 조건과 현재 인증 상태를 확인해주세요.
-            retryable: false
+            message: 요청 조건과 현재 인증 상태를 확인해주세요.
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
 
 AuthProblem403CsrfInvalidOrUserRestricted:
@@ -1050,10 +912,10 @@ AuthProblem403CsrfInvalidOrUserRestricted:
     Cache-Control:
       $ref: ./headers.yaml#/CacheControlNoStore
   content:
-    application/problem+json:
+    application/json:
       schema:
         allOf:
-          - $ref: ./schemas.yaml#/ProblemDetails
+          - $ref: ./schemas.yaml#/ErrorResponse
           - type: object
             properties:
               status:
@@ -1069,22 +931,16 @@ AuthProblem403CsrfInvalidOrUserRestricted:
         csrfInvalid:
           summary: AUTH_CSRF_INVALID
           value:
-            type: https://api.dropmong.example/problems/auth-csrf-invalid
-            title: 요청을 처리할 수 없습니다.
             status: 403
             code: AUTH_CSRF_INVALID
-            detail: 요청 조건과 현재 인증 상태를 확인해주세요.
-            retryable: false
+            message: 요청 조건과 현재 인증 상태를 확인해주세요.
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
         userRestricted:
           summary: AUTH_USER_RESTRICTED
           value:
-            type: https://api.dropmong.example/problems/auth-user-restricted
-            title: 요청을 처리할 수 없습니다.
             status: 403
             code: AUTH_USER_RESTRICTED
-            detail: 요청 조건과 현재 인증 상태를 확인해주세요.
-            retryable: false
+            message: 요청 조건과 현재 인증 상태를 확인해주세요.
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
 
 AuthProblem403UserRestricted:
@@ -1095,10 +951,10 @@ AuthProblem403UserRestricted:
     Cache-Control:
       $ref: ./headers.yaml#/CacheControlNoStore
   content:
-    application/problem+json:
+    application/json:
       schema:
         allOf:
-          - $ref: ./schemas.yaml#/ProblemDetails
+          - $ref: ./schemas.yaml#/ErrorResponse
           - type: object
             properties:
               status:
@@ -1113,12 +969,9 @@ AuthProblem403UserRestricted:
         userRestricted:
           summary: AUTH_USER_RESTRICTED
           value:
-            type: https://api.dropmong.example/problems/auth-user-restricted
-            title: 요청을 처리할 수 없습니다.
             status: 403
             code: AUTH_USER_RESTRICTED
-            detail: 요청 조건과 현재 인증 상태를 확인해주세요.
-            retryable: false
+            message: 요청 조건과 현재 인증 상태를 확인해주세요.
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
 
 AuthProblem404IdentityLinkNotFound:
@@ -1129,10 +982,10 @@ AuthProblem404IdentityLinkNotFound:
     Cache-Control:
       $ref: ./headers.yaml#/CacheControlNoStore
   content:
-    application/problem+json:
+    application/json:
       schema:
         allOf:
-          - $ref: ./schemas.yaml#/ProblemDetails
+          - $ref: ./schemas.yaml#/ErrorResponse
           - type: object
             properties:
               status:
@@ -1147,12 +1000,9 @@ AuthProblem404IdentityLinkNotFound:
         identityLinkNotFound:
           summary: AUTH_IDENTITY_LINK_NOT_FOUND
           value:
-            type: https://api.dropmong.example/problems/auth-identity-link-not-found
-            title: 요청을 처리할 수 없습니다.
             status: 404
             code: AUTH_IDENTITY_LINK_NOT_FOUND
-            detail: 요청 조건과 현재 인증 상태를 확인해주세요.
-            retryable: false
+            message: 요청 조건과 현재 인증 상태를 확인해주세요.
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
 
 AuthProblem404IntentNotFound:
@@ -1163,10 +1013,10 @@ AuthProblem404IntentNotFound:
     Cache-Control:
       $ref: ./headers.yaml#/CacheControlNoStore
   content:
-    application/problem+json:
+    application/json:
       schema:
         allOf:
-          - $ref: ./schemas.yaml#/ProblemDetails
+          - $ref: ./schemas.yaml#/ErrorResponse
           - type: object
             properties:
               status:
@@ -1181,12 +1031,9 @@ AuthProblem404IntentNotFound:
         intentNotFound:
           summary: AUTH_INTENT_NOT_FOUND
           value:
-            type: https://api.dropmong.example/problems/auth-intent-not-found
-            title: 요청을 처리할 수 없습니다.
             status: 404
             code: AUTH_INTENT_NOT_FOUND
-            detail: 요청 조건과 현재 인증 상태를 확인해주세요.
-            retryable: false
+            message: 요청 조건과 현재 인증 상태를 확인해주세요.
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
 
 AuthProblem404OperatorTargetNotFound:
@@ -1197,10 +1044,10 @@ AuthProblem404OperatorTargetNotFound:
     Cache-Control:
       $ref: ./headers.yaml#/CacheControlNoStore
   content:
-    application/problem+json:
+    application/json:
       schema:
         allOf:
-          - $ref: ./schemas.yaml#/ProblemDetails
+          - $ref: ./schemas.yaml#/ErrorResponse
           - type: object
             properties:
               status:
@@ -1215,12 +1062,9 @@ AuthProblem404OperatorTargetNotFound:
         operatorTargetNotFound:
           summary: AUTH_OPERATOR_TARGET_NOT_FOUND
           value:
-            type: https://api.dropmong.example/problems/auth-operator-target-not-found
-            title: 요청을 처리할 수 없습니다.
             status: 404
             code: AUTH_OPERATOR_TARGET_NOT_FOUND
-            detail: 요청 조건과 현재 인증 상태를 확인해주세요.
-            retryable: false
+            message: 요청 조건과 현재 인증 상태를 확인해주세요.
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
 
 AuthProblem409ApprovalRequiredOrIdempotencyConflict:
@@ -1231,10 +1075,10 @@ AuthProblem409ApprovalRequiredOrIdempotencyConflict:
     Cache-Control:
       $ref: ./headers.yaml#/CacheControlNoStore
   content:
-    application/problem+json:
+    application/json:
       schema:
         allOf:
-          - $ref: ./schemas.yaml#/ProblemDetails
+          - $ref: ./schemas.yaml#/ErrorResponse
           - type: object
             properties:
               status:
@@ -1250,22 +1094,16 @@ AuthProblem409ApprovalRequiredOrIdempotencyConflict:
         approvalRequired:
           summary: AUTH_APPROVAL_REQUIRED
           value:
-            type: https://api.dropmong.example/problems/auth-approval-required
-            title: 요청을 처리할 수 없습니다.
             status: 409
             code: AUTH_APPROVAL_REQUIRED
-            detail: 요청 조건과 현재 인증 상태를 확인해주세요.
-            retryable: false
+            message: 요청 조건과 현재 인증 상태를 확인해주세요.
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
         idempotencyConflict:
           summary: AUTH_IDEMPOTENCY_CONFLICT
           value:
-            type: https://api.dropmong.example/problems/auth-idempotency-conflict
-            title: 요청을 처리할 수 없습니다.
             status: 409
             code: AUTH_IDEMPOTENCY_CONFLICT
-            detail: 요청 조건과 현재 인증 상태를 확인해주세요.
-            retryable: false
+            message: 요청 조건과 현재 인증 상태를 확인해주세요.
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
 
 AuthProblem409IdempotencyConflictOrIdentifierUnavailable:
@@ -1276,10 +1114,10 @@ AuthProblem409IdempotencyConflictOrIdentifierUnavailable:
     Cache-Control:
       $ref: ./headers.yaml#/CacheControlNoStore
   content:
-    application/problem+json:
+    application/json:
       schema:
         allOf:
-          - $ref: ./schemas.yaml#/ProblemDetails
+          - $ref: ./schemas.yaml#/ErrorResponse
           - type: object
             properties:
               status:
@@ -1295,22 +1133,16 @@ AuthProblem409IdempotencyConflictOrIdentifierUnavailable:
         idempotencyConflict:
           summary: AUTH_IDEMPOTENCY_CONFLICT
           value:
-            type: https://api.dropmong.example/problems/auth-idempotency-conflict
-            title: 요청을 처리할 수 없습니다.
             status: 409
             code: AUTH_IDEMPOTENCY_CONFLICT
-            detail: 요청 조건과 현재 인증 상태를 확인해주세요.
-            retryable: false
+            message: 요청 조건과 현재 인증 상태를 확인해주세요.
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
         identifierUnavailable:
           summary: AUTH_IDENTIFIER_UNAVAILABLE
           value:
-            type: https://api.dropmong.example/problems/auth-identifier-unavailable
-            title: 요청을 처리할 수 없습니다.
             status: 409
             code: AUTH_IDENTIFIER_UNAVAILABLE
-            detail: 요청 조건과 현재 인증 상태를 확인해주세요.
-            retryable: false
+            message: 요청 조건과 현재 인증 상태를 확인해주세요.
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
 
 AuthProblem409IdempotencyConflictOrIdentityLinkConflict:
@@ -1321,10 +1153,10 @@ AuthProblem409IdempotencyConflictOrIdentityLinkConflict:
     Cache-Control:
       $ref: ./headers.yaml#/CacheControlNoStore
   content:
-    application/problem+json:
+    application/json:
       schema:
         allOf:
-          - $ref: ./schemas.yaml#/ProblemDetails
+          - $ref: ./schemas.yaml#/ErrorResponse
           - type: object
             properties:
               status:
@@ -1340,22 +1172,16 @@ AuthProblem409IdempotencyConflictOrIdentityLinkConflict:
         idempotencyConflict:
           summary: AUTH_IDEMPOTENCY_CONFLICT
           value:
-            type: https://api.dropmong.example/problems/auth-idempotency-conflict
-            title: 요청을 처리할 수 없습니다.
             status: 409
             code: AUTH_IDEMPOTENCY_CONFLICT
-            detail: 요청 조건과 현재 인증 상태를 확인해주세요.
-            retryable: false
+            message: 요청 조건과 현재 인증 상태를 확인해주세요.
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
         identityLinkConflict:
           summary: AUTH_IDENTITY_LINK_CONFLICT
           value:
-            type: https://api.dropmong.example/problems/auth-identity-link-conflict
-            title: 요청을 처리할 수 없습니다.
             status: 409
             code: AUTH_IDENTITY_LINK_CONFLICT
-            detail: 요청 조건과 현재 인증 상태를 확인해주세요.
-            retryable: false
+            message: 요청 조건과 현재 인증 상태를 확인해주세요.
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
 
 AuthProblem409IdempotencyConflictOrMethodUnavailable:
@@ -1366,10 +1192,10 @@ AuthProblem409IdempotencyConflictOrMethodUnavailable:
     Cache-Control:
       $ref: ./headers.yaml#/CacheControlNoStore
   content:
-    application/problem+json:
+    application/json:
       schema:
         allOf:
-          - $ref: ./schemas.yaml#/ProblemDetails
+          - $ref: ./schemas.yaml#/ErrorResponse
           - type: object
             properties:
               status:
@@ -1385,22 +1211,16 @@ AuthProblem409IdempotencyConflictOrMethodUnavailable:
         idempotencyConflict:
           summary: AUTH_IDEMPOTENCY_CONFLICT
           value:
-            type: https://api.dropmong.example/problems/auth-idempotency-conflict
-            title: 요청을 처리할 수 없습니다.
             status: 409
             code: AUTH_IDEMPOTENCY_CONFLICT
-            detail: 요청 조건과 현재 인증 상태를 확인해주세요.
-            retryable: false
+            message: 요청 조건과 현재 인증 상태를 확인해주세요.
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
         methodUnavailable:
           summary: AUTH_METHOD_UNAVAILABLE
           value:
-            type: https://api.dropmong.example/problems/auth-method-unavailable
-            title: 요청을 처리할 수 없습니다.
             status: 409
             code: AUTH_METHOD_UNAVAILABLE
-            detail: 요청 조건과 현재 인증 상태를 확인해주세요.
-            retryable: false
+            message: 요청 조건과 현재 인증 상태를 확인해주세요.
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
 
 AuthProblem409IdempotencyConflictOrPhoneIdentityNotLinked:
@@ -1411,10 +1231,10 @@ AuthProblem409IdempotencyConflictOrPhoneIdentityNotLinked:
     Cache-Control:
       $ref: ./headers.yaml#/CacheControlNoStore
   content:
-    application/problem+json:
+    application/json:
       schema:
         allOf:
-          - $ref: ./schemas.yaml#/ProblemDetails
+          - $ref: ./schemas.yaml#/ErrorResponse
           - type: object
             properties:
               status:
@@ -1430,22 +1250,16 @@ AuthProblem409IdempotencyConflictOrPhoneIdentityNotLinked:
         idempotencyConflict:
           summary: AUTH_IDEMPOTENCY_CONFLICT
           value:
-            type: https://api.dropmong.example/problems/auth-idempotency-conflict
-            title: 요청을 처리할 수 없습니다.
             status: 409
             code: AUTH_IDEMPOTENCY_CONFLICT
-            detail: 요청 조건과 현재 인증 상태를 확인해주세요.
-            retryable: false
+            message: 요청 조건과 현재 인증 상태를 확인해주세요.
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
         phoneIdentityNotLinked:
           summary: AUTH_PHONE_IDENTITY_NOT_LINKED
           value:
-            type: https://api.dropmong.example/problems/auth-phone-identity-not-linked
-            title: 요청을 처리할 수 없습니다.
             status: 409
             code: AUTH_PHONE_IDENTITY_NOT_LINKED
-            detail: 요청 조건과 현재 인증 상태를 확인해주세요.
-            retryable: false
+            message: 요청 조건과 현재 인증 상태를 확인해주세요.
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
 
 AuthProblem409IdempotencyConflictOrVerificationRequired:
@@ -1456,10 +1270,10 @@ AuthProblem409IdempotencyConflictOrVerificationRequired:
     Cache-Control:
       $ref: ./headers.yaml#/CacheControlNoStore
   content:
-    application/problem+json:
+    application/json:
       schema:
         allOf:
-          - $ref: ./schemas.yaml#/ProblemDetails
+          - $ref: ./schemas.yaml#/ErrorResponse
           - type: object
             properties:
               status:
@@ -1475,22 +1289,16 @@ AuthProblem409IdempotencyConflictOrVerificationRequired:
         idempotencyConflict:
           summary: AUTH_IDEMPOTENCY_CONFLICT
           value:
-            type: https://api.dropmong.example/problems/auth-idempotency-conflict
-            title: 요청을 처리할 수 없습니다.
             status: 409
             code: AUTH_IDEMPOTENCY_CONFLICT
-            detail: 요청 조건과 현재 인증 상태를 확인해주세요.
-            retryable: false
+            message: 요청 조건과 현재 인증 상태를 확인해주세요.
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
         verificationRequired:
           summary: AUTH_VERIFICATION_REQUIRED
           value:
-            type: https://api.dropmong.example/problems/auth-verification-required
-            title: 요청을 처리할 수 없습니다.
             status: 409
             code: AUTH_VERIFICATION_REQUIRED
-            detail: 요청 조건과 현재 인증 상태를 확인해주세요.
-            retryable: false
+            message: 요청 조건과 현재 인증 상태를 확인해주세요.
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
 
 AuthProblem409MethodUnavailable:
@@ -1501,10 +1309,10 @@ AuthProblem409MethodUnavailable:
     Cache-Control:
       $ref: ./headers.yaml#/CacheControlNoStore
   content:
-    application/problem+json:
+    application/json:
       schema:
         allOf:
-          - $ref: ./schemas.yaml#/ProblemDetails
+          - $ref: ./schemas.yaml#/ErrorResponse
           - type: object
             properties:
               status:
@@ -1519,12 +1327,9 @@ AuthProblem409MethodUnavailable:
         methodUnavailable:
           summary: AUTH_METHOD_UNAVAILABLE
           value:
-            type: https://api.dropmong.example/problems/auth-method-unavailable
-            title: 요청을 처리할 수 없습니다.
             status: 409
             code: AUTH_METHOD_UNAVAILABLE
-            detail: 요청 조건과 현재 인증 상태를 확인해주세요.
-            retryable: false
+            message: 요청 조건과 현재 인증 상태를 확인해주세요.
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
 
 AuthProblem410ChallengeExpired:
@@ -1535,10 +1340,10 @@ AuthProblem410ChallengeExpired:
     Cache-Control:
       $ref: ./headers.yaml#/CacheControlNoStore
   content:
-    application/problem+json:
+    application/json:
       schema:
         allOf:
-          - $ref: ./schemas.yaml#/ProblemDetails
+          - $ref: ./schemas.yaml#/ErrorResponse
           - type: object
             properties:
               status:
@@ -1553,12 +1358,9 @@ AuthProblem410ChallengeExpired:
         challengeExpired:
           summary: AUTH_CHALLENGE_EXPIRED
           value:
-            type: https://api.dropmong.example/problems/auth-challenge-expired
-            title: 요청을 처리할 수 없습니다.
             status: 410
             code: AUTH_CHALLENGE_EXPIRED
-            detail: 요청 조건과 현재 인증 상태를 확인해주세요.
-            retryable: false
+            message: 요청 조건과 현재 인증 상태를 확인해주세요.
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
 
 AuthProblem410ChallengeExpiredOrIdentityLinkIntentExpired:
@@ -1569,10 +1371,10 @@ AuthProblem410ChallengeExpiredOrIdentityLinkIntentExpired:
     Cache-Control:
       $ref: ./headers.yaml#/CacheControlNoStore
   content:
-    application/problem+json:
+    application/json:
       schema:
         allOf:
-          - $ref: ./schemas.yaml#/ProblemDetails
+          - $ref: ./schemas.yaml#/ErrorResponse
           - type: object
             properties:
               status:
@@ -1588,22 +1390,16 @@ AuthProblem410ChallengeExpiredOrIdentityLinkIntentExpired:
         challengeExpired:
           summary: AUTH_CHALLENGE_EXPIRED
           value:
-            type: https://api.dropmong.example/problems/auth-challenge-expired
-            title: 요청을 처리할 수 없습니다.
             status: 410
             code: AUTH_CHALLENGE_EXPIRED
-            detail: 요청 조건과 현재 인증 상태를 확인해주세요.
-            retryable: false
+            message: 요청 조건과 현재 인증 상태를 확인해주세요.
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
         identityLinkIntentExpired:
           summary: AUTH_IDENTITY_LINK_INTENT_EXPIRED
           value:
-            type: https://api.dropmong.example/problems/auth-identity-link-intent-expired
-            title: 요청을 처리할 수 없습니다.
             status: 410
             code: AUTH_IDENTITY_LINK_INTENT_EXPIRED
-            detail: 요청 조건과 현재 인증 상태를 확인해주세요.
-            retryable: false
+            message: 요청 조건과 현재 인증 상태를 확인해주세요.
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
 
 AuthProblem410IdentityLinkIntentExpired:
@@ -1614,10 +1410,10 @@ AuthProblem410IdentityLinkIntentExpired:
     Cache-Control:
       $ref: ./headers.yaml#/CacheControlNoStore
   content:
-    application/problem+json:
+    application/json:
       schema:
         allOf:
-          - $ref: ./schemas.yaml#/ProblemDetails
+          - $ref: ./schemas.yaml#/ErrorResponse
           - type: object
             properties:
               status:
@@ -1632,12 +1428,9 @@ AuthProblem410IdentityLinkIntentExpired:
         identityLinkIntentExpired:
           summary: AUTH_IDENTITY_LINK_INTENT_EXPIRED
           value:
-            type: https://api.dropmong.example/problems/auth-identity-link-intent-expired
-            title: 요청을 처리할 수 없습니다.
             status: 410
             code: AUTH_IDENTITY_LINK_INTENT_EXPIRED
-            detail: 요청 조건과 현재 인증 상태를 확인해주세요.
-            retryable: false
+            message: 요청 조건과 현재 인증 상태를 확인해주세요.
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
 
 AuthProblem410PasswordResetGrantExpired:
@@ -1648,10 +1441,10 @@ AuthProblem410PasswordResetGrantExpired:
     Cache-Control:
       $ref: ./headers.yaml#/CacheControlNoStore
   content:
-    application/problem+json:
+    application/json:
       schema:
         allOf:
-          - $ref: ./schemas.yaml#/ProblemDetails
+          - $ref: ./schemas.yaml#/ErrorResponse
           - type: object
             properties:
               status:
@@ -1666,12 +1459,9 @@ AuthProblem410PasswordResetGrantExpired:
         passwordResetGrantExpired:
           summary: AUTH_PASSWORD_RESET_GRANT_EXPIRED
           value:
-            type: https://api.dropmong.example/problems/auth-password-reset-grant-expired
-            title: 요청을 처리할 수 없습니다.
             status: 410
             code: AUTH_PASSWORD_RESET_GRANT_EXPIRED
-            detail: 요청 조건과 현재 인증 상태를 확인해주세요.
-            retryable: false
+            message: 요청 조건과 현재 인증 상태를 확인해주세요.
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
 
 AuthProblem410ReauthenticationProofInvalid:
@@ -1682,10 +1472,10 @@ AuthProblem410ReauthenticationProofInvalid:
     Cache-Control:
       $ref: ./headers.yaml#/CacheControlNoStore
   content:
-    application/problem+json:
+    application/json:
       schema:
         allOf:
-          - $ref: ./schemas.yaml#/ProblemDetails
+          - $ref: ./schemas.yaml#/ErrorResponse
           - type: object
             properties:
               status:
@@ -1700,12 +1490,9 @@ AuthProblem410ReauthenticationProofInvalid:
         reauthenticationProofInvalid:
           summary: AUTH_REAUTHENTICATION_PROOF_INVALID
           value:
-            type: https://api.dropmong.example/problems/auth-reauthentication-proof-invalid
-            title: 요청을 처리할 수 없습니다.
             status: 410
             code: AUTH_REAUTHENTICATION_PROOF_INVALID
-            detail: 요청 조건과 현재 인증 상태를 확인해주세요.
-            retryable: false
+            message: 요청 조건과 현재 인증 상태를 확인해주세요.
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
 
 AuthProblem410RefreshRetryExpired:
@@ -1716,10 +1503,10 @@ AuthProblem410RefreshRetryExpired:
     Cache-Control:
       $ref: ./headers.yaml#/CacheControlNoStore
   content:
-    application/problem+json:
+    application/json:
       schema:
         allOf:
-          - $ref: ./schemas.yaml#/ProblemDetails
+          - $ref: ./schemas.yaml#/ErrorResponse
           - type: object
             properties:
               status:
@@ -1734,12 +1521,9 @@ AuthProblem410RefreshRetryExpired:
         refreshRetryExpired:
           summary: AUTH_REFRESH_RETRY_EXPIRED
           value:
-            type: https://api.dropmong.example/problems/auth-refresh-retry-expired
-            title: 요청을 처리할 수 없습니다.
             status: 410
             code: AUTH_REFRESH_RETRY_EXPIRED
-            detail: 요청 조건과 현재 인증 상태를 확인해주세요.
-            retryable: false
+            message: 요청 조건과 현재 인증 상태를 확인해주세요.
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
 
 AuthProblem410RegistrationExpired:
@@ -1750,10 +1534,10 @@ AuthProblem410RegistrationExpired:
     Cache-Control:
       $ref: ./headers.yaml#/CacheControlNoStore
   content:
-    application/problem+json:
+    application/json:
       schema:
         allOf:
-          - $ref: ./schemas.yaml#/ProblemDetails
+          - $ref: ./schemas.yaml#/ErrorResponse
           - type: object
             properties:
               status:
@@ -1768,12 +1552,9 @@ AuthProblem410RegistrationExpired:
         registrationExpired:
           summary: AUTH_REGISTRATION_EXPIRED
           value:
-            type: https://api.dropmong.example/problems/auth-registration-expired
-            title: 요청을 처리할 수 없습니다.
             status: 410
             code: AUTH_REGISTRATION_EXPIRED
-            detail: 요청 조건과 현재 인증 상태를 확인해주세요.
-            retryable: false
+            message: 요청 조건과 현재 인증 상태를 확인해주세요.
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
 
 AuthProblem410SessionDeliveryExpiredOrRegistrationExpired:
@@ -1784,10 +1565,10 @@ AuthProblem410SessionDeliveryExpiredOrRegistrationExpired:
     Cache-Control:
       $ref: ./headers.yaml#/CacheControlNoStore
   content:
-    application/problem+json:
+    application/json:
       schema:
         allOf:
-          - $ref: ./schemas.yaml#/ProblemDetails
+          - $ref: ./schemas.yaml#/ErrorResponse
           - type: object
             properties:
               status:
@@ -1803,22 +1584,16 @@ AuthProblem410SessionDeliveryExpiredOrRegistrationExpired:
         sessionDeliveryExpired:
           summary: AUTH_SESSION_DELIVERY_EXPIRED
           value:
-            type: https://api.dropmong.example/problems/auth-session-delivery-expired
-            title: 요청을 처리할 수 없습니다.
             status: 410
             code: AUTH_SESSION_DELIVERY_EXPIRED
-            detail: 요청 조건과 현재 인증 상태를 확인해주세요.
-            retryable: false
+            message: 요청 조건과 현재 인증 상태를 확인해주세요.
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
         registrationExpired:
           summary: AUTH_REGISTRATION_EXPIRED
           value:
-            type: https://api.dropmong.example/problems/auth-registration-expired
-            title: 요청을 처리할 수 없습니다.
             status: 410
             code: AUTH_REGISTRATION_EXPIRED
-            detail: 요청 조건과 현재 인증 상태를 확인해주세요.
-            retryable: false
+            message: 요청 조건과 현재 인증 상태를 확인해주세요.
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
 
 AuthProblem412ResourcePreconditionFailed:
@@ -1829,10 +1604,10 @@ AuthProblem412ResourcePreconditionFailed:
     Cache-Control:
       $ref: ./headers.yaml#/CacheControlNoStore
   content:
-    application/problem+json:
+    application/json:
       schema:
         allOf:
-          - $ref: ./schemas.yaml#/ProblemDetails
+          - $ref: ./schemas.yaml#/ErrorResponse
           - type: object
             properties:
               status:
@@ -1847,12 +1622,9 @@ AuthProblem412ResourcePreconditionFailed:
         resourcePreconditionFailed:
           summary: AUTH_RESOURCE_PRECONDITION_FAILED
           value:
-            type: https://api.dropmong.example/problems/auth-resource-precondition-failed
-            title: 요청을 처리할 수 없습니다.
             status: 412
             code: AUTH_RESOURCE_PRECONDITION_FAILED
-            detail: 요청 조건과 현재 인증 상태를 확인해주세요.
-            retryable: false
+            message: 요청 조건과 현재 인증 상태를 확인해주세요.
             requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
 
 AuthenticationRequired:
@@ -1863,10 +1635,10 @@ AuthenticationRequired:
     Cache-Control:
       $ref: ./headers.yaml#/CacheControlNoStore
   content:
-    application/problem+json:
+    application/json:
       schema:
         allOf:
-          - $ref: ./schemas.yaml#/ProblemDetails
+          - $ref: ./schemas.yaml#/ErrorResponse
           - type: object
             properties:
               status:
@@ -1878,12 +1650,9 @@ AuthenticationRequired:
                 enum:
                   - AUTH_SESSION_REQUIRED
       example:
-        type: https://api.dropmong.example/problems/auth-session-required
-        title: 로그인이 필요합니다.
         status: 401
         code: AUTH_SESSION_REQUIRED
-        detail: 로그인한 뒤 다시 시도해주세요.
-        retryable: false
+        message: 로그인한 뒤 다시 시도해주세요.
         requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
 
 Forbidden:
@@ -1894,10 +1663,10 @@ Forbidden:
     Cache-Control:
       $ref: ./headers.yaml#/CacheControlNoStore
   content:
-    application/problem+json:
+    application/json:
       schema:
         allOf:
-          - $ref: ./schemas.yaml#/ProblemDetails
+          - $ref: ./schemas.yaml#/ErrorResponse
           - type: object
             properties:
               status:
@@ -1909,12 +1678,9 @@ Forbidden:
                 enum:
                   - AUTH_FORBIDDEN
       example:
-        type: https://api.dropmong.example/problems/auth-forbidden
-        title: 이 요청을 처리할 수 없습니다.
         status: 403
         code: AUTH_FORBIDDEN
-        detail: 인증 상태와 요청 권한을 확인해주세요.
-        retryable: false
+        message: 인증 상태와 요청 권한을 확인해주세요.
         requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
 
 NotFound:
@@ -1925,10 +1691,10 @@ NotFound:
     Cache-Control:
       $ref: ./headers.yaml#/CacheControlNoStore
   content:
-    application/problem+json:
+    application/json:
       schema:
         allOf:
-          - $ref: ./schemas.yaml#/ProblemDetails
+          - $ref: ./schemas.yaml#/ErrorResponse
           - type: object
             properties:
               status:
@@ -1940,12 +1706,9 @@ NotFound:
                 enum:
                   - AUTH_REGISTRATION_NOT_FOUND
       example:
-        type: https://api.dropmong.example/problems/auth-registration-not-found
-        title: 인증 요청을 찾을 수 없습니다.
         status: 404
         code: AUTH_REGISTRATION_NOT_FOUND
-        detail: 요청과 현재 인증 컨텍스트를 확인해주세요.
-        retryable: false
+        message: 요청과 현재 인증 컨텍스트를 확인해주세요.
         requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
 
 Conflict:
@@ -1956,10 +1719,10 @@ Conflict:
     Cache-Control:
       $ref: ./headers.yaml#/CacheControlNoStore
   content:
-    application/problem+json:
+    application/json:
       schema:
         allOf:
-          - $ref: ./schemas.yaml#/ProblemDetails
+          - $ref: ./schemas.yaml#/ErrorResponse
           - type: object
             properties:
               status:
@@ -1971,12 +1734,9 @@ Conflict:
                 enum:
                   - AUTH_IDEMPOTENCY_CONFLICT
       example:
-        type: https://api.dropmong.example/problems/auth-idempotency-conflict
-        title: 같은 요청을 이어 갈 수 없습니다.
         status: 409
         code: AUTH_IDEMPOTENCY_CONFLICT
-        detail: 원래 요청의 key를 재사용하거나 새 의도에는 새 key를 사용해주세요.
-        retryable: false
+        message: 원래 요청의 key를 재사용하거나 새 의도에는 새 key를 사용해주세요.
         requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
 
 Gone:
@@ -1987,10 +1747,10 @@ Gone:
     Cache-Control:
       $ref: ./headers.yaml#/CacheControlNoStore
   content:
-    application/problem+json:
+    application/json:
       schema:
         allOf:
-          - $ref: ./schemas.yaml#/ProblemDetails
+          - $ref: ./schemas.yaml#/ErrorResponse
           - type: object
             properties:
               status:
@@ -2002,12 +1762,9 @@ Gone:
                 enum:
                   - AUTH_INTENT_EXPIRED
       example:
-        type: https://api.dropmong.example/problems/auth-intent-expired
-        title: 인증 요청 시간이 만료되었습니다.
         status: 410
         code: AUTH_INTENT_EXPIRED
-        detail: 인증을 처음부터 다시 진행해주세요.
-        retryable: false
+        message: 인증을 처음부터 다시 진행해주세요.
         requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
 
 PreconditionFailed:
@@ -2018,10 +1775,10 @@ PreconditionFailed:
     Cache-Control:
       $ref: ./headers.yaml#/CacheControlNoStore
   content:
-    application/problem+json:
+    application/json:
       schema:
         allOf:
-          - $ref: ./schemas.yaml#/ProblemDetails
+          - $ref: ./schemas.yaml#/ErrorResponse
           - type: object
             properties:
               status:
@@ -2033,12 +1790,9 @@ PreconditionFailed:
                 enum:
                   - AUTH_POLICY_PRECONDITION_FAILED
       example:
-        type: https://api.dropmong.example/problems/auth-policy-precondition-failed
-        title: 인증 정책이 이미 변경되었습니다.
         status: 412
         code: AUTH_POLICY_PRECONDITION_FAILED
-        detail: 최신 상태를 다시 조회한 뒤 요청해주세요.
-        retryable: false
+        message: 최신 상태를 다시 조회한 뒤 요청해주세요.
         requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
 
 UnprocessableEntity:
@@ -2049,10 +1803,10 @@ UnprocessableEntity:
     Cache-Control:
       $ref: ./headers.yaml#/CacheControlNoStore
   content:
-    application/problem+json:
+    application/json:
       schema:
         allOf:
-          - $ref: ./schemas.yaml#/ProblemDetails
+          - $ref: ./schemas.yaml#/ErrorResponse
           - type: object
             properties:
               status:
@@ -2064,12 +1818,9 @@ UnprocessableEntity:
                 enum:
                   - AUTH_PASSWORD_POLICY_NOT_MET
       example:
-        type: https://api.dropmong.example/problems/auth-password-policy-not-met
-        title: 새 비밀번호가 보안 정책을 만족하지 않습니다.
         status: 422
         code: AUTH_PASSWORD_POLICY_NOT_MET
-        detail: 안내된 비밀번호 조건을 확인해주세요.
-        retryable: false
+        message: 안내된 비밀번호 조건을 확인해주세요.
         requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
 
 Locked:
@@ -2080,10 +1831,10 @@ Locked:
     Cache-Control:
       $ref: ./headers.yaml#/CacheControlNoStore
   content:
-    application/problem+json:
+    application/json:
       schema:
         allOf:
-          - $ref: ./schemas.yaml#/ProblemDetails
+          - $ref: ./schemas.yaml#/ErrorResponse
           - type: object
             properties:
               status:
@@ -2095,12 +1846,9 @@ Locked:
                 enum:
                   - AUTH_ACCOUNT_LOCKED
       example:
-        type: https://api.dropmong.example/problems/auth-account-locked
-        title: 잠시 동안 로그인할 수 없습니다.
         status: 423
         code: AUTH_ACCOUNT_LOCKED
-        detail: 잠시 뒤 다시 시도하거나 비밀번호 재설정을 진행해주세요.
-        retryable: true
+        message: 잠시 뒤 다시 시도하거나 비밀번호 재설정을 진행해주세요.
         requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
 
 RateLimited:
@@ -2113,10 +1861,10 @@ RateLimited:
     Retry-After:
       $ref: ./headers.yaml#/RetryAfter
   content:
-    application/problem+json:
+    application/json:
       schema:
         allOf:
-          - $ref: ./schemas.yaml#/ProblemDetails
+          - $ref: ./schemas.yaml#/ErrorResponse
           - type: object
             properties:
               status:
@@ -2128,12 +1876,9 @@ RateLimited:
                 enum:
                   - AUTH_RATE_LIMITED
       example:
-        type: https://api.dropmong.example/problems/auth-rate-limited
-        title: 요청이 너무 많습니다.
         status: 429
         code: AUTH_RATE_LIMITED
-        detail: 잠시 뒤 다시 시도해주세요.
-        retryable: true
+        message: 잠시 뒤 다시 시도해주세요.
         requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
 
 VirtualMessageNotFound:
@@ -2144,10 +1889,10 @@ VirtualMessageNotFound:
     Cache-Control:
       $ref: ./headers.yaml#/CacheControlNoStore
   content:
-    application/problem+json:
+    application/json:
       schema:
         allOf:
-          - $ref: ./schemas.yaml#/ProblemDetails
+          - $ref: ./schemas.yaml#/ErrorResponse
           - type: object
             properties:
               status:
@@ -2159,12 +1904,9 @@ VirtualMessageNotFound:
                 enum:
                   - AUTH_VIRTUAL_MESSAGE_NOT_FOUND
       example:
-        type: https://api.dropmong.example/problems/auth-virtual-message-not-found
-        title: 인증 메시지를 조회할 수 없습니다.
         status: 404
         code: AUTH_VIRTUAL_MESSAGE_NOT_FOUND
-        detail: 인증 요청과 현재 인증 컨텍스트를 확인해주세요.
-        retryable: false
+        message: 인증 요청과 현재 인증 컨텍스트를 확인해주세요.
         requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
 
 VirtualMessageUnavailable:
@@ -2175,10 +1917,10 @@ VirtualMessageUnavailable:
     Cache-Control:
       $ref: ./headers.yaml#/CacheControlNoStore
   content:
-    application/problem+json:
+    application/json:
       schema:
         allOf:
-          - $ref: ./schemas.yaml#/ProblemDetails
+          - $ref: ./schemas.yaml#/ErrorResponse
           - type: object
             properties:
               status:
@@ -2190,12 +1932,9 @@ VirtualMessageUnavailable:
                 enum:
                   - AUTH_VIRTUAL_MESSAGE_UNAVAILABLE
       example:
-        type: https://api.dropmong.example/problems/auth-virtual-message-unavailable
-        title: 인증 메시지를 더 이상 조회할 수 없습니다.
         status: 410
         code: AUTH_VIRTUAL_MESSAGE_UNAVAILABLE
-        detail: 새 인증번호를 요청해주세요.
-        retryable: false
+        message: 새 인증번호를 요청해주세요.
         requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
 
 VirtualMessageRateLimited:
@@ -2208,10 +1947,10 @@ VirtualMessageRateLimited:
     Retry-After:
       $ref: ./headers.yaml#/RetryAfter
   content:
-    application/problem+json:
+    application/json:
       schema:
         allOf:
-          - $ref: ./schemas.yaml#/ProblemDetails
+          - $ref: ./schemas.yaml#/ErrorResponse
           - type: object
             properties:
               status:
@@ -2223,12 +1962,9 @@ VirtualMessageRateLimited:
                 enum:
                   - AUTH_RATE_LIMITED
       example:
-        type: https://api.dropmong.example/problems/auth-rate-limited
-        title: 요청이 너무 많습니다.
         status: 429
         code: AUTH_RATE_LIMITED
-        detail: 잠시 뒤 다시 시도해주세요.
-        retryable: true
+        message: 잠시 뒤 다시 시도해주세요.
         requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
 
 VirtualMessageServiceUnavailable:
@@ -2241,10 +1977,10 @@ VirtualMessageServiceUnavailable:
     Retry-After:
       $ref: ./headers.yaml#/RetryAfter
   content:
-    application/problem+json:
+    application/json:
       schema:
         allOf:
-          - $ref: ./schemas.yaml#/ProblemDetails
+          - $ref: ./schemas.yaml#/ErrorResponse
           - type: object
             properties:
               status:
@@ -2256,10 +1992,91 @@ VirtualMessageServiceUnavailable:
                 enum:
                   - AUTH_SERVICE_UNAVAILABLE
       example:
-        type: https://api.dropmong.example/problems/auth-service-unavailable
-        title: 인증 서비스를 일시적으로 사용할 수 없습니다.
         status: 503
         code: AUTH_SERVICE_UNAVAILABLE
-        detail: 잠시 뒤 다시 시도해주세요.
-        retryable: true
+        message: 잠시 뒤 다시 시도해주세요.
         requestId: 30d9fa85-0a18-4263-98b6-231dca5a6fb8
+
+AuthProblem401SessionRequiredOrRevoked:
+  description: access JWT 또는 그 JWT가 가리키는 active Session을 확인할 수 없다.
+  headers:
+    X-Request-Id:
+      $ref: ./headers.yaml#/XRequestId
+    Cache-Control:
+      $ref: ./headers.yaml#/CacheControlNoStore
+  content:
+    application/json:
+      schema:
+        allOf:
+          - $ref: ./schemas.yaml#/ErrorResponse
+          - type: object
+            properties:
+              status:
+                type: integer
+                enum: [401]
+              code:
+                type: string
+                enum: [AUTH_SESSION_REQUIRED, AUTH_SESSION_REVOKED]
+
+AuthProblem403ReauthRequired:
+  description: 목적에 맞는 최근 재인증이 필요하다.
+  headers:
+    X-Request-Id:
+      $ref: ./headers.yaml#/XRequestId
+    Cache-Control:
+      $ref: ./headers.yaml#/CacheControlNoStore
+  content:
+    application/json:
+      schema:
+        allOf:
+          - $ref: ./schemas.yaml#/ErrorResponse
+          - type: object
+            properties:
+              status:
+                type: integer
+                enum: [403]
+              code:
+                type: string
+                enum: [AUTH_REAUTH_REQUIRED]
+
+AuthProblem403ReauthRequiredOrUserRestricted:
+  description: 목적에 맞는 최근 재인증이 필요하거나 사용자 인증 상태가 제한됐다.
+  headers:
+    X-Request-Id:
+      $ref: ./headers.yaml#/XRequestId
+    Cache-Control:
+      $ref: ./headers.yaml#/CacheControlNoStore
+  content:
+    application/json:
+      schema:
+        allOf:
+          - $ref: ./schemas.yaml#/ErrorResponse
+          - type: object
+            properties:
+              status:
+                type: integer
+                enum: [403]
+              code:
+                type: string
+                enum: [AUTH_REAUTH_REQUIRED, AUTH_USER_RESTRICTED]
+
+AuthProblem403ForbiddenOrReauthRequired:
+  description: 별도 인가 경계의 승인 또는 목적에 맞는 최근 재인증이 필요하다.
+  headers:
+    X-Request-Id:
+      $ref: ./headers.yaml#/XRequestId
+    Cache-Control:
+      $ref: ./headers.yaml#/CacheControlNoStore
+  content:
+    application/json:
+      schema:
+        allOf:
+          - $ref: ./schemas.yaml#/ErrorResponse
+          - type: object
+            properties:
+              status:
+                type: integer
+                enum: [403]
+              code:
+                type: string
+                enum: [AUTH_FORBIDDEN, AUTH_REAUTH_REQUIRED]
