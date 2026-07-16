@@ -40,7 +40,7 @@ updated: 2026-07-10
 - 영속성 참조: [SD.A.30020](../../50-service-design/A_300_auth/A_300_20-persistence/README.md)
 - 서비스 참조: [SD.A.30030](../../50-service-design/A_300_auth/A_300_30-service/README.md)
 - API 참조: [SD.A.30040](../../50-service-design/A_300_auth/A_300_40-api/README.md)
-- 시퀀스 참조: [SCN.A.300](../../80-sequence/A_300_auth/README.md)
+- 시퀀스 참조: [SCN.A.300](../../50-service-design/A_300_auth/A_300_50-sequence/README.md)
 
 ## 화면 미리보기
 

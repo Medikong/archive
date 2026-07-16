@@ -6,7 +6,7 @@ status: draft
 tags: [requirements, dropmong, auth, member, signup, signin, session, identity]
 source: local
 created: 2026-07-07
-updated: 2026-07-10
+updated: 2026-07-15
 ---
 
 # 인증 및 회원 요구사항 정의
@@ -26,11 +26,11 @@ updated: 2026-07-10
 ### 문서 역할
 
 - `REQ.A.01`은 드롭 발견부터 구매 시도까지의 큰 사용자 여정을 다룬다.
-- `REQ.A.05`는 그 여정에서 필요한 로그인, 회원가입, 세션, 사용자 계정 식별, 권한 확인을 독립 요구사항으로 분리한다.
+- `REQ.A.05`는 그 여정에서 필요한 로그인, 회원가입, 세션과 사용자 계정 식별을 독립 요구사항으로 분리한다. role, permission, 판매자 소속과 업무 ACL 판단은 별도 인가 경계의 요구사항으로 둔다.
 - 공개 탐색 화면은 비회원 접근을 허용하고, 드롭 참여와 개인/결제 정보 화면은 인증 게이트를 통과해야 한다.
 - 하나의 페이지 안에서도 공개 영역, 선택적 개인화 영역, 필수 인증 행동을 분리한다. 예를 들어 홈 화면은 공개 접근을 허용하되, 사용자 쿠폰/알림/최근 주문 같은 개인화 영역은 로그인 상태에서만 조회하거나 비회원 대체 상태로 표시한다.
 - 휴대폰 번호 인증은 독립적인 사용자 계정 생성 수단이 아니라, 이메일 회원가입 과정에서 Context 사용자가 발급한 `user_id`에 연결되는 인증 식별자다. Auth가 이메일·휴대폰 소유 확인 완료를 알리면 Context 사용자가 사용자 계정과 `user_id`를 만들고 Auth에 계정 연동을 요청한다. 휴대폰 번호 로그인은 이미 연결된 휴대폰 인증 식별자를 검증한 뒤 해당 `user_id`로 로그인한다.
-- 인증 서비스는 `user_id`와 인증/세션/권한 판단에 필요한 최소 정보만 다루고, 사용자 프로필과 표시 정보는 회원/사용자 서비스 책임으로 분리한다.
+- 인증 서비스는 `user_id`와 인증·세션에 필요한 최소 정보만 다루고, 사용자 프로필과 표시 정보는 회원/사용자 서비스, role·permission·판매자 소속·업무 ACL은 별도 인가 경계 책임으로 분리한다.
 
 ### 용어 구분
 
@@ -96,8 +96,8 @@ updated: 2026-07-10
 
 - 사용자 목표: 사용자는 불필요한 로그인 없이 드롭을 탐색하고, 필요한 순간에 빠르게 가입/로그인한 뒤 원래 행동으로 돌아간다.
 - 비즈니스 목표: DropMong은 드롭 참여자와 주문 사용자를 신뢰 가능한 `user_id`로 식별해 공정성, CS 대응, 재참여 경험을 지킨다.
-- 운영 목표: 운영자는 인증 실패, 인증 식별자 잠금, 세션 이상, 인증 수단 연동, 휴대폰 번호 변경, 권한 변경 이력을 감사 이벤트와 지표로 확인한다.
-- 기술 목표: 인증/세션/권한 처리는 사용자 프로필과 분리하고, 피크 트래픽과 인증 서버 장애가 구매 경로 전체로 번지지 않게 한다.
+- 운영 목표: 운영자는 인증 실패, 인증 식별자 잠금, 세션 이상, 인증 수단 연동과 휴대폰 번호 변경 이력을 감사 이벤트와 지표로 확인한다. 인가 변경 이력은 별도 인가 경계에서 확인한다.
+- 기술 목표: 인증·세션 처리는 사용자 프로필과 인가 처리에서 분리하고, 피크 트래픽과 인증 서버 장애가 구매 경로 전체로 번지지 않게 한다.
 
 ## 사용자 유형
 
@@ -132,9 +132,9 @@ updated: 2026-07-10
 | `REQ.A.05.FR-017` | 시스템은 인증 수단 연동 시 해당 인증 식별자가 이미 다른 `user_id`에 등록되어 있으면 연동을 거부하고 사유 코드를 반환한다. | 구매자, CS | Should | 사용자 계정 관리 페이지 예정 |
 | `REQ.A.05.FR-018` | 시스템은 인증 수단 연동 요청 시 현재 사용자 계정의 `user_id`, 연동할 인증 식별자, 소유 증명 방식, 연동 성공/실패 결과를 기록한다. | 구매자, CS | Should | 사용자 계정 관리 페이지 예정 |
 | `REQ.A.05.FR-019` | 시스템은 네이버 인증, 토스 인증, PASS 인증, 카카오톡 인증, Apple 로그인, Google 로그인을 인증 수단 후보로 요구사항에 반영하되 MVP 구현 범위에서는 제외한다. | 비회원, 구매자 | Could | [PAGE.A.300](../10-sitemap/PAGE_A_300_auth_member/PAGE_A_300_auth_member.md) |
-| `REQ.A.05.FR-020` | 판매자 사용자 계정은 판매자 포털 접근 시 일반 구매자 권한과 분리된 역할 확인을 통과해야 한다. | 판매자 | Must | [REQ.A.03](./REQ_A_03_seller.md) |
-| `REQ.A.05.FR-021` | 운영자 사용자 계정은 운영자 사이트 접근 시 RBAC를 통과해야 하고, 판매자/운영자 passkey는 MVP 이후 강한 인증 요구사항으로 둔다. | 플랫폼 운영자 | Must | [REQ.A.04](./REQ_A_04_platform_operator_admin.md) |
-| `REQ.A.05.FR-022` | 시스템은 로그인 성공/실패, 회원가입, 휴대폰 인증, token 발급/갱신, 로그아웃, 인증 식별자 잠금, 권한 변경, 인증 수단 연동/변경을 의미별 감사 이벤트로 구분해 Audit Context로 전송한다. | 시스템, CS, 운영자 | Must | 운영자 사이트 예정 |
+| `REQ.A.05.FR-020` | 판매자 포털은 별도 인가 경계에서 일반 구매자와 분리된 판매자 소속·업무 권한 확인을 통과해야 한다. auth-service는 그 정보를 소유하거나 token claim으로 발급하지 않는다. | 판매자 | Must | [REQ.A.03](./REQ_A_03_seller.md) |
+| `REQ.A.05.FR-021` | 운영자 사이트는 별도 인가 경계의 RBAC를 통과해야 하고, auth-service는 운영자 인증과 재인증만 담당한다. 판매자/운영자 passkey는 MVP 이후 강한 인증 요구사항으로 둔다. | 플랫폼 운영자 | Must | [REQ.A.04](./REQ_A_04_platform_operator_admin.md) |
+| `REQ.A.05.FR-022` | auth-service는 로그인 성공/실패, 회원가입, 휴대폰 인증, token 발급/갱신, 로그아웃, 인증 식별자 잠금과 인증 수단 연동/변경을 의미별 감사 이벤트로 구분해 Audit Context로 전송한다. 인가 변경 감사는 별도 인가 경계가 전송한다. | 시스템, CS, 운영자 | Must | 운영자 사이트 예정 |
 | `REQ.A.05.FR-023` | 시스템은 화면 영역과 사용자 행동을 공개, 선택적 인증, 필수 인증, 권한 필요로 분류하고 각 분류별 처리 방식을 정의한다. | 시스템 | Must | PAGE.A.01, PAGE.A.300 예정 |
 | `REQ.A.05.FR-024` | 공개 페이지 안의 사용자 개인화 컴포넌트는 Auth Boundary 또는 Permission Boundary 안에서 렌더링하며, 인증/권한 오류가 발생해도 페이지 전체 실패로 전파하지 않고 해당 컴포넌트의 대체 상태로 제한한다. | 비회원, 구매자 | Must | [PAGE.A.01](../10-sitemap/buyer-mobile-web/PAGE_A_01_homepage.md) |
 | `REQ.A.05.FR-025` | API는 공개 데이터, 선택적 개인화 데이터, 필수 인증 데이터를 구분해 제공하고, 선택적 개인화 데이터 실패가 공개 페이지 전체 실패로 번지지 않게 한다. | 시스템 | Must | [SD.A.30040](../50-service-design/A_300_auth/A_300_40-api/README.md) |
@@ -162,10 +162,10 @@ updated: 2026-07-10
 | `REQ.A.05.NFR-008` | 로그인과 token 갱신은 피크 트래픽에서 관측 가능해야 한다. | signin, signup, token refresh, phone verification의 p50/p95/p99 latency, error rate, lock rate, refresh spike를 확인한다. | 운영 대시보드 예정 |
 | `REQ.A.05.NFR-009` | 사용자 계정은 자동 또는 수동으로 병합되지 않아야 한다. | 이메일, 휴대폰, ProviderSubject가 같거나 달라도 기존 `user_id`끼리 합치지 않고, 인증 수단 연동만 별도 상태 전이로 처리한다. | 사용자 계정 관리 페이지 예정 |
 | `REQ.A.05.NFR-010` | 인증 식별자는 하나의 `user_id`에만 연결될 수 있어야 한다. | 이미 다른 `user_id`에 연결된 이메일 인증 식별자, 휴대폰 인증 식별자, ProviderSubject는 새 `user_id`에 연동할 수 없고 실패 사유와 감사 이벤트를 남긴다. | [SD.A.30020](../50-service-design/A_300_auth/A_300_20-persistence/README.md) |
-| `REQ.A.05.NFR-011` | 판매자와 운영자 사용자 계정은 일반 구매자 사용자 계정보다 강한 인증을 요구할 수 있어야 한다. | passkey, MFA, 재인증 정책을 역할별로 설정할 수 있다. | [REQ.A.03](./REQ_A_03_seller.md), [REQ.A.04](./REQ_A_04_platform_operator_admin.md) |
+| `REQ.A.05.NFR-011` | 판매자와 운영자 사용자 계정은 일반 구매자 사용자 계정보다 강한 인증을 요구할 수 있어야 한다. | 별도 인가 경계가 전달한 신뢰 가능한 action에 따라 passkey, MFA, 재인증을 요구하며 auth-service가 role이나 membership을 저장하지 않는다. | [REQ.A.03](./REQ_A_03_seller.md), [REQ.A.04](./REQ_A_04_platform_operator_admin.md) |
 | `REQ.A.05.NFR-012` | passkey는 MVP 구현 범위에서 제외하되 요구사항과 확장 경로는 남긴다. | 판매자/운영자 passkey 등록, 복구, 해제, 분실 대응 정책을 후속 문서에서 다룰 수 있다. | [SD.A.30030](../50-service-design/A_300_auth/A_300_30-service/README.md) |
-| `REQ.A.05.NFR-013` | OAuth/OIDC token은 용도별로 구분해야 한다. | ID token은 identity proof, access token은 권한 위임, 내부 session token은 DropMong API 접근에 사용한다. | [SD.A.30040](../50-service-design/A_300_auth/A_300_40-api/README.md) |
-| `REQ.A.05.NFR-014` | 인증 서비스는 사용자 프로필 의미를 알지 않아야 한다. | auth-service는 `user_id`, credential, session, role/permission claim만 다루고 표시명, 주소, 마케팅 속성은 회원/사용자 서비스가 다룬다. | [SD.A.30030](../50-service-design/A_300_auth/A_300_30-service/README.md) |
+| `REQ.A.05.NFR-013` | OAuth/OIDC token은 용도별로 구분해야 한다. | ID token은 외부 identity proof, DropMong access JWT는 사용자와 Session 인증에 사용한다. role, permission, 판매자 소속과 업무 ACL은 access JWT에 넣지 않는다. | [SD.A.30040](../50-service-design/A_300_auth/A_300_40-api/README.md) |
+| `REQ.A.05.NFR-014` | 인증 서비스는 사용자 프로필과 인가 의미를 알지 않아야 한다. | auth-service는 `user_id`, credential과 session만 다룬다. 표시명·주소·마케팅 속성은 회원/사용자 서비스, role·permission·판매자 소속·업무 ACL은 별도 인가 경계가 다룬다. | [SD.A.30030](../50-service-design/A_300_auth/A_300_30-service/README.md) |
 | `REQ.A.05.NFR-015` | 인증 관련 감사 이벤트는 민감 정보를 포함하지 않아야 한다. | 비밀번호, 인증번호, token 원문, provider secret은 로그/trace/event에 남기지 않는다. | 운영 대시보드 예정 |
 | `REQ.A.05.NFR-016` | 인증 정책은 페이지 단위에만 고정되지 않아야 한다. | page, section, action, API endpoint 단위로 공개, 선택적 인증, 필수 인증, 권한 필요 정책을 선언할 수 있다. | PAGE.A.01, [SD.A.30040](../50-service-design/A_300_auth/A_300_40-api/README.md) |
 | `REQ.A.05.NFR-017` | 선택적 개인화 API의 인증 실패는 공개 페이지 전체를 실패시키지 않아야 한다. | 홈 화면 공개 데이터는 유지하고, Auth Boundary 또는 Permission Boundary 안의 개인화 컴포넌트만 비회원 상태, 로그인 유도, 권한 없음, 또는 일시 실패 상태로 처리한다. | [PAGE.A.01](../10-sitemap/buyer-mobile-web/PAGE_A_01_homepage.md) |
@@ -181,7 +181,7 @@ updated: 2026-07-10
 - 기술 제약: 드롭 오픈 순간에는 로그인, token refresh, 휴대폰 인증 요청이 동시에 증가할 수 있으므로 구매/쿠폰 핵심 쓰기 경로와 인증 경로의 장애 영향을 분리해야 한다.
 - 일정 제약: MVP는 이메일 회원가입과 가상 SMS 휴대폰 인증 식별자 연동을 우선 구현하고, 네이버/토스/PASS/카카오톡 인증, Apple/Google 로그인, 판매자/운영자 passkey는 요구사항에만 반영한다.
 - 데이터 제약: `user_id`는 사용자 계정의 내부 식별자이며 회원, 주문, 쿠폰, 판매자, 운영자 감사 이력을 연결한다. 이메일 인증 식별자, 휴대폰 인증 식별자, 소셜 ProviderSubject는 서로 달라도 되지만, 각 인증 식별자는 한 `user_id`에만 연결된다.
-- 운영 제약: 인증 수단 해제/재연동, 인증 식별자 잠금 해제, 권한 변경, passkey 해제 같은 작업은 수동 DB 수정이 아니라 CS/플랫폼 운영자의 운영 기능과 감사 이벤트를 통해 수행해야 한다. 다만 휴대폰 번호 교체는 안전한 로그인과 대체 인증, 새 번호 SMS 인증을 통과한 경우에만 사용자 셀프 변경을 허용한다.
+- 운영 제약: 인증 수단 해제/재연동, 인증 식별자 잠금 해제와 passkey 해제 같은 인증 작업은 수동 DB 수정이 아니라 CS/플랫폼 운영자의 운영 기능과 감사 이벤트를 통해 수행해야 한다. 인가 변경은 별도 인가 경계가 처리한다. 휴대폰 번호 교체는 안전한 로그인과 대체 인증, 새 번호 SMS 인증을 통과한 경우에만 사용자 셀프 변경을 허용한다.
 
 ## 수용 기준
 
@@ -211,7 +211,7 @@ updated: 2026-07-10
 - 계정 접근이 불가능하거나 대체 인증을 통과할 수 없으면 CS 담당자와 플랫폼 운영자의 운영 기능으로 수동 처리한다.
 - 판매자와 운영자 사용자 계정에는 passkey 요구사항을 남기되 MVP 구현 대상에서 제외된다.
 - 판매자/운영자 passkey 복구와 break-glass 권한 사용은 팀장급 승인자를 거쳐야 한다.
-- 인증 서비스는 사용자 프로필/표시 정보를 소유하지 않고 `user_id`와 인증/세션/권한 정보만 다룬다.
+- 인증 서비스는 사용자 프로필/표시 정보와 role, permission, 판매자 소속, 업무 ACL을 소유하지 않고 `user_id`와 인증·세션 정보만 다룬다.
 - 로그인 성공/실패, 회원가입, token 갱신, 로그아웃, 인증 식별자 잠금, 인증 수단 연동/변경은 의미별 감사 이벤트로 Audit Context에 전송된다.
 
 ## 연관 태그
@@ -224,7 +224,7 @@ updated: 2026-07-10
 - 영속성 참조: [SD.A.30020](../50-service-design/A_300_auth/A_300_20-persistence/README.md)
 - 서비스 참조: [SD.A.30030](../50-service-design/A_300_auth/A_300_30-service/README.md)
 - API 참조: [SD.A.30040](../50-service-design/A_300_auth/A_300_40-api/README.md)
-- 시퀀스 참조: [SCN.A.300](../80-sequence/A_300_auth/README.md), [SCN.A.310-01](../80-sequence/A_300_auth/SCN_A_310_01_password_reset.md)
+- 시퀀스 참조: [SCN.A.300](../50-service-design/A_300_auth/A_300_50-sequence/README.md), [SCN.A.310-01](../50-service-design/A_300_auth/A_300_50-sequence/SCN_A_310_01_password_reset.md)
 
 ## 열린 질문
 

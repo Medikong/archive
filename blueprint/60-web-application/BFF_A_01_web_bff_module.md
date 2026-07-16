@@ -55,7 +55,7 @@ updated: 2026-07-10
 - 인증 도메인 모델: [SD.A.30010](../50-service-design/A_300_auth/A_300_10-domain-model/SD_A_30010_auth_domain_model.md)
 - 인증 서비스: [SD.A.30030](../50-service-design/A_300_auth/A_300_30-service/README.md)
 - 인증 API: [SD.A.30040](../50-service-design/A_300_auth/A_300_40-api/README.md)
-- 가입 처리 시퀀스: [SCN.A.300-01](../80-sequence/A_300_auth/SCN_A_300_01_email_registration.md)
+- 가입 처리 시퀀스: [SCN.A.01-01](../80-sequence/A_01_user/SCN_A_01_01_user_provisioning_auth_link.md)
 - 웹 애플리케이션 인덱스: [60-web-application](README.md)
 - 프론트엔드 구조: [WEB.A.01](WEB_A_01_frontend_architecture.md)
 - 상태와 데이터 전략: [WEB.A.02](WEB_A_02_state_data_strategy.md)
