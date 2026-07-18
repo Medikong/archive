@@ -6,7 +6,7 @@ status: draft
 tags: [web-application, frontend, nextjs, app-router, route-group, responsive]
 source: local
 created: 2026-07-10
-updated: 2026-07-10
+updated: 2026-07-16
 ---
 
 # 프론트엔드 애플리케이션 구조
@@ -18,7 +18,8 @@ updated: 2026-07-10
 - 배포 기준: 하나의 반응형 웹 애플리케이션
 - 사용자 영역: 구매자, 판매자, 플랫폼 운영자, 인증
 - 상태와 데이터 기준: [WEB.A.02](WEB_A_02_state_data_strategy.md)
-- 웹 BFF 경계: [BFF.A.01](BFF_A_01_web_bff_module.md)
+- buyer·auth 웹 BFF 경계: [BFF.A.01](BFF_A_01_web_bff_module.md)
+- seller API 경계: [판매자 웹 애플리케이션 설계](A_03_seller/README.md)
 - 배포와 검증 기준: [WEB.A.03](WEB_A_03_deployment_observability_test.md)
 
 ## 설계 목표
@@ -35,6 +36,8 @@ updated: 2026-07-10
 3. route group 이름은 URL에 포함하지 않는다. 실제 URL은 사이트맵의 `path`를 따른다.
 4. 페이지와 layout은 Server Component를 기본값으로 사용한다. 상호작용, 브라우저 API, polling이 필요한 leaf component만 Client Component로 만든다.
 5. 마이크로 프론트엔드와 액터별 별도 저장소는 초기 범위에서 사용하지 않는다.
+6. buyer와 auth는 같은 출처의 buyer BFF를 사용할 수 있다. seller 업무 API는 Seller BFF를 두지 않고 브라우저가 Kubernetes Ingress를 통해 실제 소유 서비스로 호출한다.
+7. seller Server Component도 여러 업무 서비스를 fan-out해 화면 DTO, 통합 상태나 지표를 만들지 않는다.
 
 ## PAGE와 UI 연결
 
@@ -50,54 +53,85 @@ updated: 2026-07-10
 
 플랫폼 운영자 route group은 코드 위치만 예약한다. `PAGE`와 `UI`가 정의되기 전에는 임의의 운영 메뉴를 구현하지 않는다.
 
-## 폴더 구조 예시
+## 현재 구현 구조
+
+2026-07-16 `service` checkout HEAD `1bb90b3`의 `dropmong-web`에는 다음 route가 구현되어 있다.
 
 ```text
-src/
-├── app/
+app/
+├── (buyer)/
+│   ├── page.tsx                         # /
+│   ├── products/[productId]/page.tsx   # /products/[productId]
+│   ├── checkout/page.tsx               # /checkout
+│   └── orders/complete/page.tsx         # /orders/complete
+├── (seller)/seller/**                   # PAGE.A.200~211, 현재 fixture/BFF 의존
+├── api/web/
+│   ├── auth/context/route.ts
+│   ├── home/route.ts
+│   ├── products/[productId]/route.ts
+│   ├── checkouts/[checkoutId]/**
+│   ├── orders/[orderId]/route.ts
+│   └── seller/[...path]/route.ts        # seller 목표에서는 제거
+└── auth/signin/page.tsx
+src/server/bff/
+├── catalog.ts
+├── auth.ts
+├── checkout.ts
+└── seller/**                            # 현행 제거 대상
+```
+
+현재 buyer Server Component는 같은 프로세스의 서버 함수를 직접 사용하고, 브라우저 mutation과 polling은 Route Handler를 사용한다. Auth는 개발 cookie, Checkout·Order 결과는 fixture다. 이 구조를 실제 서비스 연동 완료로 해석하지 않는다.
+
+## 목표 폴더 구조 예시
+
+다음 구조는 목표 예시이며 현재 파일 목록이 아니다. PAGE와 서비스 계약이 없는 route는 미리 만들지 않는다.
+
+```text
+app/
+├── layout.tsx
+├── global-error.tsx
+├── not-found.tsx
+├── (buyer)/
 │   ├── layout.tsx
-│   ├── global-error.tsx
-│   ├── not-found.tsx
-│   ├── (buyer)/
-│   │   ├── layout.tsx
+│   ├── page.tsx
+│   ├── products/[productId]/
 │   │   ├── page.tsx
-│   │   ├── products/[productId]/
-│   │   │   ├── page.tsx
-│   │   │   ├── loading.tsx
-│   │   │   ├── error.tsx
-│   │   │   ├── not-found.tsx
-│   │   │   └── _components/
-│   │   ├── cart/page.tsx
-│   │   ├── checkout/
-│   │   │   ├── page.tsx
-│   │   │   ├── loading.tsx
-│   │   │   └── error.tsx
-│   │   ├── orders/
-│   │   │   ├── page.tsx
-│   │   │   ├── complete/page.tsx
-│   │   │   └── [orderId]/
-│   │   │       ├── tracking/page.tsx
-│   │   │       └── manage/page.tsx
-│   │   └── my/
-│   │       ├── page.tsx
-│   │       └── coupons/page.tsx
-│   ├── (auth)/
-│   │   ├── layout.tsx
-│   │   └── auth/
-│   │       ├── signin/page.tsx
-│   │       ├── signup/page.tsx
-│   │       └── password-reset/page.tsx
-│   ├── (seller)/
-│   │   ├── layout.tsx
-│   │   └── seller/
-│   │       ├── page.tsx
-│   │       ├── drops/page.tsx
-│   │       ├── drops/[dropId]/edit/page.tsx
-│   │       └── orders/page.tsx
-│   └── (operator)/
-│       ├── layout.tsx
-│       └── operator/
-│           └── page.tsx
+│   │   ├── loading.tsx
+│   │   ├── error.tsx
+│   │   ├── not-found.tsx
+│   │   └── _components/
+│   ├── cart/page.tsx
+│   ├── checkout/
+│   │   ├── page.tsx
+│   │   ├── loading.tsx
+│   │   └── error.tsx
+│   ├── orders/
+│   │   ├── page.tsx
+│   │   ├── complete/page.tsx
+│   │   └── [orderId]/
+│   │       ├── tracking/page.tsx
+│   │       └── manage/page.tsx
+│   └── my/
+│       ├── page.tsx
+│       └── coupons/page.tsx
+├── (auth)/
+│   ├── layout.tsx
+│   └── auth/
+│       ├── signin/page.tsx
+│       ├── signup/page.tsx
+│       └── password-reset/page.tsx
+├── (seller)/
+│   ├── layout.tsx
+│   └── seller/
+│       ├── page.tsx
+│       ├── drops/page.tsx
+│       ├── drops/[dropId]/edit/page.tsx
+│       └── orders/page.tsx
+└── (operator)/
+    ├── layout.tsx
+    └── operator/
+        └── page.tsx
+src/
 ├── components/
 │   ├── shared/
 │   ├── buyer/
@@ -144,6 +178,7 @@ src/
 - countdown은 Client Component가 화면 숫자만 갱신한다. 드롭 오픈 여부와 구매 가능 판정은 서버 응답을 따른다.
 - Server Action을 사용하더라도 각 action 안에서 입력 검증, 인증, 권한을 다시 확인한다. layout이나 middleware 통과만 신뢰하지 않는다.
 - 주문, 결제처럼 중복 실행 위험이 있는 mutation은 API 계약의 멱등키를 반드시 전달한다.
+- seller Server Component는 서버 실행 권한을 이용해 Catalog·Order·Payment·Coupon을 직접 조합하지 않는다. seller 업무 조회와 Command는 [A.03 seller 결정](A_03_seller/README.md)을 따른다.
 
 ## Layout 기준
 
@@ -152,7 +187,7 @@ src/
 | root | `<html>`, `<body>`, 전역 스타일, 최소 provider, 전역 오류 추적 | 모든 사용자 |
 | buyer | 구매자 헤더, 하단 내비게이션, 반응형 content container | 공개 화면과 로그인 화면을 segment에서 구분 |
 | auth | 인증 제목, 단계 안내, 로그인 후 복귀 정보 | 인증 전후 모두 가능 |
-| seller | 좌측 메뉴, 판매자 식별 정보, 작업 알림 영역 | 판매자 role 필요 |
+| seller | 좌측 메뉴, 판매자 식별 정보, 작업 알림 영역 | seller actor context, membership과 PAGE permission 확인 |
 | operator | 운영 메뉴, 환경 표시, 위험 작업 경고 | 플랫폼 운영 role 필요 |
 
 최상위 root layout은 하나만 둔다. route group마다 별도 root layout을 만들지 않아 액터 영역을 이동할 때 전체 문서가 다시 로드되는 일을 피한다.
@@ -182,12 +217,17 @@ src/
 
 ## API 접근 경계
 
-- 화면 DTO, 웹 session, CSRF, 내부 요청 변환의 상세 기준은 [BFF.A.01](BFF_A_01_web_bff_module.md)이 소유한다.
-- 초기 Server Component 조회는 서버 전용 API client를 사용한다.
-- 브라우저에서 주기적으로 갱신해야 하는 주문, 결제, 배송 상태는 브라우저에 노출 가능한 동일 출처 endpoint를 사용한다.
-- 내부 서비스 주소, 서비스 credential, 운영용 endpoint는 Client Component에 노출하지 않는다.
-- 웹 전용 응답 조합이 필요해도 백엔드 업무 규칙을 프론트엔드에 복제하지 않는다. 조합 계약의 소유 위치는 서비스/API 설계에서 정한다.
-- API 오류는 `lib/api`에서 기술 오류와 업무 오류로 구분하고, `PAGE`와 `UI`가 요구하는 사용자 메시지로 연결한다.
+| 영역 | 접근 경계 | 허용 | 금지 |
+| --- | --- | --- | --- |
+| buyer·auth | [BFF.A.01](BFF_A_01_web_bff_module.md) | 같은 출처 Route Handler 또는 같은 프로세스의 buyer 서버 모듈, 실제 Auth·업무 API 전달 | 가격·재고·쿠폰·포인트·주문·결제 규칙 재구현 |
+| seller | [A.03 seller](A_03_seller/README.md) | 브라우저가 Ingress-facing seller 전용 계약을 가진 실제 소유 서비스 호출 | `/api/web/seller/**` 확장, buyer API 재사용, Server Component fan-out |
+| operator | 액터별 PAGE·서비스 설계 대기 | 확정된 전용 Query·Command가 생긴 뒤 연결 | seller 또는 buyer BFF에 임의로 편입 |
+
+- 내부 서비스 주소, service credential과 운영용 endpoint는 Client Component에 노출하지 않는다.
+- seller 브라우저가 내부 주소를 직접 사용한다는 뜻이 아니다. 외부에 공개된 Ingress route와 수신 서비스의 인증·권한 검증을 사용한다.
+- 웹 전용 응답 모양이 필요해도 백엔드 업무 규칙을 프론트엔드에 복제하지 않는다. 조합 결과의 원장과 권위는 소유 서비스 계약에 둔다.
+- API 오류는 actor별 client 경계에서 기술 오류와 업무 오류로 구분하고, `PAGE`와 `UI`가 요구하는 사용자 메시지로 연결한다.
+- API 구현, actor 사용 가능, Ingress 공개, 프론트 연결을 서로 다른 상태로 기록한다.
 
 ## 애플리케이션 분리 기준
 
@@ -212,6 +252,8 @@ src/
 - 로딩, 오류, 빈 결과, 최신성 지연을 각각 재현할 수 있다.
 - 작은 화면과 넓은 화면에서 핵심 CTA와 상태가 가려지지 않는다.
 - 주문과 결제 mutation은 중복 제출을 막고 멱등키를 전달한다.
+- buyer BFF와 seller Ingress 직접 호출 경계가 테스트와 코드에서 섞이지 않는다.
+- seller Server Component와 브라우저가 여러 서비스 응답을 합쳐 새로운 업무 상태나 지표를 만들지 않는다.
 - 앱을 나누지 않은 이유와 향후 분리 신호를 배포·보안·성능 지표로 설명할 수 있다.
 
 ## 연관 태그
@@ -222,7 +264,8 @@ src/
 
 - 플랫폼 운영자 `PAGE`와 `UI`가 작성된 뒤 `(operator)`의 실제 route 목록을 확정한다.
 - 구매자 checkout을 buyer layout 안에서 유지할지, 탐색 요소를 줄인 별도 nested layout으로 둘지 정한다.
-- Server Component가 호출할 웹 전용 API 진입점과 브라우저 polling endpoint의 소유 서비스를 정한다.
+- buyer Server Component가 사용할 BFF 함수와 브라우저 polling endpoint를 PAGE별 연동 원장에 맞춰 정한다.
+- seller Ingress-facing 계약과 CORS·CSRF·인증 context가 준비된 서비스부터 actor별 원장에 연결한다.
 - 배포 환경의 Next.js 서버 인스턴스 수와 캐시 공유 방식을 [WEB.A.02](WEB_A_02_state_data_strategy.md)에 맞춰 확정한다.
 
 ## 참고 자료
