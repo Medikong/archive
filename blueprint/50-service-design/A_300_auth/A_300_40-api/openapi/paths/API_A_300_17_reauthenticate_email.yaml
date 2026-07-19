@@ -62,9 +62,12 @@ post:
               type: string
               format: password
               minLength: 1
-              maxLength: 1024
+              maxLength: 256
               writeOnly: true
               x-sensitive: true
+              description: >-
+                현재 비밀번호 원문이다. maxLength는 Unicode code point 기준 256자이고 UTF-8은 1024바이트 이하로 제한한다.
+                trim 또는 Unicode 정규화를 적용하지 않는다.
         example:
           purpose: replace_phone
           password: <current-password>

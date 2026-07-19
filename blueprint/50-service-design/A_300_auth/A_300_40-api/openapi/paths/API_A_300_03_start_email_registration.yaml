@@ -24,6 +24,7 @@ post:
     AUTH_IDENTIFIER_UNAVAILABLE: 409
     AUTH_IDEMPOTENCY_CONFLICT: 409
     AUTH_INTENT_EXPIRED: 410
+    AUTH_PASSWORD_POLICY_NOT_MET: 422
     AUTH_RATE_LIMITED: 429
     AUTH_SERVICE_UNAVAILABLE: 503
   security:
@@ -60,11 +61,14 @@ post:
             password:
               type: string
               format: password
-              minLength: 1
-              maxLength: 1024
+              minLength: 12
+              maxLength: 256
               writeOnly: true
               x-sensitive: true
-              description: 세부 강도는 현재 PasswordPolicy로 검증한다.
+              description: >-
+                OpenAPI 최소값은 12자이고 배포 설정 AUTH_PASSWORD_MIN_LENGTH가 12~256자 범위에서 강화할 수 있다.
+                maxLength는 Unicode code point 기준 256자다.
+                UTF-8은 1024바이트 이하로 제한하며 trim 또는 Unicode 정규화를 적용하지 않는다.
             phone:
               $ref: ../components/schemas.yaml#/PhoneNumber
             rememberMe:
@@ -167,6 +171,8 @@ post:
       $ref: ../components/responses.yaml#/AuthProblem409IdempotencyConflictOrIdentifierUnavailable
     '410':
       $ref: ../components/responses.yaml#/Gone
+    '422':
+      $ref: ../components/responses.yaml#/UnprocessableEntity
     '429':
       $ref: ../components/responses.yaml#/RateLimited
     '503':
