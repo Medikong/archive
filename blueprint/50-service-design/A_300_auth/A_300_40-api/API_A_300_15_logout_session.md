@@ -8,7 +8,7 @@ api_design: SD.A.30040
 domain_model: SD.A.30010
 persistence: SD.A.30020
 service: SD.A.30030
-updated: 2026-07-16
+updated: 2026-07-20
 ---
 
 # API.A.300-15 로그아웃
@@ -21,7 +21,7 @@ updated: 2026-07-16
 | operationId | `logoutSession` |
 | 역할 | 웹·모바일의 현재 Session과 refresh family를 폐기한다. |
 | API 유형 | Command |
-| 인증 | 웹 `__Host-dm_refresh` cookie·CSRF·Origin 또는 모바일 `X-Refresh-Token` header |
+| 인증 | 웹 `__Secure-dm_refresh` cookie·CSRF·Origin 또는 모바일 `X-Refresh-Token` header |
 | 권한 | 제출한 credential이 가리키는 현재 Session 또는 refresh family만 폐기 가능 |
 | 노출 범위 | public |
 | 멱등성 | `Idempotency-Key` 필수 |

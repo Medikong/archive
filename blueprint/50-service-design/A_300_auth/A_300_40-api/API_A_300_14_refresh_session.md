@@ -8,7 +8,7 @@ api_design: SD.A.30040
 domain_model: SD.A.30010
 persistence: SD.A.30020
 service: SD.A.30030
-updated: 2026-07-16
+updated: 2026-07-20
 ---
 
 # API.A.300-14 Session 갱신
@@ -21,7 +21,7 @@ updated: 2026-07-16
 | operationId | `refreshSession` |
 | 역할 | 채널별 refresh token을 회전하고 새 access JWT를 발급한다. |
 | API 유형 | Command |
-| 인증 | 웹 `__Host-dm_refresh` cookie·CSRF·Origin 또는 모바일 `X-Refresh-Token` header |
+| 인증 | 웹 `__Secure-dm_refresh` cookie·CSRF·Origin 또는 모바일 `X-Refresh-Token` header |
 | 권한 | active Session, active refresh family와 active UserAuthState |
 | 노출 범위 | public |
 | 멱등성 | `Idempotency-Key` 필수 |
