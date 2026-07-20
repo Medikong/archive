@@ -94,7 +94,7 @@ sequenceDiagram
 - 입력: 계정 식별자, 인증 수단, Challenge code, 새 비밀번호, Idempotency-Key.
 - 출력: PasswordReset 상태, Challenge metadata, 채널별 reset 권한, `204 No Content`.
 - 저장: PasswordReset, VerificationChallenge, 새 PasswordCredential hash, IdempotencyRecord, 감사 OutboxEvent.
-- 폐기: reset grant, `__Host-dm_auth`, 모바일 authFlowToken, 기존 Session, 웹 `__Host-dm_refresh`, 모바일 refresh family, 연결된 AuthenticationIntent.
+- 폐기: reset grant, `__Host-dm_auth`, 모바일 authFlowToken, 기존 Session, 웹 `__Secure-dm_refresh`, 모바일 refresh family, 연결된 AuthenticationIntent.
 
 ## 불변 조건
 

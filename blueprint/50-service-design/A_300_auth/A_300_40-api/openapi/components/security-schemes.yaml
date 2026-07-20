@@ -27,8 +27,8 @@ WebOrigin:
 WebRefreshCookie:
   type: apiKey
   in: cookie
-  name: __Host-dm_refresh
-  description: 웹 refresh family를 가리키는 회전형 HttpOnly cookie다. 보호 API의 credential로 사용할 수 없다.
+  name: __Secure-dm_refresh
+  description: 웹 refresh family를 가리키며 session 경로로 제한한 회전형 HttpOnly cookie다. 보호 API의 credential로 사용할 수 없다.
 
 MobileAuthFlowToken:
   type: apiKey

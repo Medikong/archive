@@ -6,7 +6,7 @@ status: draft
 tags: [scenario, sequence, auth, web, jwt, istio, refresh-rotation, session-revocation]
 source: local
 created: 2026-07-15
-updated: 2026-07-15
+updated: 2026-07-20
 use_case: UC.A.300-05
 service_design: SD.A.300
 ---
@@ -25,7 +25,7 @@ service_design: SD.A.300
 
 1. 웹앱은 여러 업무 서비스의 공개 API를 직접 호출하되 모든 외부 요청은 Istio Ingress Gateway를 통과한다.
 2. 웹 보호 API의 credential은 `Authorization: Bearer <access-jwt>`다.
-3. access JWT는 웹앱 메모리에만 보관한다. refresh token은 Auth host의 HttpOnly·Secure·SameSite cookie로만 전달하고 JavaScript에 노출하지 않는다.
+3. access JWT는 웹앱 메모리에만 보관한다. refresh token은 `__Secure-dm_refresh; Path=/api/v1/auth/sessions; HttpOnly; Secure; SameSite=Strict` cookie로만 전달하고 JavaScript에 노출하지 않는다. `Domain`은 지정하지 않는다.
 4. Auth는 Session, refresh family와 폐기 상태를 소유한다. access JWT는 짧은 수명의 발급 결과이며 원문을 영속 저장하지 않는다.
 5. Istio Ingress는 JWT와 Session 유효성을 검증하는 인증 경계다. 각 업무 서비스는 JWT를 직접 검증하거나 JWKS를 조회하지 않는다.
 6. Istio Ingress는 외부 `X-User-*`, `X-Session-*`, `X-Token-*` 헤더를 제거하고 검증된 claim으로 최소 내부 사용자 컨텍스트를 다시 만든다.
@@ -67,8 +67,10 @@ sequenceDiagram
     participant Istio as Istio Ingress Gateway
     participant Auth as Auth 서비스
     participant Session as Session 저장소
+    participant Jobs as 상태 반영 작업
+    participant Worker as Auth Worker
     participant Validator as Session 상태 검사기
-    participant Revoked as 폐기된 sid 캐시
+    participant StatusCache as Session 상태 Redis
     participant Service as 업무 서비스
     participant Events as Session 이벤트
 
@@ -93,8 +95,8 @@ sequenceDiagram
         Istio->>Istio: JWT 서명, iss, aud, exp와 필수 claim 검증
         Istio->>Validator: HTTP ext_authz + Bearer JWT
         Validator->>Validator: JWT 재검증, sid/sub/jti 추출
-        Validator->>Revoked: sid 폐기 여부 조회
-        Revoked-->>Validator: active
+        Validator->>StatusCache: sid 상태 조회
+        StatusCache-->>Validator: active
         Validator-->>Istio: allow
         Istio->>Auth: 검증된 최소 사용자 컨텍스트 전달
         Auth-->>Istio: user_id + Session 요약
@@ -111,8 +113,8 @@ sequenceDiagram
     Istio->>Istio: JWT 서명, iss, aud, exp와 필수 claim 검증
     Istio->>Validator: HTTP ext_authz + Bearer JWT
     Validator->>Validator: JWT 재검증, sid/sub/jti 추출
-    Validator->>Revoked: sid 폐기 여부 조회
-    Revoked-->>Validator: active
+    Validator->>StatusCache: sid 상태 조회
+    StatusCache-->>Validator: active
     Validator-->>Istio: allow
     Istio->>Istio: 검증된 claim으로 내부 사용자 컨텍스트 생성
     Istio->>Service: X-User-Id, X-Session-Id, X-Token-Id
@@ -131,9 +133,10 @@ sequenceDiagram
             Istio-->>Web: 새 access JWT + 회전된 refresh cookie
             Web->>Web: 메모리의 access JWT 교체
         else 만료, 폐기 또는 재사용 탐지
-            Auth->>Session: Session + refresh family 폐기
+            Auth->>Session: Session + refresh family 폐기, row version 증가
+            Session->>Jobs: 같은 DB transaction에서 terminal 상태 작업 기록
+            Auth->>StatusCache: versioned terminal tombstone 즉시 반영
             Auth->>Events: Auth.SessionRevoked
-            Events->>Revoked: sid를 access JWT exp까지 등록
             Auth-->>Istio: 401 AUTH_SESSION_REVOKED
             Istio-->>Web: 401, 다시 로그인 필요
         end
@@ -143,20 +146,32 @@ sequenceDiagram
     Web->>Istio: POST /api/v1/auth/sessions/logout
     Note right of Web: refresh cookie, Origin, Idempotency-Key
     Istio->>Auth: 로그아웃 요청 전달
-    Auth->>Session: Session + refresh family 폐기
+    Auth->>Session: Session + refresh family 폐기, row version 증가
+    Session->>Jobs: 같은 DB transaction에서 terminal 상태 작업 기록
+    Auth->>StatusCache: versioned terminal tombstone 즉시 반영
     Auth->>Events: Auth.SessionRevoked
-    Events->>Revoked: sid를 access JWT exp까지 등록
     Auth-->>Istio: 204 + refresh cookie 만료
     Istio-->>Web: 204 + refresh cookie 만료
     Web->>Web: 메모리의 access JWT 삭제
+
+    opt Redis 즉시 반영 실패 또는 미처리 작업 존재
+        Worker->>Jobs: lease로 pending 작업 claim
+        Jobs-->>Worker: sid + terminal 상태 + row version
+        Worker->>StatusCache: Lua CAS로 tombstone 반영
+        alt Redis ACK 성공
+            Worker->>Jobs: delivered 처리
+        else Redis 장애
+            Worker->>Jobs: backoff 뒤 재시도하도록 반환
+        end
+    end
 
     opt 로그아웃 전 access JWT 재사용
         Web->>Istio: 업무 API + 폐기된 Bearer JWT
         Istio->>Istio: JWT 서명과 exp 검증 성공
         Istio->>Validator: HTTP ext_authz + 폐기된 Bearer JWT
         Validator->>Validator: JWT 재검증, sid 추출
-        Validator->>Revoked: sid 폐기 여부 조회
-        Revoked-->>Validator: revoked
+        Validator->>StatusCache: sid 상태 조회
+        StatusCache-->>Validator: revoked
         Validator-->>Istio: deny
         Istio-->>Web: 401 Unauthorized
         Note right of Istio: 업무 서비스에는 전달하지 않음
@@ -173,8 +188,9 @@ JWT claim, JWKS, Istio 검증 순서, Session 상태 확인과 내부 인증 헤
 2. 같은 refresh token과 같은 `Idempotency-Key`의 응답 유실 재시도만 짧은 복구 TTL 동안 같은 결과를 복구한다.
 3. 같은 이전 refresh token을 다른 key로 제출하면 재사용으로 판단해 Session과 refresh family를 폐기한다.
 4. 로그아웃, 비밀번호 재설정, 사용자 제한과 운영자 강제 폐기는 `Auth.SessionRevoked`를 발행한다.
-5. 폐기된 `sid`는 해당 access JWT의 `exp`까지 캐시에 유지한다. 그 이후에는 만료 검증만으로 거부되므로 캐시에서 제거할 수 있다.
-6. 폐기 event나 Session 상태 검사기가 사용할 수 없으면 보호 요청을 인증 성공으로 간주하지 않는다.
+5. Session terminal 전이와 versioned 상태 반영 작업은 PostgreSQL의 같은 transaction에서 저장한다. Redis가 실패해도 worker가 작업을 잃지 않고 복구될 때까지 재시도한다.
+6. Redis의 active 값은 짧게 유지하고, 폐기 상태는 더 긴 tombstone으로 기록한다. Lua CAS는 낮은 version이나 늦게 도착한 active 값이 새 terminal 상태를 덮지 못하게 한다.
+7. Redis miss는 PostgreSQL 원본을 확인해 다시 채우며 Redis·PostgreSQL·write-through 중 필요한 의존성이 실패하면 보호 요청을 인증 성공으로 간주하지 않는다.
 
 ## 오류 처리
 
@@ -194,4 +210,5 @@ JWT claim, JWKS, Istio 검증 순서, Session 상태 확인과 내부 인증 헤
 - 공개 Auth 경로는 access JWT 없이 Auth까지 도달하고 보호 업무 경로는 JWT 없이 도달하지 않는다.
 - 로그아웃과 refresh token 재사용 뒤 이전 access JWT가 업무 서비스에 도달하지 않는다.
 - refresh 동시 요청 중 하나만 회전에 성공하고 같은 key 재시도만 최초 결과를 복구한다.
+- 브라우저가 `__Secure-dm_refresh`를 저장하고 refresh·logout 경로에만 전송하며 `__Host-dm_auth`는 `Path=/` 조건을 유지한다.
 - JWT, refresh cookie, 비밀번호와 내부 개인정보가 로그·trace·metric label에 남지 않는다.
