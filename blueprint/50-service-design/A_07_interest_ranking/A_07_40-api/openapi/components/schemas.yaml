@@ -148,7 +148,7 @@ OpenRankingListResponse:
 # 2026-07-14: upcomingCount -> interestCount로 개명(의미가 "당일 누적"에서 "리셋 없는 누적"으로 바뀜).
 UpcomingRankingItem:
   type: object
-  required: [dropId, interestCount]
+  required: [dropId, interestCount, viewCount, conversionRate]
   properties:
     dropId:
       type: string
@@ -156,6 +156,18 @@ UpcomingRankingItem:
     interestCount:
       type: integer
       minimum: 0
+    viewCount:
+      type: integer
+      minimum: 0
+      description: 리셋 없는 누적 조회수(2026-07-21 추가). 정렬 기준(전환율)의 분모다.
+    conversionRate:
+      type: [number, "null"]
+      minimum: 0
+      maximum: 1
+      description: >-
+        interestCount / viewCount(2026-07-21 추가, 정렬 기준). viewCount가
+        표본 임계값 미만이면 null이며, 이 경우 원시 interestCount로 하위
+        티어에 정렬된다(api-endpoint-process.md API.A.07-06 참고).
 
 UpcomingRankingListResponse:
   type: object
@@ -171,7 +183,7 @@ UpcomingRankingListResponse:
 # 2026-07-14 신규: 실시간 많이 보는 상품 랭킹(API.A.07-08).
 TrendingRankingItem:
   type: object
-  required: [dropId, rank, viewerCount]
+  required: [dropId, rank, viewerCount, newInterestCount, conversionRate]
   properties:
     dropId:
       type: string
@@ -183,7 +195,19 @@ TrendingRankingItem:
     viewerCount:
       type: integer
       minimum: 0
-      description: 가장 최근 KST 3시간 구간의 서로 다른 조회자 수다.
+      description: 가장 최근 KST 3시간 구간의 서로 다른 조회자 수다. 정렬 기준(rank)은 이 값 기준이다.
+    newInterestCount:
+      type: integer
+      minimum: 0
+      description: >-
+        같은 3시간 구간에 새로 찜을 활성화한 사용자 수(2026-07-20 추가, 김정엽 멘토링 피드백 대응).
+        이 랭킹의 후보 집합 자체가 조회 기록이 있는 드롭으로 한정되므로, 조회 없이 찜만 늘어난
+        드롭의 찜 속도는 반영되지 않는다(api-endpoint-process.md API.A.07-08 "알려진 제약" 참고).
+    conversionRate:
+      type: [number, "null"]
+      minimum: 0
+      maximum: 1
+      description: newInterestCount / viewerCount. viewerCount가 0인 항목은 애초에 이 랭킹에 등장하지 않아 실질적으로 null이 나올 일은 없다.
 
 TrendingRankingListResponse:
   type: object

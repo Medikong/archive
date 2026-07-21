@@ -98,9 +98,10 @@ api: SD.A.0740
 | `DropInterestCounterRepository.transitionPhase` | `drop_interest_counters` | `WHERE drop_id = ? AND version = ?` | `catalog.drop.updated` 반영 | 보류 |
 | `DropInterestCounterRepository.updateSellThroughScore` | `drop_interest_counters` | `WHERE drop_id = ? AND version = ?` | 오픈 후 점수 갱신 | 보류 |
 | `DropInterestCounterRepository.listByPhaseOrderByScore` | `drop_interest_counters` | `WHERE drop_phase = 'OPEN' ORDER BY sell_through_score DESC` | 오픈 후 랭킹(`RM.A.07-02`) | 보류 |
-| `DropInterestCounterRepository.listByInterestCount`(구 `listByPhaseOrderByUpcoming`) | `drop_interest_counters` | `ORDER BY interest_count DESC, drop_id ASC` (phase 필터 없음) | 기다리는 상품 랭킹(`RM.A.07-03`) | 구현함 |
+| `DropInterestCounterRepository.listByInterestCount`(구 `listByPhaseOrderByUpcoming`, 2026-07-21 전환율 기반으로 재설계) | `drop_interest_counters` LEFT JOIN `drop_view_counters` | 최근 활동(찜 또는 조회) 게이트 통과한 드롭만 대상, `interest_count/view_count`(조회수≥`MIN_VIEWS_FOR_RATIO`=20일 때) 내림차순, 미달 드롭은 원시 `interest_count` 폴백 티어 | 기다리는 상품 랭킹(`RM.A.07-03`) | 구현함 |
+| `DropViewCounterRepository.increment`(신규, 2026-07-21) | `drop_view_counters` | `INSERT ... ON CONFLICT(drop_id) DO UPDATE SET view_count = view_count + 1, last_viewed_at = now()` | 전환율 분모 + 최근 활동 게이트용 누적 조회수(리셋 없음) | 구현함 |
 | `DropViewRepository.recordView`(신규) | `drop_views` | `INSERT` | 조회 원문 기록(dedup 없음) | 구현함 |
-| `DropViewRankingRepository.computeAndStoreBucket`(신규, 배치 전용) | `drop_views` 읽음 → `drop_view_rankings` 씀 | `SELECT drop_id, COUNT(DISTINCT user_id) FROM drop_views WHERE viewed_at >= ? AND viewed_at < ? GROUP BY drop_id ORDER BY 2 DESC LIMIT 100` | KST 3시간 구간 마감 시 Top 100 스냅샷 계산·저장 | 구현함 |
+| `DropViewRankingRepository.computeAndStoreBucket`(신규, 배치 전용, 2026-07-20 찜 신호 추가) | `drop_views`+`interests` 읽음 → `drop_view_rankings` 씀 | `viewerCount`: `SELECT drop_id, COUNT(DISTINCT user_id) FROM drop_views WHERE viewed_at >= ? AND viewed_at < ? GROUP BY drop_id ORDER BY 2 DESC LIMIT 100`. `newInterestCount`(같은 구간): `SELECT drop_id, COUNT(*) FROM interests WHERE status='active' AND updated_at >= ? AND updated_at < ? GROUP BY drop_id`. `conversionRate = newInterestCount / viewerCount`. | KST 3시간 구간 마감 시 Top 100 스냅샷 계산·저장(조회자 수 기준 정렬 유지, 찜 속도/전환율은 참고 필드로 동봉) | 구현함 |
 | `DropViewRankingRepository.getLatestBucket`(신규) | `drop_view_rankings` | `WHERE bucket_start = (SELECT MAX(bucket_start) ...)` | 실시간 많이 보는 상품 랭킹(`RM.A.07-06`) | 구현함 |
 
 ## 쓰기 전략
@@ -110,7 +111,8 @@ api: SD.A.0740
 | 찜 추가/해제 | `interests` 단일 행 | 즉시 정합성 | 낙관적 잠금 충돌 시 재조회 후 재시도 |
 | 오픈전 카운터 반영(찜 이벤트 소비) | `drop_interest_counters` 단일 행, `INSERT ... ON CONFLICT` 원자적 증감(2026-07-14 수정: 낙관적 잠금 재조회 불필요) | 지연 허용(비동기) | 이벤트 재처리 멱등키 설계 필요(미해소, 아래 확인 필요 참고) |
 | 조회 기록(2026-07-14 구현 전환) | `drop_views` insert(dedup 없음) | 지연 허용 | 실패해도 랭킹에 소폭 영향만 있고 재시도 강제 안 함 |
-| 실시간 조회 랭킹 배치(2026-07-14 신규) | `drop_view_rankings` bucket 단위 upsert | 지연 허용, KST 3시간 경계마다 1회 실행 | 배치 실패 시 다음 구간 스냅샷은 정상 진행, 놓친 구간은 결측으로 남김(확인 필요: 재실행/백필 정책) |
+| 누적 조회수 반영(신규, 2026-07-21) | `drop_view_counters` 단일 행, `INSERT ... ON CONFLICT` 원자적 증감 | 지연 허용 | 조회 기록(`drop_views` insert)과 같은 요청 안에서 같이 반영, 실패해도 랭킹에 소폭 영향만 |
+| 실시간 조회 랭킹 배치(2026-07-14 신규, 2026-07-20 찜 신호 추가) | `drop_view_rankings` bucket 단위 upsert, `interests` 읽기 전용 | 지연 허용, KST 3시간 경계마다 1회 실행 | 배치 실패 시 다음 구간 스냅샷은 정상 진행, 놓친 구간은 결측으로 남김(2026-07-20 확정: 재실행/백필 없음 — `drop_views` 6시간 보존 한도상 완전한 백필이 불가능해서 애초에 정책적으로도 결측 허용이 맞다고 판단) |
 | (보류) 랭킹 리스트 전환 / 오픈후 점수 갱신 | `drop_interest_counters` 단일 행 | 지연 허용 | 외부 이벤트 재전송 시 멱등 처리 필요 |
 
 ## 읽기 전략
@@ -119,7 +121,7 @@ api: SD.A.0740
 | --- | --- | --- | --- |
 | 찜 목록 조회 | `interests` | `(user_id, status)` | 캐시 없음(즉시 정합성 요구) |
 | (보류) 오픈 후 인기 랭킹 조회 | `drop_interest_counters` | `(drop_phase, sell_through_score DESC)` | 짧은 TTL 캐시 검토(확인 필요) |
-| 기다리는 상품 랭킹 조회(구 "오픈 예정 랭킹", 2026-07-14 개명) | `drop_interest_counters` | `(interest_count DESC, drop_id)` | 짧은 TTL 캐시 검토(확인 필요) |
+| 기다리는 상품 랭킹 조회(구 "오픈 예정 랭킹", 2026-07-21 전환율 기반 재설계) | `drop_interest_counters` LEFT JOIN `drop_view_counters` | `(interest_count DESC, drop_id)` + `drop_view_counters.drop_id` PK | 짧은 TTL 캐시 검토(확인 필요) |
 | 드롭 관심도 통계 조회 | `drop_interest_counters` | PK(`drop_id`) | 캐시 없음 |
 | 실시간 많이 보는 상품 랭킹 조회(2026-07-14 신규) | `drop_view_rankings` | `bucket_start DESC` | 캐시 불필요 — 이미 3시간 배치 스냅샷이라 그 자체가 캐시 역할 |
 
@@ -130,14 +132,15 @@ api: SD.A.0740
 | `interests` | unique `(user_id, drop_id)` | 찜 레코드 유일성 보장 |
 | `interests` | `(user_id, status)` | 찜 목록 조회 |
 | (보류) `drop_interest_counters` | `(drop_phase, sell_through_score DESC)` | 오픈 후 랭킹 정렬 조회 |
-| `drop_interest_counters` | `(interest_count DESC, drop_id)` | 기다리는 상품 랭킹 정렬 조회(2026-07-14: `drop_phase` 필터 제거) |
+| `drop_interest_counters` | `(interest_count DESC, drop_id)` | 기다리는 상품 랭킹 정렬 조회(2026-07-14: `drop_phase` 필터 제거, 2026-07-21: 전환율 정렬로 확장) |
+| `drop_view_counters`(신규, 2026-07-21) | PK `(drop_id)` | 전환율 계산용 JOIN + 최근 활동 게이트(`last_viewed_at`) |
 | `drop_views` | `(drop_id, viewed_at)` | 3시간 배치 집계 쿼리(`GROUP BY drop_id`, 구간 필터) |
 | `drop_view_rankings` | PK `(bucket_start, rank)` | 최신 구간 스냅샷 조회 |
 
 ## 마이그레이션
 
-- `interests`, `drop_interest_counters`, `drop_views`, `drop_view_rankings` 모두 신규 테이블이다. 기존 catalog-service/order-service 스키마와 무관하며 수정하지 않는다(`REQ.A.07.NFR-002`).
-- 초기 마이그레이션에서 네 테이블과 위 인덱스를 함께 생성한다. 별도 백필 데이터는 없다(신규 서비스 시작).
+- `interests`, `drop_interest_counters`, `drop_views`, `drop_view_rankings`, `drop_view_counters`(2026-07-21 추가) 모두 신규 테이블이다. 기존 catalog-service/order-service 스키마와 무관하며 수정하지 않는다(`REQ.A.07.NFR-002`).
+- 초기 마이그레이션에서 다섯 테이블과 위 인덱스를 함께 생성한다. 별도 백필 데이터는 없다(신규 서비스 시작). 이 서비스는 Alembic 없이 `Base.metadata.create_all()`로 스키마를 생성해서, 이미 배포된 환경에 새 컬럼/테이블을 추가할 땐 기존 테이블은 자동으로 안 바뀐다는 점을 유의(2026-07-20 세션에서 실제로 겪은 문제, `drop_view_rankings` 스키마 드리프트).
 
 ## 확인 필요
 
@@ -148,4 +151,6 @@ api: SD.A.0740
 - (2026-07-14 해소) ~~"실시간 많이 보고 있는 상품" 착수 전 시간창/저장방식 결정~~ — KST 3시간 고정 구간 + Postgres(`drop_views`/`drop_view_rankings`)로 확정, 이번 슬라이스에 포함.
 - (2026-07-14 해소) ~~`drop_views` 청소 배치~~ — 실시간 조회 랭킹 배치에 지연 삭제(직전 구간 원본 삭제)를 통합해 별도 배치 없이 최대 6시간분만 유지하도록 확정했다.
 - (2026-07-14 추가) 조회 기록 쓰기 경로의 핫키 대응(로컬 버퍼링 등)은 `HOTSPOT.A.07-01`과 함께 부하테스트 이후 결정.
-- (2026-07-14 추가) 3시간 배치가 특정 구간에 실패하면 그 구간은 스냅샷이 비는데, 재실행/백필 정책이 미정.
+- (2026-07-14 해소, 2026-07-20 확정) ~~3시간 배치 실패 시 재실행/백필 정책~~ — 결측 허용, 재실행 없음으로 확정(위 "쓰기 전략" 참고).
+- (2026-07-20 해소, 2026-07-21 확정) ~~`newInterestCount`/`conversionRate`를 `기다리는 상품 랭킹`의 정렬 기준으로 승격할지~~ — `기다리는 상품 랭킹`(FR-003)은 자체 전환율(누적 찜/누적 조회) 기반으로 재설계됨(아래 참고). `실시간 많이 보는 상품 랭킹`(FR-011)의 `newInterestCount`/`conversionRate`는 여전히 참고 필드로만 유지.
+- (2026-07-21 추가) `RECENCY_WINDOW`(최근 활동 게이트, 현재 14일)와 `MIN_VIEWS_FOR_RATIO`(전환율 표본 임계값, 현재 20)는 도메인 실측 데이터 없이 잠정치로 정함 — 실사용 트래픽이 쌓이면 재조정 대상.

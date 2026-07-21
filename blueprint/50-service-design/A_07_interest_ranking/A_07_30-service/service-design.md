@@ -62,6 +62,12 @@ api: SD.A.0740
 - 절차(2026-07-14 단순화): 찜 추가는 `DropInterestCounterRepository.increment`, 찜 해제는 `decrement` 호출 — `INSERT ... ON CONFLICT DO UPDATE SET interest_count = interest_count ± 1`로 원자적 처리해 리셋 판단(`RULE.A.07-01`)이나 가중치(`weight`) 계산이 필요 없다.
 - 멱등키: 확인 필요 — 같은 이벤트가 재전송되면 카운터가 중복 증감할 수 있어 이벤트 ID 기반 처리 이력이 필요하다.
 
+### 기다리는 상품 랭킹 조회 (읽기 시점 계산, 배치 아님, 2026-07-21 재설계)
+
+- `찜 카운터 반영 Consumer`(위)와 별개로, 조회 기록 Handler(`API.A.07-04`)가 같은 요청 안에서 `DropViewCounterRepository.increment`도 호출해 `drop_view_counters`(리셋 없는 누적 조회수)를 갱신한다.
+- 랭킹 조회(`API.A.07-06`) 시점에 `drop_interest_counters`와 `drop_view_counters`를 JOIN해 전환율을 계산·정렬한다 — 별도 배치 워커가 아니라 매 요청마다 계산하는 읽기 시점 쿼리다(트렌딩 랭킹의 3시간 배치 스냅샷 방식과 다름, 이유: 찜/조회 카운터 둘 다 이미 원자적 증감 테이블이라 매 요청 재계산 비용이 낮음).
+- 기간편향("얼어붙은 비율") 대응 근거는 `REQ.A.07` 2026-07-21 수정 이력 참고.
+
 ### 랭킹 리스트 전환 Consumer (`CMD.A.07-03`)
 
 - 구독: `catalog.drop.updated`(외부, `EXT.A.07-01`).
@@ -79,13 +85,17 @@ api: SD.A.0740
 
 - 리셋 자체가 없어져 완전히 불필요해졌다. `찜 카운터 반영 Consumer`가 원자적 증감만 하면 끝이다.
 
-### 실시간 조회 랭킹 배치 Worker (신규, 2026-07-14)
+### 실시간 조회 랭킹 배치 Worker (신규, 2026-07-14, 2026-07-20 찜 속도/전환율 신호 추가)
 
 - 트리거: KST 00/03/06/09/12/15/18/21시 정각 스케줄(사용자 확정, `REQ.A.07` 수정 이력 참고).
-- 절차: 방금 마감된 3시간 구간(`[bucket_start, bucket_start + 3h)`)에 대해 `DropViewRankingRepository.computeAndStoreBucket` 호출 → `drop_views`에서 `GROUP BY drop_id, COUNT(DISTINCT user_id) DESC LIMIT 100` → `drop_view_rankings`에 해당 `bucket_start`로 100행 upsert.
+- 절차: 방금 마감된 3시간 구간(`[bucket_start, bucket_start + 3h)`)에 대해 `DropViewRankingRepository.computeAndStoreBucket` 호출 →
+  - `drop_views`에서 `GROUP BY drop_id, COUNT(DISTINCT user_id) DESC LIMIT 100` (조회자 수, 정렬 기준 유지)
+  - **(2026-07-20 추가)** 같은 구간에 대해 `interests`에서 `WHERE status = 'active' AND updated_at IN [bucket_start, bucket_end)` `GROUP BY drop_id, COUNT(*)` (신규 찜 수 = `newInterestCount`) — `updated_at`을 쓰는 이유: `created_at`은 최초 찜 시점에만 찍히고 재찜(취소 후 다시 찜)에는 안 바뀌어서, "이 구간에 찜을 활성화한 사용자 수"를 정확히 못 잡는다. `upsert_status`는 최초 생성이든 재활성화든 항상 `updated_at`을 갱신하므로 이걸 기준으로 삼는다.
+  - `conversionRate = newInterestCount / viewerCount`(조회자 0명이면 `null`)를 같이 계산
+  - `drop_view_rankings`에 해당 `bucket_start`로 순위(조회자 수 기준) + `newInterestCount` + `conversionRate`를 upsert.
 - **원본 정리(2026-07-14 추가)**: 스냅샷 저장에 성공한 뒤, "이번에 막 스냅샷을 만든 구간"이 아니라 **그 이전 구간**(안전 마진 1구간)의 `drop_views` 행을 삭제한다 — 즉 배치가 항상 "직전 스냅샷 구간" 원본을 지우고 "방금 만든 스냅샷 구간" 원본은 다음 배치까지 남겨둔다. 이러면 `drop_views`는 항상 최대 2개 구간(최대 6시간)분량만 유지되고, 스냅샷 계산에 문제가 있었을 때 직전 구간은 재계산할 여지가 남는다. 별도 청소 배치가 필요 없어졌다(`SD.A.0720`의 "청소 배치" 확인 필요 항목 해소).
-- 대상: `drop_views`(읽기+지연 삭제), `drop_view_rankings`(쓰기).
-- 실패 처리: 확인 필요(아래 참고) — 배치가 실패하면 그 구간의 스냅샷이 비게 된다.
+- 대상: `drop_views`(읽기+지연 삭제), `interests`(읽기 전용), `drop_view_rankings`(쓰기).
+- **(2026-07-20 해소) 실패 처리**: 배치가 특정 구간 실행에 실패하면(서버 재시작 등) 그 구간은 스냅샷이 빈 채로 남는다 — 자동 백필/재계산은 하지 않고 "다음 구간부터 정상 진행"으로 확정. 근거: `drop_views` 보존 기간이 최대 6시간(2구간)뿐이라 완벽한 백필 자체가 구조적으로 불가능하고(오래 놓친 구간은 원본이 이미 삭제됨), 지금 트래픽 규모에서 배치 인프라(재시도 큐 등)를 만드는 비용이 결측 1구간의 영향보다 크다고 판단. 실제로 결측이 반복 발생하면 그때 재검토.
 
 ## 트랜잭션 경계 요약
 
@@ -94,7 +104,7 @@ api: SD.A.0740
 | 찜 토글 | `interests` 단일 행 | 커밋 후 발행(확인 필요: outbox 도입 여부) | 낙관적 잠금 충돌 시 1회 |
 | 조회 기록(2026-07-14 재설계) | `drop_views` insert 하나 | 발행 없음 | 실패해도 랭킹에 소폭 영향만, 강제 재시도 없음 |
 | 찜 카운터 반영 | `drop_interest_counters` 단일 행, `INSERT ... ON CONFLICT` | 없음(내부 소비만) | 멱등키 확정 후 재시도 가능 |
-| 실시간 조회 랭킹 배치(신규) | `drop_view_rankings` 구간 단위 upsert(최대 100행) | 없음 | 확인 필요(재실행/백필 정책) |
+| 실시간 조회 랭킹 배치(신규, 2026-07-20 찜 신호 추가) | `drop_view_rankings` 구간 단위 upsert(최대 100행), `interests` 읽기 전용 | 없음 | 실패해도 재시도/백필 없음(결측 허용, 아래 확인 필요 참고) |
 | (보류) 랭킹 리스트 전환 | `drop_interest_counters` 단일 행 | `랭킹 리스트 전환됨` 발행 | 계약 확정 후 결정 |
 | (보류) 오픈 후 점수 갱신 | `drop_interest_counters` 단일 행 | `오픈후 점수 갱신됨` 발행 | 계약 확정 후 결정 |
 
@@ -104,5 +114,6 @@ api: SD.A.0740
 - Event Consumer들의 멱등키 설계(이벤트 ID 처리 이력 저장 위치와 보존 기간).
 - `catalog.drop.updated` 계약이 `packages/contracts`에 언제 추가되는지 catalog 담당자와 협의.
 - (2026-07-14 해소) ~~당일 카운터 리셋 방식~~ — 리셋 자체가 없어져 해당 없음.
-- (2026-07-14 추가) 실시간 조회 랭킹 배치가 특정 구간 실행에 실패하면(서버 재시작 등) 그 구간은 스냅샷이 빈 채로 남는다. 재실행/백필 정책 미정 — 당장은 "다음 구간부터 정상 진행"으로 두고, 실제로 문제 되면 그때 정한다.
+- (2026-07-14 해소, 2026-07-20 재확인) ~~실시간 조회 랭킹 배치 재실행/백필 정책~~ — 결측 허용으로 확정(위 Worker 섹션 참고). `drop_views` 보존 기간이 6시간뿐이라 오래된 결측 구간은 원본이 없어 어차피 완전한 백필이 불가능함.
 - (2026-07-14 해소) ~~`drop_views` 청소 배치~~ — 별도 배치 없이, 실시간 조회 랭킹 배치가 스냅샷 저장 후 직전 구간 원본을 지우는 방식으로 통합했다(최대 2개 구간, 6시간분만 유지).
+- (2026-07-20 추가) 할인율(원가 대비 할인율)을 랭킹 신호로 쓰는 안은 catalog-service 의존이 생겨 "다른 서비스 의존 최소화" 원칙과 상충 + catalog-service가 현재 완전 스텁이라 검증 불가능 → 보류. catalog-service가 실제 이벤트를 발행하기 시작하면 재검토.

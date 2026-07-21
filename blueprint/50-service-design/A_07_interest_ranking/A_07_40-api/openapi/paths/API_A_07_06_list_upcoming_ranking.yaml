@@ -3,9 +3,14 @@ get:
     - Ranking
   summary: 기다리는 상품 랭킹 조회
   description: |
-    드롭 상태 구분 없이(2026-07-14: catalog-service 의존 제거, `SCHEDULED` 필터 삭제), 전체 드롭을
-    리셋 없는 누적 활성 찜 수(`interestCount`) 내림차순으로 반환한다. 홈 화면 위젯은 `limit=3`으로,
-    "전체보기" 페이지는 `limit` 최대 100으로 호출한다.
+    드롭 상태 구분 없이(2026-07-14: catalog-service 의존 제거, `SCHEDULED` 필터 삭제), 전환율
+    (`interestCount / viewCount`) 내림차순으로 반환한다(2026-07-21 재설계). 홈 화면 위젯은
+    `limit=3`으로, "전체보기" 페이지는 `limit` 최대 100으로 호출한다.
+
+    누적 찜수만으로 정렬하던 기존 방식은 인기 절정기에 쌓인 찜수가 활동이 끊긴 뒤에도 그대로
+    남아 오래된 드롭이 계속 1위를 차지하는 기간편향이 있었다. 대응으로 (1) 찜/조회 둘 다 최근
+    일정 기간 활동이 없는 드롭은 결과에서 제외하고, (2) 조회수가 너무 적어 전환율이 왜곡되기
+    쉬운 드롭은 원시 `interestCount`로 하위 티어에 배치한다.
   operationId: listUpcomingRanking
   x-api-id: API.A.07-06
   x-use-case: UC.A.07
@@ -28,6 +33,8 @@ get:
             data:
               - dropId: 7d4a8f2c-5e14-46be-9b9b-987f5d69e001
                 interestCount: 128
+                viewCount: 640
+                conversionRate: 0.2
             pageInfo:
               nextCursor: null
               hasNext: false

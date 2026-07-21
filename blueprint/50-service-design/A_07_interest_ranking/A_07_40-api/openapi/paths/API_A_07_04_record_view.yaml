@@ -6,6 +6,9 @@ post:
     드롭 상세 화면 진입을 관심 신호로 기록한다(2026-07-14 재설계). 반복 조회를 막지 않고 매번 원문 그대로
     `drop_views`에 기록한다. 같은 사용자의 반복 조회는 랭킹 집계 시점(`COUNT(DISTINCT user_id)`)에서
     자연히 1명으로 처리되므로, 이 API 자체는 dedup을 하지 않는다(멱등하지 않음, 매번 새 행 추가).
+
+    같은 요청 안에서 리셋 없는 누적 조회수(`drop_view_counters`)도 같이 갱신한다(2026-07-21 추가) —
+    `기다리는 상품 랭킹`(API.A.07-06)의 전환율 계산 분모 + 최근 활동 게이트에 쓰인다.
   operationId: recordDropView
   x-api-id: API.A.07-04
   x-use-case: UC.A.07

@@ -86,7 +86,8 @@ service: SD.A.0730
 
 - 책임과 경계: 로그인 사용자의 조회만 집계한다(`POLICY.A.07-01`). 비로그인 조회는 이 API를 호출하지 않는 것을 프론트 계약으로 하며, 서버도 인증 실패 시 집계하지 않는다.
 - 처리 규칙(2026-07-14 단순화): 로그인 게이트 → `DropViewRepository.recordView(drop_id, user_id)`로 `drop_views`에 insert → `204`(본문 없음, `remove_interest`와 동일 패턴). Redis/dedup 단계와 `recorded` boolean이 더는 의미가 없어져 응답 스키마(`ViewRecordResponse`)도 제거했다.
-- 상태 변경과 트랜잭션: `drop_views` insert 하나. 이 API 자체는 랭킹 값을 직접 갱신하지 않는다 — 랭킹은 3시간마다 별도 배치(`SD.A.0730`의 "실시간 조회 랭킹 배치 Worker")가 계산한다.
+- **(2026-07-21 추가)** 같은 요청 안에서 `DropViewCounterRepository.increment(drop_id)`도 같이 호출해 `drop_view_counters`(리셋 없는 누적 조회수)를 갱신한다 — `기다리는 상품 랭킹`(`API.A.07-06`)의 전환율 분모 + 최근 활동 게이트용.
+- 상태 변경과 트랜잭션: `drop_views` insert + `drop_view_counters` upsert, 별도 트랜잭션(각자 지연 허용). 이 API 자체는 3시간 배치 랭킹 값을 직접 갱신하지 않는다 — 그건 별도 배치(`SD.A.0730`의 "실시간 조회 랭킹 배치 Worker")가 계산한다.
 - 예외: 인증 실패 `401`.
 - 도메인 매핑: Handler → `ViewRecordingHandler` / 모델 → `DropView`(신규, Aggregate 아님) / Event → `EVT.A.07-03`.
 
@@ -108,19 +109,24 @@ service: SD.A.0730
 - 도메인 매핑: Repository → `DropInterestCounterRepository.listByPhaseOrderByScore`.
 - `limit`/`cursor` 공용 pagination parameter를 사용한다(2026-07-13 추가).
 
-## API.A.07-06 기다리는 상품 랭킹 조회(구 "오픈 예정 랭킹", 2026-07-14 재정의)
+## API.A.07-06 기다리는 상품 랭킹 조회(구 "오픈 예정 랭킹", 2026-07-14 재정의, 2026-07-21 전환율 기반 재설계)
 
 | 항목 | 값 |
 | --- | --- |
 | Method / Path | `GET /v1/rankings/drops/upcoming` |
 | operationId | `listUpcomingRanking`(확인 필요: "upcoming"이 phase 필터 제거 후에도 적절한 이름인지 — 외부 계약 변경은 팀 확정 필요, 지금은 유지) |
-| 역할 | 드롭 상태 구분 없이, 전체 드롭을 리셋 없는 누적 활성 찜 수(`interest_count`) 내림차순으로 반환한다(`RM.A.07-03`). |
+| 역할 | 드롭 상태 구분 없이, **전환율(누적 찜수 ÷ 누적 조회수)** 내림차순으로 반환한다(`RM.A.07-03`, 2026-07-21 재설계 — 아래 참고). |
 | 유형 | Query |
 | 인증 | 불필요 |
 | 기본 `limit` | 홈 화면 위젯은 `limit=3`, "전체보기" 페이지는 `limit` 최대 100(2026-07-14 UX 결정) |
 
-- 책임과 경계(2026-07-14 수정): `drop_interest_counters ORDER BY interest_count DESC, drop_id ASC` — `WHERE drop_phase = 'SCHEDULED'` 필터를 제거했다(catalog-service 의존 제거, `REQ.A.07` 수정 이력 참고).
-- 도메인 매핑: Repository → `DropInterestCounterRepository.listByInterestCount`(구 `listByPhaseOrderByUpcoming`).
+- 책임과 경계(2026-07-14 수정): `WHERE drop_phase = 'SCHEDULED'` 필터를 제거했다(catalog-service 의존 제거, `REQ.A.07` 수정 이력 참고).
+- **(2026-07-21 재설계) 정렬 기준**: 기존 `interest_count` 단독 정렬은 오래된 드롭이 인기 절정기에 쌓은 찜 수만으로 활동이 끊긴 뒤에도 계속 1위를 차지하는 기간편향이 있었다(`REQ.A.07` 2026-07-21 수정 이력 참고). 대응:
+  - `drop_interest_counters`를 `drop_view_counters`(신규, 누적 조회수)와 LEFT JOIN해 `interest_count/view_count`로 전환율을 계산, 그 값으로 정렬한다.
+  - **최근 활동 게이트**: 찜 또는 조회 중 더 최근 활동 시각이 `RECENCY_WINDOW`(현재 14일, 잠정치) 이전이면 후보에서 제외한다 — "얼어붙은 비율"(활동이 끊긴 뒤에도 절정기 전환율이 그대로 남는 문제) 방지.
+  - **표본 부족 폴백**: 조회수가 `MIN_VIEWS_FOR_RATIO`(현재 20) 미만이면 전환율 대신 원시 `interest_count`로 하위 티어에 배치한다(작은 표본에서 전환율이 왜곡되는 것 방지).
+  - 응답에 `viewCount`(누적 조회수)와 `conversionRate`(표본 부족 시 `null`)를 추가로 노출한다.
+- 도메인 매핑: Repository → `DropInterestCounterRepository.listByInterestCount`(구 `listByPhaseOrderByUpcoming`), `DropViewCounterRepository.increment`(조회 기록 시 같이 호출).
 - `limit`/`cursor` 공용 pagination parameter를 사용한다.
 
 ## API.A.07-08 실시간 많이 보는 상품 랭킹 조회(신규, 2026-07-14)
@@ -138,7 +144,10 @@ service: SD.A.0730
 - 상태 변경: 없음.
 - 도메인 매핑: Repository → `DropViewRankingRepository.getLatestBucket`.
 - `limit`/`cursor` 공용 pagination parameter를 사용한다.
-- 확인 필요: 구간 경계 직후(예: 03:00:01)에는 새 구간의 스냅샷이 아직 없을 수 있다 — 이 경우 직전 구간 값을 계속 보여줄지, 빈 리스트를 보여줄지 결정 필요.
+- **(2026-07-20 해소) 구간 경계 직후 응답 정책**: 새 구간의 스냅샷이 아직 없을 때(예: 03:00:01)는 직전 구간 값을 그대로 계속 노출한다(빈 리스트 반환하지 않음) — 구현 변경 없이 기존 `getLatestBucket`(가장 최근에 실제로 계산된 버킷 반환) 동작을 그대로 확정한 것. 응답의 `bucketStart`가 "이 데이터가 언제 기준인지"를 프론트에 알려주므로, 매 3시간 경계마다 랭킹이 잠깐 사라지는 UX보다 이 편이 낫다고 판단.
+- **(2026-07-20 명확화) "실시간"의 정의**: 이벤트 발생 즉시 반영이 아니라, KST 3시간 경계마다 갱신되는 "최대 3시간 이내 최신 스냅샷"을 뜻한다. operationId/경로(`listTrendingRanking`, `/rankings/drops/trending`)는 이미 "실시간" 대신 "trending"을 쓰고 있어 영문 계약엔 문제없음 — 한글 화면 명칭("실시간 조회 랭킹")과 내부 코드 주석에서만 이 정의를 명시하는 것으로 정리(외부 계약 변경 없음).
+- **(2026-07-20 추가) 찜 속도 + 전환율 필드**: 응답의 각 항목에 `newInterestCount`(같은 3시간 구간에 새로 찜한 사용자 수)와 `conversionRate`(`newInterestCount / viewerCount`, 조회자가 0명이면 `null`)를 추가 노출한다. 정렬 기준은 그대로 `viewerCount`(조회자 수) 내림차순을 유지 — 전환율을 정렬 기준으로 쓰려면 표본 수 임계값(최소 조회자 수) 같은 안전장치를 먼저 설계해야 해서, 이번 단계는 "계산해서 보여주기"까지만 하고 정렬 반영은 다음 단계로 남긴다. 근거: 김정엽 멘토링 피드백(2026-07-14) — 누적 조회수의 기간편향, 찜/조회 신호 결합 요구.
+- **(2026-07-20 알려진 제약)** 이 API의 랭킹 후보 집합은 `drop_views`에 조회 기록이 있는 드롭으로만 정해진다(정렬 기준 자체가 `viewerCount`이므로). 즉 사용자가 상세 페이지를 열지 않고(`record_drop_view` 미호출) 목록 카드에서 바로 찜만 누른 드롭은 이 구간에 찜이 아무리 늘어도 이 랭킹에 아예 등장하지 않는다 — `newInterestCount`는 "조회가 있는 드롭들 사이에서의" 찜 속도이지, 서비스 전체 찜 속도가 아니다. 후보 집합을 `drop_views ∪ interests`로 넓히는 안(조회 0건인 드롭도 `viewerCount=0`으로 등장)을 검토했으나, 정렬 기준 재설계가 같이 필요해 이번 단계는 범위 밖으로 명시적으로 미뤘다(2026-07-20 확인).
 
 ## API.A.07-07 드롭 관심도 통계 조회
 

@@ -7,6 +7,14 @@ get:
     서로 다른 조회자 수(`viewerCount`) 기준 랭킹을 반환한다. 매 요청마다 다시 집계하지 않고,
     3시간마다 도는 배치가 미리 계산해 둔 스냅샷(`drop_view_rankings`)만 읽는다(2026-07-14 신설).
     홈 화면 위젯은 `limit=3`으로, "전체보기" 페이지는 `limit` 최대 100으로 호출한다.
+
+    "실시간"은 이벤트 즉시 반영이 아니라 최대 3시간 이내 최신 스냅샷을 뜻한다(2026-07-20 명확화).
+    구간 경계 직후 새 스냅샷이 아직 없을 때는 직전 구간 값을 계속 반환한다(빈 리스트를 주지 않음).
+
+    같은 구간의 찜 신호(`newInterestCount`/`conversionRate`)도 함께 반환한다(2026-07-20 추가,
+    김정엽 멘토링 피드백 대응 — 누적 조회수의 기간편향, 찜/조회 신호 결합). 다만 이 랭킹의 후보
+    집합 자체가 조회 기록이 있는 드롭으로 한정되므로, 조회 없이 찜만 늘어난 드롭은 반영되지
+    않는다(알려진 제약, api-endpoint-process.md 참고). 정렬 기준은 여전히 `viewerCount`다.
   operationId: listTrendingRanking
   x-api-id: API.A.07-08
   x-use-case: UC.A.07
@@ -30,6 +38,8 @@ get:
               - dropId: 7d4a8f2c-5e14-46be-9b9b-987f5d69e001
                 rank: 1
                 viewerCount: 342
+                newInterestCount: 58
+                conversionRate: 0.1696
             pageInfo:
               nextCursor: null
               hasNext: false
