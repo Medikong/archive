@@ -14,6 +14,8 @@ tags:
 paths:
   /api/v1/dev/auth/verification-messages/{challengeId}:
     $ref: ./paths/API_A_300_30_get_virtual_verification_message.yaml
+  /api/v1/dev/auth/test-tokens/bulk:
+    $ref: ./paths/API_A_300_34_issue_development_bulk_tokens.yaml
 components:
   securitySchemes:
     DevAccessToken:
